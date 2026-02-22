@@ -1,0 +1,4 @@
+{
+  "framework": "sveltekit",
+  "buildCommand": "npx prisma generate && npm run build"
+}
