@@ -1,0 +1,269 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ListVisibility {
+  PUBLIC
+  UNLISTED
+  PRIVATE
+
+  @@map("list_visibility")
+}
+
+enum MediaProvider {
+  TMDB
+  ANILIST
+  OMDB
+  TVDB
+  JIKAN
+  KITSU
+  TRAKT
+
+  @@map("media_provider")
+}
+
+enum MediaType {
+  MOVIE
+  TV
+  ANIME
+  CARTOON
+  OTHER
+
+  @@map("media_type")
+}
+
+enum WatchStatus {
+  WATCHED
+  IN_PROGRESS
+  PLAN_TO_WATCH
+}
+
+model User {
+  id            String      @id @default(uuid()) @db.Uuid
+  email         String?     @unique @db.VarChar(255)
+  emailVerified DateTime?   @map("email_verified") @db.Timestamptz(6)
+  name          String?     @db.VarChar(255)
+  image         String?
+  handle        String?     @unique @db.VarChar(255)
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  accounts      Account[]
+  sessions      Session[]
+  lists         List[]
+  listItems     ListItem[]
+  savedLists    SavedList[]
+  apiKeys       UserApiKey[]
+
+  @@map("users")
+}
+
+model UserApiKey {
+  id            String        @id @default(uuid()) @db.Uuid
+  userId        String        @map("user_id") @db.Uuid
+  provider      MediaProvider
+  encryptedData String        @map("encrypted_data")
+  iv            String        @db.VarChar(64)
+  authTag       String        @map("auth_tag") @db.VarChar(64)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider], map: "user_api_keys_user_provider_unique")
+  @@map("user_api_keys")
+}
+
+model Account {
+  userId            String   @map("user_id") @db.Uuid
+  type              String   @db.VarChar(255)
+  provider          String   @db.VarChar(255)
+  providerAccountId String   @map("provider_account_id") @db.VarChar(255)
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?  @db.VarChar(255)
+  scope             String?
+  id_token          String?
+  session_state     String?  @db.VarChar(255)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  sessionToken String   @id @map("session_token") @db.VarChar(255)
+  userId       String   @map("user_id") @db.Uuid
+  expires      DateTime @db.Timestamptz(6)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String   @db.VarChar(255)
+  token      String   @unique @db.VarChar(255)
+  expires    DateTime @db.Timestamptz(6)
+
+  @@id([identifier, token])
+  @@map("verification_tokens")
+}
+
+model List {
+  id          String         @id @default(uuid()) @db.Uuid
+  ownerUserId String         @map("owner_user_id") @db.Uuid
+  title       String         @db.VarChar(120)
+  description String?        @db.VarChar(400)
+  visibility  ListVisibility @default(PRIVATE)
+  shareToken  String?        @unique(map: "lists_share_token_unique") @map("share_token") @db.VarChar(255)
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  owner       User           @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  items       ListItem[]
+  savedBy     SavedList[]
+
+  @@index([ownerUserId, updatedAt], map: "lists_owner_updated_idx")
+  @@index([visibility, updatedAt], map: "lists_visibility_updated_idx")
+  @@map("lists")
+}
+
+model SavedList {
+  id      String   @id @default(uuid()) @db.Uuid
+  userId  String   @map("user_id") @db.Uuid
+  listId  String   @map("list_id") @db.Uuid
+  savedAt DateTime @default(now()) @map("saved_at") @db.Timestamptz(6)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  list    List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listId], map: "saved_lists_user_list_unique")
+  @@map("saved_lists")
+}
+
+model Media {
+  id             String        @id @default(uuid()) @db.Uuid
+  mediaType      MediaType     @default(OTHER) @map("media_type")
+  title          String        @db.VarChar(500)
+  originalTitle  String?       @map("original_title") @db.VarChar(500)
+  year           Int?
+  overview       String?
+  posterUrl      String?       @map("poster_url")
+  backdropUrl    String?       @map("backdrop_url")
+  runtimeMinutes Int?          @map("runtime_minutes")
+  episodeRuntimeMin Int?       @map("episode_runtime_min")
+  episodeRuntimeMax Int?       @map("episode_runtime_max")
+  seasonsCount   Int?          @map("seasons_count")
+  episodesCount  Int?          @map("episodes_count")
+  seasonBreakdown Json?        @map("season_breakdown")
+  countries      String[]      @default([])
+  isAdult        Boolean       @default(false) @map("is_adult")
+  imdbId         String?       @unique(map: "media_imdb_unique") @map("imdb_id") @db.VarChar(32)
+  tmdbId         Int?          @unique(map: "media_tmdb_unique") @map("tmdb_id")
+  anilistId      Int?          @unique(map: "media_anilist_unique") @map("anilist_id")
+  tvdbId         Int?          @unique(map: "media_tvdb_unique") @map("tvdb_id")
+  malId          Int?          @unique(map: "media_mal_unique") @map("mal_id")
+  kitsuId        Int?          @unique(map: "media_kitsu_unique") @map("kitsu_id")
+  traktId        Int?          @unique(map: "media_trakt_unique") @map("trakt_id")
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  listItems      ListItem[]
+  sources        MediaSource[]
+  genres         MediaGenre[]
+  cast           MediaCast[]
+
+  @@index([title], map: "media_title_idx")
+  @@index([year], map: "media_year_idx")
+  @@map("media")
+}
+
+model ListItem {
+  id            String   @id @default(uuid()) @db.Uuid
+  listId        String   @map("list_id") @db.Uuid
+  mediaId       String   @map("media_id") @db.Uuid
+  addedByUserId String   @map("added_by_user_id") @db.Uuid
+  notes         String?  @db.VarChar(500)
+  rating        Int?
+  status        WatchStatus?
+  currentSeason  Int?    @map("current_season")
+  currentEpisode Int?    @map("current_episode")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  list          List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  media         Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  addedBy       User     @relation(fields: [addedByUserId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, mediaId], map: "list_items_unique_per_list_media")
+  @@index([listId, createdAt], map: "list_items_list_created_idx")
+  @@map("list_items")
+}
+
+model MediaSource {
+  id             String        @id @default(uuid()) @db.Uuid
+  mediaId        String        @map("media_id") @db.Uuid
+  provider       MediaProvider
+  externalId     String        @map("external_id") @db.VarChar(255)
+  externalUrl    String?       @map("external_url")
+  lastFetchedAt  DateTime?     @map("last_fetched_at") @db.Timestamptz(6)
+  expiresAt      DateTime?     @map("expires_at") @db.Timestamptz(6)
+  etag           String?       @db.VarChar(255)
+  rawJson        Json?         @map("raw_json")
+  normalizedJson Json?         @map("normalized_json")
+  media          Media         @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, externalId], map: "media_sources_provider_external_unique")
+  @@index([provider, externalId], map: "media_sources_provider_external_idx")
+  @@map("media_sources")
+}
+
+model Genre {
+  id        String      @id @default(uuid()) @db.Uuid
+  slug      String      @unique @db.VarChar(255)
+  name      String      @db.VarChar(255)
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  media     MediaGenre[]
+
+  @@map("genres")
+}
+
+model MediaGenre {
+  mediaId String @map("media_id") @db.Uuid
+  genreId String @map("genre_id") @db.Uuid
+  media   Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  genre   Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, genreId])
+  @@index([genreId], map: "media_genres_genre_idx")
+  @@map("media_genres")
+}
+
+model Person {
+  id            String      @id @default(uuid()) @db.Uuid
+  name          String      @db.VarChar(255)
+  tmdbPersonId  Int?        @unique(map: "people_tmdb_unique") @map("tmdb_person_id")
+  anilistStaffId Int?       @unique(map: "people_anilist_unique") @map("anilist_staff_id")
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  castEntries   MediaCast[]
+
+  @@index([name], map: "people_name_idx")
+  @@map("people")
+}
+
+model MediaCast {
+  mediaId   String  @map("media_id") @db.Uuid
+  personId  String  @map("person_id") @db.Uuid
+  role      String? @db.VarChar(255)
+  castOrder Int?    @map("cast_order")
+  media     Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  person    Person  @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, personId])
+  @@index([personId], map: "media_cast_person_idx")
+  @@map("media_cast")
+}
