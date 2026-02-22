@@ -1,10 +1,10 @@
 <script lang="ts">
+  import { page } from '$app/state'
   import CircleCheckIcon from '@lucide/svelte/icons/circle-check'
   import CirclePlayIcon from '@lucide/svelte/icons/circle-play'
   import ClockIcon from '@lucide/svelte/icons/clock'
   import Trash2Icon from '@lucide/svelte/icons/trash-2'
   import { useQueryClient } from '@tanstack/svelte-query'
-  import { page } from '$app/state'
 
   import { L } from '$lib'
   import { WATCH_STATUS_META } from '$shared/config/domain'
@@ -34,7 +34,7 @@
     compact?: boolean
   }
 
-  const { item, showStatusLabel = false }: Props = $props()
+  const { item, showStatusLabel = false, compact = false }: Props = $props()
 
   const queryClient = useQueryClient()
   const listId = $derived((page.data as PageData).list?.id)
@@ -73,7 +73,9 @@
     <img
       src={item.media.posterUrl}
       alt={item.media.title}
-      class="aspect-2/3 w-full object-cover transition-transform duration-300 {compact ? 'group-hover:scale-[1.03]' : 'group-hover:scale-105'}"
+      class="aspect-2/3 w-full object-cover transition-transform duration-300 {compact
+        ? 'group-hover:scale-[1.03]'
+        : 'group-hover:scale-105'}"
       loading="lazy"
     />
   {:else}
@@ -136,21 +138,21 @@
   </div>
 
   {#if !compact}
-  <div class="p-3 transition-opacity duration-200 group-hover:opacity-0">
-    <h2 class="line-clamp-1 text-sm font-medium">{item.media.title}</h2>
-    <div class="mt-1 flex flex-wrap items-center gap-1.5">
-      {#if item.media.year}
-        <span class="text-xs text-muted-foreground">{item.media.year}</span>
+    <div class="p-3 transition-opacity duration-200 group-hover:opacity-0">
+      <h2 class="line-clamp-1 text-sm font-medium">{item.media.title}</h2>
+      <div class="mt-1 flex flex-wrap items-center gap-1.5">
+        {#if item.media.year}
+          <span class="text-xs text-muted-foreground">{item.media.year}</span>
+        {/if}
+        <span class="rounded-full border px-2 py-0.5 text-[10px] leading-none font-semibold {typeMeta.color}">
+          {typeMeta.label}
+        </span>
+      </div>
+      {#if showStatusLabel}
+        <p class="mt-0.5 text-xs text-muted-foreground">
+          {item.status ? watchStatusLabels[item.status as keyof typeof watchStatusLabels] : L.status_plan_to_watch()}
+        </p>
       {/if}
-      <span class="rounded-full border px-2 py-0.5 text-[10px] leading-none font-semibold {typeMeta.color}">
-        {typeMeta.label}
-      </span>
     </div>
-    {#if showStatusLabel}
-      <p class="mt-0.5 text-xs text-muted-foreground">
-        {item.status ? watchStatusLabels[item.status as keyof typeof watchStatusLabels] : L.status_plan_to_watch()}
-      </p>
-    {/if}
-  </div>
   {/if}
 </a>

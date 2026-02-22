@@ -19,6 +19,8 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-svelte": "^3.15.0",
     "globals": "^16.5.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "mdsvex": "^0.12.6",
     "prettier": "^3.8.1",
     "prettier-plugin-svelte": "^3.5.0",
@@ -41,7 +43,7 @@
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
-    "prepare": "svelte-kit sync || echo ''",
+    "prepare": "husky",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "format": "prettier --write .",
@@ -71,5 +73,8 @@
     "@st1ggy/linter-config",
     "esbuild",
     "unrs-resolver"
-  ]
+  ],
+  "lint-staged": {
+    "*.{ts,svelte}": "eslint"
+  }
 }
