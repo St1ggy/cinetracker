@@ -1,7 +1,7 @@
 import { includeIgnoreFile } from '@eslint/compat'
-// @ts-expect-error: no types for this package
+// eslint-disable-next-line import/default
 import st1ggyConfig from '@st1ggy/linter-config/eslint-svelte'
-import { defineConfig } from 'eslint/config'
+import { defineConfig, globalIgnores } from 'eslint/config'
 import svelte from 'eslint-plugin-svelte'
 import globals from 'globals'
 import { fileURLToPath } from 'node:url'
@@ -12,8 +12,22 @@ import svelteConfig from './svelte.config.js'
 
 const gitignorePath = fileURLToPath(new URL('.gitignore', import.meta.url))
 
+// typescript-eslint v8.56+ errors when both `project` and `projectService` are set.
+// @st1ggy/linter-config v2.42+ sets both, so strip `project` from its parserOptions.
+const cleanedSt1ggyConfig = st1ggyConfig.map((c) => {
+  /** @type {Record<string, unknown>} */
+  const po = /** @type {any} */ (c.languageOptions?.parserOptions)
+
+  if (!po?.project) return c
+
+  const parserOptions = Object.fromEntries(Object.entries(po).filter(([key]) => key !== 'project'))
+
+  return { ...c, languageOptions: { ...c.languageOptions, parserOptions } }
+})
+
 export default defineConfig(
   includeIgnoreFile(gitignorePath),
+  globalIgnores(['src/lib/components/ui/**/*']),
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
   {
     files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
@@ -27,7 +41,7 @@ export default defineConfig(
     },
   },
   ...svelte.configs['flat/prettier'],
-  ...st1ggyConfig,
+  ...cleanedSt1ggyConfig,
   {
     rules: {
       'svelte/no-navigation-without-resolve': 'off',

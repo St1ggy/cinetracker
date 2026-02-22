@@ -1,4 +1,4 @@
-// @ts-expect-error no types
+// eslint-disable-next-line import/default
 import prettierConfig from '@st1ggy/linter-config/prettier-svelte'
 
 export default {
