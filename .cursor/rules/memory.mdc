@@ -7,6 +7,8 @@ alwaysApply: true
 
 > **For AI:** After every new architectural decision, convention change, or feature addition — **add an entry here** with the date and a brief description.
 
+> **IMPORTANT:** All critical project context (stack, architecture, component map, domain types, DB schema, patterns, env vars) is consolidated in **`context.mdc`** (same folder). Always read it before making significant changes.
+
 ---
 
 ## 2026-02-22 — Initial conventions
@@ -80,6 +82,35 @@ npm run check
 ### @st1ggy/linter-config v2.42+
 - Now ships type declarations — remove `@ts-expect-error` from config file imports
 - `import/default` rule may produce false positives for subpath exports; suppress with `// eslint-disable-next-line import/default`
+
+---
+
+## 2026-02-22 — Component decomposition
+
+### What changed
+
+All large page components were split into small sub-components placed in `ui/` subdirectories:
+
+- `home.svelte` (380→115 lines): `MediaCard`, `MediaFilterBar`, `AddMediaModal`
+- `media-details.svelte` (407→117 lines): `MediaHero`, `MediaProgressPanel`
+- `profile.svelte` (404→134 lines): `ProfileInfo`, `ProviderApiKeyRow`, `DeleteAccountModal`
+- `list-details.svelte` (144→49 lines): `ListDetailHeader` + reuses `MediaCard`
+- `lists.svelte` (120→72 lines): `CreateListForm`
+
+### Why
+
+- Page root components are now thin composers (< 120 lines), all logic/UI in `ui/` sub-components
+- `MediaCard` is shared between home grid and list-details grid; accepts `showStatusLabel?: boolean` to toggle status label vs. icon-only mode; also accepts `currentSeason?` / `currentEpisode?` for progress display in hover overlay
+
+### Rule
+
+Page roots must remain thin composers. New features go in `ui/` sub-components, not in the page root.
+
+---
+
+## 2026-02-22 — context.mdc created
+
+All super-important AI context was consolidated into `context.mdc` (same `.cursor/rules/` folder). It covers: stack, FSD structure, component map, domain types, DB schema, Svelte 5 patterns, TanStack Query, API routes, i18n, UI conventions, env vars, workflow, and key decisions log.
 
 ---
 
