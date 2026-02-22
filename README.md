@@ -1,38 +1,83 @@
-# sv
+# CineTracker
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A personal media tracker for movies, TV shows and anime — with public lists, community ratings, and a tag-based catalog.
 
-## Creating a project
+**Live:** https://cinetracker.vercel.app · **Repo:** https://github.com/St1ggy/cinetracker
 
-If you're seeing this, you've probably already done this step. Congrats!
+---
 
-```sh
-# create a new project in the current directory
-npx sv create
+## Features
 
-# create a new project in my-app
-npx sv create my-app
+- **Home feed** — your personal watch list with filters (genre, status, sort) and three view modes (grid / compact / list)
+- **Lists** — create multiple named lists with custom visibility (private / unlisted / public)
+- **Public catalog** (`/explore`) — browse community lists, search by title, filter by tags, sort by newest / most popular / top rated
+- **List ratings** — rate public lists 1–5 stars (username required)
+- **Anonymous publishing** — publish a list publicly without revealing your identity
+- **User profiles** (`/u/[handle]`) — public page showing all non-anonymous public lists of a user
+- **Multi-source enrichment** — media metadata fetched and merged from TMDB, AniList, OMDB, TVDB, Jikan, Kitsu and Trakt
+- **Username system** — set a handle (changeable once per 30 days) required for public actions
+- **i18n** — English, Russian, French, Japanese and Chinese
+- **Theme** — light / dark / system
+- **Toast notifications** — all actions surface success / error feedback
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Framework | SvelteKit 2 + Svelte 5 (Runes) |
+| Styling | Tailwind CSS v4 |
+| Database | PostgreSQL via Prisma ORM |
+| Auth | Auth.js (sveltekit adapter) |
+| Server state | TanStack Query |
+| i18n | Paraglide JS |
+| Storage | unstorage (localStorage + SSR memory) |
+| Deployment | Vercel |
+| Versioning | semantic-release (conventional commits) |
+
+## Getting started
+
+```bash
+npm install
 ```
 
-## Developing
+Copy `.env.example` to `.env` and fill in the required variables:
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+```
+DATABASE_URL=postgresql://...
+AUTH_SECRET=...
+AUTH_GOOGLE_ID=...
+AUTH_GOOGLE_SECRET=...
+```
 
-```sh
+```bash
+# Apply DB migrations
+npx prisma migrate deploy
+
+# Start dev server
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+## Scripts
 
-To create a production version of your app:
+| Command | Description |
+|---|---|
+| `npm run dev` | Start development server |
+| `npm run build` | Production build |
+| `npm run preview` | Preview production build |
+| `npm run check` | Svelte type-check |
+| `npm run lint` | ESLint |
+| `npm run format` | Prettier |
+| `npm run prisma:migrate:dev` | Create & apply a new migration |
 
-```sh
-npm run build
-```
+## Versioning
 
-You can preview the production build with `npm run preview`.
+Releases are handled automatically by **semantic-release** on every push to `main`:
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+| Commit prefix | Version bump |
+|---|---|
+| `feat:` | minor |
+| `fix:`, `perf:`, `refactor:` | patch |
+| `BREAKING CHANGE` | major |
+| `chore:`, `docs:`, `style:` | — |
+
+The version from `package.json` is injected at build time via `vite.config.ts` (`__APP_VERSION__`) and displayed in the sidebar.

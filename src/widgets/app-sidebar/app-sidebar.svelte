@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state'
   import CompassIcon from '@lucide/svelte/icons/compass'
+  import GithubIcon from '@lucide/svelte/icons/github'
   import HomeIcon from '@lucide/svelte/icons/house'
   import ListIcon from '@lucide/svelte/icons/list'
   import UserIcon from '@lucide/svelte/icons/user'
@@ -67,6 +68,18 @@
       <LocaleSelector />
       <ThemeToggler />
     </div>
-    <p class="mt-2 text-center text-[10px] text-muted-foreground/50">v{__APP_VERSION__}</p>
+    <div class="mt-3 flex items-center justify-between">
+      <span class="text-xs font-medium text-muted-foreground/70">v{__APP_VERSION__}</span>
+      <a
+        href="https://github.com/St1ggy/cinetracker"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+        aria-label="GitHub repository"
+      >
+        <GithubIcon class="size-3.5" />
+        GitHub
+      </a>
+    </div>
   </div>
 </div>
