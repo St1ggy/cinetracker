@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import { page } from '$app/state'
-  import { browser } from '$app/environment'
+  import { getStorageItem, setStorageItem } from '$shared/lib/storage'
   import { createQuery, useQueryClient } from '@tanstack/svelte-query'
   import { untrack } from 'svelte'
 
@@ -27,13 +27,21 @@
   let status = $state<WatchStatus | ''>(untrack(() => data.filters?.status ?? ''))
   let showAddModal = $state(false)
 
-  // View mode persisted in localStorage — personal preference, not part of URL.
-  let viewMode = $state<ViewMode>(
-    browser ? ((localStorage.getItem('home-view-mode') as ViewMode | null) ?? 'grid') : 'grid',
-  )
+  // View mode persisted in storage — personal preference, not part of URL.
+  let viewMode = $state<ViewMode>('grid')
+  let viewModeLoaded = $state(false)
 
+  // Read once on mount; SSR gets the default 'grid'.
   $effect(() => {
-    if (browser) localStorage.setItem('home-view-mode', viewMode)
+    getStorageItem<ViewMode>('home-view-mode', 'grid').then((v) => {
+      viewMode = v
+      viewModeLoaded = true
+    })
+  })
+
+  // Write only after the initial read to avoid overwriting with the default.
+  $effect(() => {
+    if (viewModeLoaded) setStorageItem('home-view-mode', viewMode)
   })
 
   const hasActiveFilters = $derived(!!(query || genre || status))
