@@ -1,5 +1,5 @@
 {
   "framework": "sveltekit",
-  "installCommand": "npm install --ignore-scripts",
+  "installCommand": "npm ci --ignore-scripts",
   "buildCommand": "npx prisma generate && npm run build"
 }
