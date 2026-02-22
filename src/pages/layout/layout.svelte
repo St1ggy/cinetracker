@@ -67,9 +67,9 @@
       {/if}
 
       <main class="flex min-w-0 flex-1 flex-col">
-        <header class="m-4 flex items-center justify-between gap-4 rounded-lg border bg-card p-3">
+        <header class="m-4 flex items-center justify-between gap-4 rounded-lg border bg-card p-3 md:hidden">
           <button
-            class="inline-flex size-9 items-center justify-center rounded-md border hover:bg-accent md:hidden"
+            class="inline-flex size-9 items-center justify-center rounded-md border hover:bg-accent"
             aria-label={L.nav_toggle_sidebar()}
             onclick={() => (mobileSidebarOpen = !mobileSidebarOpen)}
           >
@@ -79,11 +79,9 @@
               <MenuIcon class="size-4" />
             {/if}
           </button>
-          <div class="text-sm text-muted-foreground">
-            {#if !page.data.session?.user}
-              <a href="/signin" class="underline">{L.common_sign_in()}</a>
-            {/if}
-          </div>
+          {#if !page.data.session?.user}
+            <a href="/signin" class="text-sm text-muted-foreground underline">{L.common_sign_in()}</a>
+          {/if}
         </header>
 
         <div class="flex flex-1 flex-col gap-4 p-4 pt-0">
