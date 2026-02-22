@@ -11,7 +11,7 @@ export const usersRepository = {
         image: true,
         createdAt: true,
         lists: {
-          where: { visibility: 'PUBLIC' },
+          where: { visibility: 'PUBLIC', isAnonymous: false },
           orderBy: { updatedAt: 'desc' },
           include: {
             _count: { select: { items: true } },
