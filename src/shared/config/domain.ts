@@ -50,13 +50,21 @@ export const isMediaProvider = (value: string): value is MediaProvider =>
 
 export const PROVIDER_META: Record<
   MediaProvider,
-  { label: string; description: string; requiresKey: boolean; keyUrl?: string }
+  { label: string; description: string; requiresKey: boolean; keyUrl?: string; steps?: string[] }
 > = {
   TMDB: {
     label: 'TMDB',
     description: 'Movies & TV series — the most complete database',
     requiresKey: true,
     keyUrl: 'https://www.themoviedb.org/settings/api',
+    steps: [
+      'Sign in at themoviedb.org',
+      'Open Settings → API (left sidebar)',
+      'Click "Create" and choose "Developer" type',
+      'Fill in the application form (any values for personal use)',
+      'Copy the Read Access Token (Bearer Token, v4) — recommended',
+      'Alternatively copy the API Key (v3) field',
+    ],
   },
   ANILIST: {
     label: 'AniList',
@@ -68,12 +76,26 @@ export const PROVIDER_META: Record<
     description: 'Movies, series & episodes with IMDb ratings',
     requiresKey: true,
     keyUrl: 'https://www.omdbapi.com/apikey.aspx',
+    steps: [
+      'Go to omdbapi.com/apikey.aspx',
+      'Select "FREE! (1,000 daily limit)" plan',
+      'Enter your email and submit the form',
+      'Check your inbox and click the activation link',
+      'Copy the API key from the activation email',
+    ],
   },
   TVDB: {
     label: 'TheTVDB',
     description: 'TV series, seasons and episode data',
     requiresKey: true,
     keyUrl: 'https://thetvdb.com/api-information/signup',
+    steps: [
+      'Create an account at thetvdb.com',
+      'Go to thetvdb.com/api-information and subscribe (free tier available)',
+      'Open your dashboard and generate an API key',
+      'Optionally set a PIN for extra security (enter it in the PIN field below)',
+      'Copy the API key',
+    ],
   },
   JIKAN: {
     label: 'Jikan (MyAnimeList)',
@@ -90,5 +112,13 @@ export const PROVIDER_META: Record<
     description: 'Movies & TV series with watch history sync',
     requiresKey: true,
     keyUrl: 'https://trakt.tv/oauth/applications',
+    steps: [
+      'Sign in at trakt.tv',
+      'Go to Settings → Your API Apps',
+      'Click "New Application"',
+      'Fill in the Name; set Redirect URI to urn:ietf:wg:oauth:2.0:oob',
+      'Save the application',
+      'Copy the Client ID (not the Client Secret)',
+    ],
   },
 }

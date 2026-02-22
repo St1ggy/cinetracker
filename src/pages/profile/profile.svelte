@@ -219,16 +219,6 @@
                     {/if}
                   </div>
                   <div class="flex items-center gap-2">
-                    {#if meta.keyUrl}
-                      <a
-                        href={meta.keyUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-xs text-muted-foreground underline hover:text-foreground"
-                      >
-                        {L.profile_api_key_get_key()}
-                      </a>
-                    {/if}
                     {#if configured}
                       <button
                         class="rounded-md border px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
@@ -239,52 +229,80 @@
                       </button>
                     {/if}
                     <button
-                      class="rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                      class="rounded-md border px-3 py-1 text-xs hover:bg-accent"
                       onclick={() => toggleExpand(provider)}
                     >
-                      {expanded ? '▲' : '▼'}
+                      {expanded ? L.profile_api_key_collapse() : L.profile_api_key_setup()}
                     </button>
                   </div>
                 </div>
 
                 {#if expanded}
                   <div class="border-t px-4 py-3">
-                    <div class="space-y-3">
-                      {#each fields as field (field.key)}
-                        {@const inputId = `${provider}-${field.key}`}
-                        <div>
-                          <label for={inputId} class="mb-1 block text-xs font-medium text-muted-foreground">
-                            {field.label}
-                          </label>
-                          <input
-                            id={inputId}
-                            type={field.type ?? 'text'}
-                            class="w-full rounded-md border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
-                            placeholder={field.type === 'password' ? '••••••••••••••••' : ''}
-                            value={getFieldValue(provider, field.key)}
-                            oninput={(event_) =>
-                              setFieldValue(provider, field.key, (event_.currentTarget as HTMLInputElement).value)}
-                          />
-                        </div>
-                      {/each}
-
-                      <div class="flex items-center gap-2">
-                        <button
-                          class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                          onclick={() => saveKey(provider)}
-                          disabled={status === 'saving'}
-                        >
-                          {#if status === 'saving'}
-                            {L.profile_api_key_saving()}
-                          {:else if status === 'saved'}
-                            {L.profile_api_key_saved()}
-                          {:else}
-                            {L.profile_api_key_save()}
+                    <div class="space-y-4">
+                      {#if meta.steps && meta.steps.length > 0}
+                        <div class="rounded-md bg-muted/50 px-4 py-3">
+                          <p class="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                            {L.profile_api_key_how_to_get()}
+                          </p>
+                          <ol class="space-y-1">
+                            {#each meta.steps as step, index (index)}
+                              <li class="flex gap-2 text-xs text-muted-foreground">
+                                <span class="shrink-0 font-semibold text-foreground">{index + 1}.</span>
+                                <span>{step}</span>
+                              </li>
+                            {/each}
+                          </ol>
+                          {#if meta.keyUrl}
+                            <a
+                              href={meta.keyUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              class="mt-2 inline-flex items-center gap-1 text-xs text-primary underline hover:text-primary/80"
+                            >
+                              {L.profile_api_key_open_provider_page()} →
+                            </a>
                           {/if}
-                        </button>
-                        {#if status === 'error'}
-                          <span class="text-xs text-destructive">{L.profile_api_key_error()}</span>
-                        {/if}
+                        </div>
+                      {/if}
+
+                      <div class="space-y-3">
+                        {#each fields as field (field.key)}
+                          {@const inputId = `${provider}-${field.key}`}
+                          <div>
+                            <label for={inputId} class="mb-1 block text-xs font-medium text-muted-foreground">
+                              {field.label}
+                            </label>
+                            <input
+                              id={inputId}
+                              type={field.type ?? 'text'}
+                              class="w-full rounded-md border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
+                              placeholder={field.type === 'password' ? '••••••••••••••••' : ''}
+                              value={getFieldValue(provider, field.key)}
+                              oninput={(event_) =>
+                                setFieldValue(provider, field.key, (event_.currentTarget as HTMLInputElement).value)}
+                            />
+                          </div>
+                        {/each}
+
+                        <div class="flex items-center gap-2">
+                          <button
+                            class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                            onclick={() => saveKey(provider)}
+                            disabled={status === 'saving'}
+                          >
+                            {#if status === 'saving'}
+                              {L.profile_api_key_saving()}
+                            {:else if status === 'saved'}
+                              {L.profile_api_key_saved()}
+                            {:else}
+                              {L.profile_api_key_save()}
+                            {/if}
+                          </button>
+                          {#if status === 'error'}
+                            <span class="text-xs text-destructive">{L.profile_api_key_error()}</span>
+                          {/if}
+                        </div>
                       </div>
                     </div>
                   </div>

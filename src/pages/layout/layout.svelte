@@ -80,9 +80,7 @@
             {/if}
           </button>
           <div class="text-sm text-muted-foreground">
-            {#if page.data.session?.user}
-              {L.layout_signed_in_as({ name: page.data.session.user.email ?? page.data.session.user.name ?? '—' })}
-            {:else}
+            {#if !page.data.session?.user}
               <a href="/signin" class="underline">{L.common_sign_in()}</a>
             {/if}
           </div>

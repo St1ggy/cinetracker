@@ -13,6 +13,12 @@
   const { onNavigate }: AppSidebarProps = $props()
 
   const isActive = (path: string) => page.url.pathname === path
+
+  const userLabel = $derived(
+    page.data.session?.user
+      ? (page.data.session.user.name ?? page.data.session.user.email ?? L.nav_profile())
+      : L.nav_profile(),
+  )
 </script>
 
 <div class="flex h-full w-full flex-col border-r bg-card">
@@ -39,11 +45,11 @@
     </a>
     <a
       href="/profile"
-      class={`flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent ${isActive('/profile') ? 'bg-accent font-medium' : ''}`}
+      class={`flex min-w-0 items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent ${isActive('/profile') ? 'bg-accent font-medium' : ''}`}
       onclick={() => onNavigate?.()}
     >
-      <UserIcon class="size-4" />
-      <span>{L.nav_profile()}</span>
+      <UserIcon class="size-4 shrink-0" />
+      <span class="truncate">{userLabel}</span>
     </a>
   </nav>
 

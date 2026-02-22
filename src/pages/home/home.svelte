@@ -279,16 +279,13 @@
 
       <div class="mt-3 max-h-96 space-y-2 overflow-y-auto">
         {#each searchQuery.data ?? [] as result (`${result.provider}:${result.externalId}`)}
-          <button
-            class="flex w-full items-start gap-3 rounded-md border p-2 text-left hover:bg-accent"
-            onclick={() => addProduct(result.provider, result.externalId)}
-          >
+          <div class="flex items-center gap-3 rounded-md border p-2">
             {#if result.posterUrl}
-              <img src={result.posterUrl} alt={result.title} class="h-16 w-12 rounded object-cover" />
+              <img src={result.posterUrl} alt={result.title} class="h-16 w-12 shrink-0 rounded object-cover" />
             {:else}
-              <div class="h-16 w-12 rounded bg-muted"></div>
+              <div class="h-16 w-12 shrink-0 rounded bg-muted"></div>
             {/if}
-            <div>
+            <div class="min-w-0 flex-1">
               <div class="text-sm font-medium">{result.title}</div>
               <div class="mt-0.5 flex flex-wrap items-center gap-1.5">
                 <span class="text-xs text-muted-foreground">
@@ -302,11 +299,19 @@
                   {getMediaTypeMeta(result.mediaType).label}
                 </span>
               </div>
-              <p class="line-clamp-2 text-xs text-muted-foreground">
+              <p class="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                 {result.overview ? stripHtml(result.overview) : L.common_no_overview()}
               </p>
             </div>
-          </button>
+            <button
+              class="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              title={L.home_add_product()}
+              disabled={addProductMutation.isPending}
+              onclick={() => addProduct(result.provider, result.externalId)}
+            >
+              <PlusIcon class="size-4" />
+            </button>
+          </div>
         {/each}
       </div>
     </div>
