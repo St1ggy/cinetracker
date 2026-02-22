@@ -114,6 +114,37 @@ All super-important AI context was consolidated into `context.mdc` (same `.curso
 
 ---
 
+## 2026-02-22 — Database change workflow
+
+### Rule
+After **any** change to `prisma/schema.prisma` — always:
+
+1. Create a migration:
+   ```bash
+   npm run prisma:migrate:dev -- --name <description>
+   ```
+2. The migration is auto-applied locally and SQL file is committed to git.
+3. On Vercel, `bunx prisma migrate deploy` in `buildCommand` applies pending migrations automatically.
+
+### Why
+- Schema changes without a migration cause `PrismaClientKnownRequestError: The column 'not available' does not exist` in production.
+- Vercel builds run `prisma migrate deploy` before `prisma generate`, so every migration must be committed and pushed together with the schema change.
+
+### Commands reference
+
+```bash
+# create + apply locally
+npm run prisma:migrate:dev -- --name add_my_field
+
+# check migration status (needs real DATABASE_URL)
+npx prisma migrate status
+
+# apply pending migrations on prod (done automatically by Vercel build)
+npx prisma migrate deploy
+```
+
+---
+
 ## Template for new entries
 
 ```
