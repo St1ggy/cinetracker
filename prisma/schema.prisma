@@ -147,35 +147,40 @@ model SavedList {
 }
 
 model Media {
-  id             String        @id @default(uuid()) @db.Uuid
-  mediaType      MediaType     @default(OTHER) @map("media_type")
-  title          String        @db.VarChar(500)
-  originalTitle  String?       @map("original_title") @db.VarChar(500)
-  year           Int?
-  overview       String?
-  posterUrl      String?       @map("poster_url")
-  backdropUrl    String?       @map("backdrop_url")
-  runtimeMinutes Int?          @map("runtime_minutes")
-  episodeRuntimeMin Int?       @map("episode_runtime_min")
-  episodeRuntimeMax Int?       @map("episode_runtime_max")
-  seasonsCount   Int?          @map("seasons_count")
-  episodesCount  Int?          @map("episodes_count")
-  seasonBreakdown Json?        @map("season_breakdown")
-  countries      String[]      @default([])
-  isAdult        Boolean       @default(false) @map("is_adult")
-  imdbId         String?       @unique(map: "media_imdb_unique") @map("imdb_id") @db.VarChar(32)
-  tmdbId         Int?          @unique(map: "media_tmdb_unique") @map("tmdb_id")
-  anilistId      Int?          @unique(map: "media_anilist_unique") @map("anilist_id")
-  tvdbId         Int?          @unique(map: "media_tvdb_unique") @map("tvdb_id")
-  malId          Int?          @unique(map: "media_mal_unique") @map("mal_id")
-  kitsuId        Int?          @unique(map: "media_kitsu_unique") @map("kitsu_id")
-  traktId        Int?          @unique(map: "media_trakt_unique") @map("trakt_id")
-  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
-  listItems      ListItem[]
-  sources        MediaSource[]
-  genres         MediaGenre[]
-  cast           MediaCast[]
+  id                String        @id @default(uuid()) @db.Uuid
+  mediaType         MediaType     @default(OTHER) @map("media_type")
+  title             String        @db.VarChar(500)
+  originalTitle     String?       @map("original_title") @db.VarChar(500)
+  tagline           String?       @db.VarChar(1000)
+  status            String?       @db.VarChar(100)
+  director          String?       @db.VarChar(255)
+  year              Int?
+  overview          String?
+  posterUrl         String?       @map("poster_url")
+  backdropUrl       String?       @map("backdrop_url")
+  runtimeMinutes    Int?          @map("runtime_minutes")
+  episodeRuntimeMin Int?          @map("episode_runtime_min")
+  episodeRuntimeMax Int?          @map("episode_runtime_max")
+  seasonsCount      Int?          @map("seasons_count")
+  episodesCount     Int?          @map("episodes_count")
+  seasonBreakdown   Json?         @map("season_breakdown")
+  countries         String[]      @default([])
+  isAdult           Boolean       @default(false) @map("is_adult")
+  imdbId            String?       @unique(map: "media_imdb_unique") @map("imdb_id") @db.VarChar(32)
+  tmdbId            Int?          @unique(map: "media_tmdb_unique") @map("tmdb_id")
+  anilistId         Int?          @unique(map: "media_anilist_unique") @map("anilist_id")
+  tvdbId            Int?          @unique(map: "media_tvdb_unique") @map("tvdb_id")
+  malId             Int?          @unique(map: "media_mal_unique") @map("mal_id")
+  kitsuId           Int?          @unique(map: "media_kitsu_unique") @map("kitsu_id")
+  traktId           Int?          @unique(map: "media_trakt_unique") @map("trakt_id")
+  enrichedAt        DateTime?     @map("enriched_at") @db.Timestamptz(6)
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  listItems         ListItem[]
+  sources           MediaSource[]
+  genres            MediaGenre[]
+  cast              MediaCast[]
+  ratings           MediaRating[]
 
   @@index([title], map: "media_title_idx")
   @@index([year], map: "media_year_idx")
@@ -256,14 +261,30 @@ model Person {
 }
 
 model MediaCast {
-  mediaId   String  @map("media_id") @db.Uuid
-  personId  String  @map("person_id") @db.Uuid
-  role      String? @db.VarChar(255)
-  castOrder Int?    @map("cast_order")
-  media     Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  person    Person  @relation(fields: [personId], references: [id], onDelete: Cascade)
+  mediaId    String  @map("media_id") @db.Uuid
+  personId   String  @map("person_id") @db.Uuid
+  role       String? @db.VarChar(255)
+  castOrder  Int?    @map("cast_order")
+  profileUrl String? @map("profile_url")
+  media      Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  person     Person  @relation(fields: [personId], references: [id], onDelete: Cascade)
 
   @@id([mediaId, personId])
   @@index([personId], map: "media_cast_person_idx")
   @@map("media_cast")
+}
+
+model MediaRating {
+  id        String        @id @default(uuid()) @db.Uuid
+  mediaId   String        @map("media_id") @db.Uuid
+  provider  MediaProvider
+  source    String        @db.VarChar(100)
+  value     Float
+  maxValue  Float         @map("max_value")
+  votes     Int?
+  media     Media         @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, provider], map: "media_ratings_media_provider_unique")
+  @@index([mediaId], map: "media_ratings_media_idx")
+  @@map("media_ratings")
 }
