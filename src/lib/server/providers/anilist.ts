@@ -26,6 +26,7 @@ const detailsQuery = `
 query ($id: Int!) {
   Media(id: $id, type: ANIME) {
     id
+    idMal
     title { romaji english native }
     description(asHtml: false)
     coverImage { extraLarge large }
@@ -87,6 +88,9 @@ const extractAnilistCast = (raw: Record<string, unknown>): CanonicalCastMember[]
 const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
   const titleObject = (raw.title ?? {}) as Record<string, string | undefined>
   const id = Number(raw.id)
+  const malId = raw.idMal != null ? Number(raw.idMal) : null
+  const coverImage = raw.coverImage as Record<string, string | undefined> | undefined
+  const posterUrl = coverImage?.extraLarge ?? coverImage?.large ?? null
 
   return {
     provider: 'ANILIST',
@@ -97,11 +101,10 @@ const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
     year: ((raw.startDate as Record<string, number | undefined> | undefined)?.year ?? null) as number | null,
     mediaType: 'ANIME',
     overview: (raw.description as string | undefined) ?? null,
-    posterUrl: ((raw.coverImage as Record<string, string | undefined> | undefined)?.extraLarge ??
-      (raw.coverImage as Record<string, string | undefined> | undefined)?.large ??
-      null) as string | null,
+    posterUrl,
     backdropUrl: (raw.bannerImage as string | undefined) ?? null,
     anilistId: id,
+    malId,
     genres: Array.isArray(raw.genres) ? (raw.genres as string[]) : [],
     countries: raw.countryOfOrigin ? [raw.countryOfOrigin as string] : [],
     runtimeMinutes: (raw.duration as number | undefined) ?? null,

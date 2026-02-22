@@ -8,16 +8,36 @@ import type { MediaProvider } from '@prisma/client'
 type MediaWithSources = NonNullable<Awaited<ReturnType<typeof mediaRepository.findByIdWithDetails>>>
 
 /**
- * Maps each provider to the external ID field on the Media model it uses as its primary key.
+ * Mutable bag of cross-reference IDs that may be discovered during enrichment.
+ * Starts from the DB values, gets updated by the ID-discovery step.
  */
-const PROVIDER_ID_FIELD: Record<MediaProvider, keyof MediaWithSources | null> = {
-  TMDB: 'tmdbId',
-  OMDB: 'imdbId',
-  ANILIST: 'anilistId',
-  TVDB: 'tvdbId',
-  JIKAN: 'malId',
-  KITSU: 'kitsuId',
-  TRAKT: 'traktId',
+type KnownIds = {
+  imdbId: string | null
+  tvdbId: number | null
+  tmdbId: number | null
+  malId: number | null
+  anilistId: number | null
+  kitsuId: string | null
+  traktId: number | null
+}
+
+const getExternalId = (provider: MediaProvider, ids: KnownIds): string | number | null | undefined => {
+  switch (provider) {
+    case 'TMDB':
+      return ids.tmdbId
+    case 'OMDB':
+      return ids.imdbId
+    case 'TVDB':
+      return ids.tvdbId
+    case 'ANILIST':
+      return ids.anilistId
+    case 'JIKAN':
+      return ids.malId
+    case 'KITSU':
+      return ids.kitsuId
+    case 'TRAKT':
+      return ids.traktId
+  }
 }
 
 /**
@@ -36,8 +56,105 @@ const getCompatibleProviders = (media: MediaWithSources): MediaProvider[] => {
 }
 
 /**
+ * Discovers cross-reference IDs from existing provider sources when they are missing
+ * from the media record. This handles media imported before external_id enrichment
+ * was added to the adapters (e.g. TMDB TV shows missing imdbId, AniList missing malId).
+ */
+const discoverMissingIds = async (
+  mediaId: string,
+  media: MediaWithSources,
+  existingProviders: Set<MediaProvider>,
+  credsByProvider: Map<MediaProvider, unknown>,
+  ids: KnownIds,
+): Promise<void> => {
+  const tasks: Promise<void>[] = []
+
+  // TMDB gives us imdbId and tvdbId via external_ids — re-fetch if missing
+  if (existingProviders.has('TMDB') && ids.tmdbId && (!ids.imdbId || ids.tvdbId == null)) {
+    const tmdbCreds = credsByProvider.get('TMDB')
+    const tmdbAdapter = getAdapter('TMDB')
+
+    if (tmdbAdapter && tmdbCreds) {
+      tasks.push(
+        (async () => {
+          try {
+            const d = await tmdbAdapter.fetchDetails(String(ids.tmdbId), tmdbCreds as never)
+
+            if (!ids.imdbId && d.imdbId) ids.imdbId = d.imdbId
+
+            if (ids.tvdbId == null && d.tvdbId) ids.tvdbId = d.tvdbId
+          } catch {
+            // best-effort
+          }
+        })(),
+      )
+    }
+  }
+
+  // AniList gives us idMal — re-fetch if malId is missing
+  if (existingProviders.has('ANILIST') && ids.anilistId && !ids.malId) {
+    const anilistAdapter = getAdapter('ANILIST')
+
+    if (anilistAdapter) {
+      tasks.push(
+        (async () => {
+          try {
+            const d = await anilistAdapter.fetchDetails(String(ids.anilistId))
+
+            if (d.malId) ids.malId = d.malId
+          } catch {
+            // best-effort
+          }
+        })(),
+      )
+    }
+  }
+
+  await Promise.allSettled(tasks)
+
+  // Persist any newly discovered IDs back to the media record
+  const persistUpdates: Record<string, unknown> = {}
+
+  if (!media.imdbId && ids.imdbId) persistUpdates.imdbId = ids.imdbId
+
+  if (media.tvdbId == null && ids.tvdbId) persistUpdates.tvdbId = ids.tvdbId
+
+  if (!media.malId && ids.malId) persistUpdates.malId = ids.malId
+
+  if (Object.keys(persistUpdates).length > 0) {
+    await mediaRepository.upsertMedia(mediaId, {
+      mediaType: media.mediaType,
+      title: media.title,
+      originalTitle: media.originalTitle,
+      countries: media.countries,
+      isAdult: media.isAdult,
+      tagline: media.tagline ?? null,
+      status: media.status ?? null,
+      director: media.director ?? null,
+      backdropUrl: media.backdropUrl ?? null,
+      posterUrl: media.posterUrl ?? null,
+      overview: media.overview ?? null,
+      imdbId: (persistUpdates.imdbId as string | undefined) ?? media.imdbId ?? null,
+      tvdbId: (persistUpdates.tvdbId as number | undefined) ?? media.tvdbId ?? null,
+      tmdbId: media.tmdbId ?? null,
+      anilistId: media.anilistId ?? null,
+      malId: (persistUpdates.malId as number | undefined) ?? media.malId ?? null,
+      kitsuId: media.kitsuId ?? null,
+      traktId: media.traktId ?? null,
+      year: media.year ?? null,
+      runtimeMinutes: media.runtimeMinutes ?? null,
+      episodeRuntimeMin: media.episodeRuntimeMin ?? null,
+      episodeRuntimeMax: media.episodeRuntimeMax ?? null,
+      seasonsCount: media.seasonsCount ?? null,
+      episodesCount: media.episodesCount ?? null,
+      seasonBreakdown: media.seasonBreakdown ?? null,
+    })
+  }
+}
+
+/**
  * For a given media record, fetch details from all compatible providers that:
- * 1. We already have a cross-reference ID for
+ * 1. We already have a cross-reference ID for (or just discovered one)
  * 2. Don't yet have a MediaSource saved
  * 3. Are enabled (user has a key or provider is free)
  *
@@ -55,16 +172,24 @@ export const enrichMediaSources = async (mediaId: string, userKeys: DecryptedUse
   const credsByProvider = new Map(userKeys.map((k) => [k.provider, k.credentials]))
   const compatibleProviders = getCompatibleProviders(media)
 
+  const ids: KnownIds = {
+    imdbId: media.imdbId,
+    tvdbId: media.tvdbId,
+    tmdbId: media.tmdbId,
+    malId: media.malId,
+    anilistId: media.anilistId,
+    kitsuId: media.kitsuId,
+    traktId: media.traktId,
+  }
+
+  await discoverMissingIds(mediaId, media, existingProviders, credsByProvider, ids)
+
   const fetchTasks: Promise<void>[] = []
 
   for (const provider of compatibleProviders) {
     if (existingProviders.has(provider)) continue
 
-    const idField = PROVIDER_ID_FIELD[provider]
-
-    if (!idField) continue
-
-    const externalIdValue = media[idField as keyof MediaWithSources] as string | number | null | undefined
+    const externalIdValue = getExternalId(provider, ids)
 
     if (externalIdValue == null) continue
 
@@ -120,11 +245,25 @@ export const enrichMediaSources = async (mediaId: string, userKeys: DecryptedUse
           if (!media.overview && normalized.overview) updates.overview = normalized.overview
 
           // Cross-reference IDs: fill in missing external IDs discovered from this provider
-          if (!media.imdbId && normalized.imdbId) updates.imdbId = normalized.imdbId
+          if (!ids.imdbId && normalized.imdbId) {
+            updates.imdbId = normalized.imdbId
+            ids.imdbId = normalized.imdbId
+          }
 
-          if (media.tvdbId == null && normalized.tvdbId) updates.tvdbId = normalized.tvdbId
+          if (ids.tvdbId == null && normalized.tvdbId) {
+            updates.tvdbId = normalized.tvdbId
+            ids.tvdbId = normalized.tvdbId
+          }
 
-          if (media.tmdbId == null && normalized.tmdbId) updates.tmdbId = normalized.tmdbId
+          if (ids.tmdbId == null && normalized.tmdbId) {
+            updates.tmdbId = normalized.tmdbId
+            ids.tmdbId = normalized.tmdbId
+          }
+
+          if (ids.malId == null && normalized.malId) {
+            updates.malId = normalized.malId
+            ids.malId = normalized.malId
+          }
 
           if (Object.keys(updates).length > 0) {
             await mediaRepository.upsertMedia(mediaId, {
@@ -139,13 +278,13 @@ export const enrichMediaSources = async (mediaId: string, userKeys: DecryptedUse
               backdropUrl: (updates.backdropUrl as string | undefined) ?? media.backdropUrl ?? null,
               posterUrl: (updates.posterUrl as string | undefined) ?? media.posterUrl ?? null,
               overview: (updates.overview as string | undefined) ?? media.overview ?? null,
-              imdbId: (updates.imdbId as string | undefined) ?? media.imdbId ?? null,
-              tvdbId: (updates.tvdbId as number | undefined) ?? media.tvdbId ?? null,
-              tmdbId: (updates.tmdbId as number | undefined) ?? media.tmdbId ?? null,
-              anilistId: media.anilistId ?? null,
-              malId: media.malId ?? null,
-              kitsuId: media.kitsuId ?? null,
-              traktId: media.traktId ?? null,
+              imdbId: (updates.imdbId as string | undefined) ?? ids.imdbId ?? null,
+              tvdbId: (updates.tvdbId as number | undefined) ?? ids.tvdbId ?? null,
+              tmdbId: (updates.tmdbId as number | undefined) ?? ids.tmdbId ?? null,
+              anilistId: ids.anilistId ?? null,
+              malId: (updates.malId as number | undefined) ?? ids.malId ?? null,
+              kitsuId: ids.kitsuId ?? null,
+              traktId: ids.traktId ?? null,
               year: media.year ?? null,
               runtimeMinutes: media.runtimeMinutes ?? null,
               episodeRuntimeMin: media.episodeRuntimeMin ?? null,
