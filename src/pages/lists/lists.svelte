@@ -68,7 +68,12 @@
       <a href={`/lists/${item.id}`} class="rounded-lg border bg-card p-4 hover:bg-accent">
         <div class="flex items-center justify-between gap-2">
           <h3 class="font-medium">{item.title}</h3>
-          <span class="rounded border px-2 py-0.5 text-xs">{getVisibilityLabel(L, item.visibility)}</span>
+          <div class="flex shrink-0 gap-1">
+            {#if item.isAnonymous}
+              <span class="rounded border px-2 py-0.5 text-xs text-muted-foreground">{L.lists_anonymous()}</span>
+            {/if}
+            <span class="rounded border px-2 py-0.5 text-xs">{getVisibilityLabel(L, item.visibility)}</span>
+          </div>
         </div>
         <p class="mt-1 line-clamp-2 text-sm text-muted-foreground">{item.description ?? L.common_no_description()}</p>
         <div class="mt-2 text-xs text-muted-foreground">{L.common_items_count({ count: item._count.items })}</div>
