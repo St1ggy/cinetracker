@@ -132,5 +132,11 @@
   "media_progress_save": "保存",
   "media_progress_saving": "保存中…",
   "media_progress_saved": "保存済み",
-  "media_progress_not_in_list": "このメディアはまだどのリストにも追加されていません。"
+  "media_progress_not_in_list": "このメディアはまだどのリストにも追加されていません。",
+  "media_ratings": "評価",
+  "media_director": "監督",
+  "media_status": "ステータス",
+  "media_enriched_from_sources": "{count}件のソースからのデータ",
+  "media_enriching": "他のソースからデータを読み込み中…",
+  "media_votes": "{count}件の投票"
 }

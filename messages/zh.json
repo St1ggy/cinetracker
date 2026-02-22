@@ -132,5 +132,11 @@
   "media_progress_save": "保存",
   "media_progress_saving": "保存中…",
   "media_progress_saved": "已保存",
-  "media_progress_not_in_list": "此媒体尚未添加到您的任何列表中。"
+  "media_progress_not_in_list": "此媒体尚未添加到您的任何列表中。",
+  "media_ratings": "评分",
+  "media_director": "导演",
+  "media_status": "状态",
+  "media_enriched_from_sources": "来自{count}个来源的数据",
+  "media_enriching": "正在加载其他来源的数据…",
+  "media_votes": "{count}票"
 }

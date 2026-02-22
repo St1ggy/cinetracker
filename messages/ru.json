@@ -132,5 +132,11 @@
   "media_progress_save": "Сохранить",
   "media_progress_saving": "Сохранение…",
   "media_progress_saved": "Сохранено",
-  "media_progress_not_in_list": "Это медиа ещё не добавлено ни в один из ваших списков."
+  "media_progress_not_in_list": "Это медиа ещё не добавлено ни в один из ваших списков.",
+  "media_ratings": "Рейтинги",
+  "media_director": "Режиссёр",
+  "media_status": "Статус",
+  "media_enriched_from_sources": "Данные из {count} источников",
+  "media_enriching": "Загрузка данных из других источников…",
+  "media_votes": "{count} голосов"
 }

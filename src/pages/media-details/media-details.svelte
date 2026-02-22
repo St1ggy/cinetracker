@@ -4,9 +4,12 @@
   import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left'
   import CalendarIcon from '@lucide/svelte/icons/calendar'
   import ClockIcon from '@lucide/svelte/icons/clock'
+  import ClapperboardIcon from '@lucide/svelte/icons/clapperboard'
   import FilmIcon from '@lucide/svelte/icons/film'
   import GlobeIcon from '@lucide/svelte/icons/globe'
   import LayersIcon from '@lucide/svelte/icons/layers'
+  import LoaderIcon from '@lucide/svelte/icons/loader'
+  import StarIcon from '@lucide/svelte/icons/star'
   import TvIcon from '@lucide/svelte/icons/tv'
   import { untrack } from 'svelte'
 
@@ -20,7 +23,31 @@
   import type { PageData } from '../../routes/media/[mediaId]/$types'
 
   const data = $derived(page.data as PageData)
-  const media = $derived(data.media)
+
+  // Use enriched data when it resolves, fall back to initial media
+  let enrichedMedia = $state<typeof data.media | null>(null)
+  let isEnriching = $state((page.data as PageData).willEnrich ?? false)
+
+  $effect(() => {
+    const enrichedPromise = data.enriched
+
+    if (!enrichedPromise) return
+
+    data.enriched
+      .then((result) => {
+        if (result) {
+          enrichedMedia = result
+        }
+      })
+      .catch(() => {
+        // Enrichment failed silently
+      })
+      .finally(() => {
+        isEnriching = false
+      })
+  })
+
+  const media = $derived(enrichedMedia ?? data.media)
   const userItems = $derived(data.userItems)
 
   const isEpisodic = $derived(media.mediaType === 'TV' || media.mediaType === 'ANIME')
@@ -62,14 +89,34 @@
       .filter((entry): entry is { seasonNumber: number; episodes: number } => entry !== null)
   }
 
+  const formatRatingValue = (value: number, maxValue: number, source: string): string => {
+    if (source === 'Rotten Tomatoes') return `${Math.round(value)}%`
+
+    if (source === 'AniList' || source === 'Kitsu' || source === 'Metacritic') {
+      return `${Math.round(value)}/${Math.round(maxValue)}`
+    }
+
+    return `${value.toFixed(1)}/${maxValue.toFixed(0)}`
+  }
+
   const genres = $derived(media.genres.map((mg: { genre: { name: string } }) => mg.genre.name))
   const cast = $derived(
-    media.cast.map((mc: { person: { name: string }; role: string }) => ({ name: mc.person.name, role: mc.role })),
+    media.cast.map((mc: { person: { name: string }; role: string | null; profileUrl?: string | null }) => ({
+      name: mc.person.name,
+      role: mc.role,
+      profileUrl: mc.profileUrl,
+    })),
   )
   const seasons = $derived(seasonBreakdown())
   const episodeDuration = $derived(formatEpisodeDuration(media.episodeRuntimeMin, media.episodeRuntimeMax))
   const runtime = $derived(formatRuntime(media.runtimeMinutes))
   const typeMeta = $derived(getMediaTypeMeta(media.mediaType))
+
+  type Rating = { provider: string; source: string; value: number; maxValue: number; votes: number | null }
+  const ratings = $derived(
+    (media.ratings ?? []) as Rating[],
+  )
+  const sourceCount = $derived(media.sources.length)
 
   // Progress panel state — one entry per userItem
   type ProgressState = {
@@ -170,6 +217,9 @@
           {#if media.originalTitle && media.originalTitle !== media.title}
             <p class="text-sm text-muted-foreground">{media.originalTitle}</p>
           {/if}
+          {#if media.tagline}
+            <p class="mt-1 text-sm italic text-muted-foreground">{media.tagline}</p>
+          {/if}
         </div>
 
         <div class="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
@@ -189,6 +239,12 @@
             {/if}
             {typeMeta.label}
           </span>
+          {#if media.status}
+            <span class="inline-flex items-center gap-1 text-xs">
+              <span class="font-medium">{L.media_status()}:</span>
+              {media.status}
+            </span>
+          {/if}
           {#if runtime && !isEpisodic}
             <span class="inline-flex items-center gap-1">
               <ClockIcon class="size-3.5" />
@@ -221,6 +277,13 @@
               {L.media_episode_duration({ value: episodeDuration })}
             </span>
           {/if}
+          {#if media.director}
+            <span class="inline-flex items-center gap-1">
+              <ClapperboardIcon class="size-3.5 shrink-0" />
+              <span class="font-medium">{L.media_director()}:</span>
+              {media.director}
+            </span>
+          {/if}
         </div>
 
         {#if genres.length > 0}
@@ -231,12 +294,64 @@
           </div>
         {/if}
 
+        {#if ratings.length > 0}
+          <div class="flex flex-wrap items-center gap-2">
+            {#each ratings as rating (rating.provider)}
+              <span
+                class="inline-flex items-center gap-1.5 rounded-full border bg-muted/40 px-3 py-1 text-xs font-medium"
+                title={rating.votes ? L.media_votes({ count: rating.votes }) : undefined}
+              >
+                <StarIcon class="size-3 fill-amber-400 text-amber-400" />
+                <span class="text-muted-foreground">{rating.source}</span>
+                <span class="font-semibold">{formatRatingValue(rating.value, rating.maxValue, rating.source)}</span>
+              </span>
+            {/each}
+          </div>
+        {:else if isEnriching}
+          <div class="flex gap-2">
+            {#each [1, 2] as i (i)}
+              <div class="h-7 w-28 animate-pulse rounded-full bg-muted"></div>
+            {/each}
+          </div>
+        {/if}
+
         {#if media.overview}
           <div
             class="prose-sm prose-muted max-w-none text-sm leading-relaxed text-muted-foreground [&_a]:underline [&_br]:block"
           >
             <!-- eslint-disable-next-line svelte/no-at-html-tags -->
             {@html sanitizeHtml(media.overview)}
+          </div>
+        {/if}
+
+        {#if sourceCount > 0}
+          <div class="flex flex-wrap items-center gap-2 pt-1">
+            {#if isEnriching}
+              <span class="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                <LoaderIcon class="size-3 animate-spin" />
+                {L.media_enriching()}
+              </span>
+            {:else}
+              <span class="text-xs text-muted-foreground">
+                {L.media_enriched_from_sources({ count: sourceCount })}:
+              </span>
+            {/if}
+            {#each media.sources as source (source.provider)}
+              {#if source.externalUrl}
+                <a
+                  href={source.externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="rounded-full border px-2.5 py-0.5 text-xs font-medium hover:bg-accent"
+                >
+                  {source.provider}
+                </a>
+              {:else}
+                <span class="rounded-full border px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                  {source.provider}
+                </span>
+              {/if}
+            {/each}
           </div>
         {/if}
       </div>
@@ -353,13 +468,40 @@
     {#if cast.length > 0}
       <section class="rounded-xl border bg-card p-4">
         <h2 class="mb-3 text-sm font-semibold">{L.media_cast()}</h2>
-        <ul class="space-y-1.5">
+        <ul class="space-y-2">
           {#each cast as member (member.name)}
-            <li class="flex items-baseline justify-between gap-2 text-sm">
-              <span class="font-medium">{member.name}</span>
-              {#if member.role}
-                <span class="shrink-0 text-xs text-muted-foreground">{member.role}</span>
+            <li class="flex items-center gap-3">
+              {#if member.profileUrl}
+                <img
+                  src={member.profileUrl}
+                  alt={member.name}
+                  class="size-8 shrink-0 rounded-full object-cover"
+                  loading="lazy"
+                />
+              {:else}
+                <div class="size-8 shrink-0 rounded-full bg-muted"></div>
               {/if}
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-medium">{member.name}</p>
+                {#if member.role}
+                  <p class="truncate text-xs text-muted-foreground">{member.role}</p>
+                {/if}
+              </div>
+            </li>
+          {/each}
+        </ul>
+      </section>
+    {:else if isEnriching}
+      <section class="rounded-xl border bg-card p-4">
+        <div class="mb-3 h-4 w-12 animate-pulse rounded bg-muted"></div>
+        <ul class="space-y-2">
+          {#each [1, 2, 3, 4, 5] as i (i)}
+            <li class="flex items-center gap-3">
+              <div class="size-8 shrink-0 animate-pulse rounded-full bg-muted"></div>
+              <div class="flex-1 space-y-1">
+                <div class="h-3.5 w-32 animate-pulse rounded bg-muted"></div>
+                <div class="h-3 w-24 animate-pulse rounded bg-muted"></div>
+              </div>
             </li>
           {/each}
         </ul>
@@ -380,28 +522,4 @@
       </section>
     {/if}
   </div>
-
-  {#if media.sources.length > 0}
-    <section class="rounded-xl border bg-card p-4">
-      <h2 class="mb-3 text-sm font-semibold">{L.media_sources()}</h2>
-      <div class="flex flex-wrap gap-2">
-        {#each media.sources as source (source.provider)}
-          {#if source.externalUrl}
-            <a
-              href={source.externalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="rounded-full border px-3 py-1 text-xs font-medium hover:bg-accent"
-            >
-              {source.provider}
-            </a>
-          {:else}
-            <span class="rounded-full border px-3 py-1 text-xs font-medium text-muted-foreground">
-              {source.provider}
-            </span>
-          {/if}
-        {/each}
-      </div>
-    </section>
-  {/if}
 </article>

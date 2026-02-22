@@ -132,5 +132,11 @@
   "media_progress_save": "Enregistrer",
   "media_progress_saving": "Enregistrement…",
   "media_progress_saved": "Enregistré",
-  "media_progress_not_in_list": "Ce média n'est encore dans aucune de vos listes."
+  "media_progress_not_in_list": "Ce média n'est encore dans aucune de vos listes.",
+  "media_ratings": "Notes",
+  "media_director": "Réalisateur",
+  "media_status": "Statut",
+  "media_enriched_from_sources": "Données de {count} sources",
+  "media_enriching": "Chargement des données d'autres sources…",
+  "media_votes": "{count} votes"
 }

@@ -132,5 +132,11 @@
   "media_progress_save": "Save",
   "media_progress_saving": "Saving…",
   "media_progress_saved": "Saved",
-  "media_progress_not_in_list": "This media is not in any of your lists yet."
+  "media_progress_not_in_list": "This media is not in any of your lists yet.",
+  "media_ratings": "Ratings",
+  "media_director": "Director",
+  "media_status": "Status",
+  "media_enriched_from_sources": "Data from {count} sources",
+  "media_enriching": "Loading data from other sources…",
+  "media_votes": "{count} votes"
 }
