@@ -14,9 +14,6 @@
   "include": [
     "src",
     "*.config.js",
-    "*.config.ts",
-    ".storybook/*",
-    "e2e",
-    "vitest-setup-client.ts"
+    "*.config.ts"
   ]
 }
