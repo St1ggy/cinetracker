@@ -94,6 +94,9 @@ export const importExternalMedia = async (
     mediaType: normalized.mediaType,
     title: normalized.title,
     originalTitle: normalized.originalTitle,
+    tagline: normalized.tagline,
+    status: normalized.status,
+    director: normalized.director,
     year: normalized.year,
     overview: normalized.overview,
     posterUrl: normalized.posterUrl,
@@ -119,12 +122,24 @@ export const importExternalMedia = async (
     mediaId: upsertedMedia.id,
     provider,
     externalId,
+    externalUrl: normalized.externalUrl ?? null,
     rawJson: normalized.raw,
     normalizedJson: normalized,
     lastFetchedAt: now,
     expiresAt: new Date(now.getTime() + appEnv.externalCacheTtlSeconds * 1000),
   })
   await mediaRepository.replaceMediaGenres(upsertedMedia.id, normalized.genres)
+
+  if (normalized.ratings && normalized.ratings.length > 0) {
+    await mediaRepository.upsertMediaRatings(
+      upsertedMedia.id,
+      normalized.ratings.map((r) => ({ ...r, provider })),
+    )
+  }
+
+  if (normalized.cast && normalized.cast.length > 0) {
+    await mediaRepository.replaceMediaCast(upsertedMedia.id, normalized.cast)
+  }
 
   return upsertedMedia
 }

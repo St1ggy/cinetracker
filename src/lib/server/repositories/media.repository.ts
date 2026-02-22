@@ -7,6 +7,9 @@ type UpsertMediaPayload = {
   mediaType: MediaType
   title: string
   originalTitle?: string | null
+  tagline?: string | null
+  status?: string | null
+  director?: string | null
   year?: number | null
   overview?: string | null
   posterUrl?: string | null
@@ -26,6 +29,23 @@ type UpsertMediaPayload = {
   episodesCount?: number | null
   seasonBreakdown?: Prisma.InputJsonValue | null
   isAdult: boolean
+}
+
+type RatingPayload = {
+  provider: MediaProvider
+  source: string
+  value: number
+  maxValue: number
+  votes?: number | null
+}
+
+type CastMemberPayload = {
+  name: string
+  role?: string | null
+  order?: number | null
+  profileUrl?: string | null
+  tmdbPersonId?: number | null
+  anilistStaffId?: number | null
 }
 
 export const mediaRepository = {
@@ -92,6 +112,7 @@ export const mediaRepository = {
     mediaId: string
     provider: MediaProvider
     externalId: string
+    externalUrl?: string | null
     rawJson: unknown
     normalizedJson: unknown
     expiresAt: Date
@@ -106,6 +127,7 @@ export const mediaRepository = {
       },
       update: {
         mediaId: input.mediaId,
+        externalUrl: input.externalUrl ?? null,
         rawJson: input.rawJson as Prisma.InputJsonValue,
         normalizedJson: input.normalizedJson as Prisma.InputJsonValue,
         expiresAt: input.expiresAt,
@@ -115,6 +137,7 @@ export const mediaRepository = {
         mediaId: input.mediaId,
         provider: input.provider,
         externalId: input.externalId,
+        externalUrl: input.externalUrl ?? null,
         rawJson: input.rawJson as Prisma.InputJsonValue,
         normalizedJson: input.normalizedJson as Prisma.InputJsonValue,
         expiresAt: input.expiresAt,
@@ -147,6 +170,81 @@ export const mediaRepository = {
     })
   },
 
+  upsertMediaRatings: async (mediaId: string, ratings: RatingPayload[]) => {
+    for (const rating of ratings) {
+      await prisma.mediaRating.upsert({
+        where: { mediaId_provider: { mediaId, provider: rating.provider } },
+        update: {
+          source: rating.source,
+          value: rating.value,
+          maxValue: rating.maxValue,
+          votes: rating.votes ?? null,
+        },
+        create: {
+          mediaId,
+          provider: rating.provider,
+          source: rating.source,
+          value: rating.value,
+          maxValue: rating.maxValue,
+          votes: rating.votes ?? null,
+        },
+      })
+    }
+  },
+
+  replaceMediaCast: async (mediaId: string, castMembers: CastMemberPayload[]) => {
+    if (castMembers.length === 0) return
+
+    await prisma.mediaCast.deleteMany({ where: { mediaId } })
+
+    for (const member of castMembers) {
+      let person: { id: string } | null = null
+
+      if (member.tmdbPersonId != null) {
+        person = await prisma.person.upsert({
+          where: { tmdbPersonId: member.tmdbPersonId },
+          update: { name: member.name },
+          create: { name: member.name, tmdbPersonId: member.tmdbPersonId },
+        })
+      } else if (member.anilistStaffId != null) {
+        person = await prisma.person.upsert({
+          where: { anilistStaffId: member.anilistStaffId },
+          update: { name: member.name },
+          create: { name: member.name, anilistStaffId: member.anilistStaffId },
+        })
+      } else {
+        person = await prisma.person.findFirst({ where: { name: member.name } })
+
+        if (!person) {
+          person = await prisma.person.create({ data: { name: member.name } })
+        }
+      }
+
+      await prisma.mediaCast.upsert({
+        where: { mediaId_personId: { mediaId, personId: person.id } },
+        update: {
+          role: member.role ?? null,
+          castOrder: member.order ?? null,
+          profileUrl: member.profileUrl ?? null,
+        },
+        create: {
+          mediaId,
+          personId: person.id,
+          role: member.role ?? null,
+          castOrder: member.order ?? null,
+          profileUrl: member.profileUrl ?? null,
+        },
+      })
+    }
+  },
+
+  setMediaEnriched: async (mediaId: string, enrichedAt: Date) => {
+    await prisma.media.update({
+      where: { id: mediaId },
+      data: { enrichedAt },
+    })
+  },
+
   findByIdWithDetails: async (id: string) =>
     prisma.media.findUnique({
       where: { id },
@@ -159,6 +257,9 @@ export const mediaRepository = {
         },
         sources: {
           select: { provider: true, externalId: true, externalUrl: true },
+        },
+        ratings: {
+          orderBy: { value: 'desc' },
         },
       },
     }),
