@@ -4,6 +4,7 @@
   import CircleCheckIcon from '@lucide/svelte/icons/circle-check'
   import CirclePlayIcon from '@lucide/svelte/icons/circle-play'
   import ClockIcon from '@lucide/svelte/icons/clock'
+  import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle'
   import PlusIcon from '@lucide/svelte/icons/plus'
   import SearchIcon from '@lucide/svelte/icons/search'
   import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
@@ -14,6 +15,7 @@
   import { WATCH_STATUSES, WATCH_STATUS_META } from '$shared/config/domain'
   import { stripHtml } from '$shared/lib/html'
   import { getMediaTypeMeta, getWatchStatusLabels } from '$shared/lib/labels'
+  import { scrollFade } from '$shared/lib/scroll-fade'
 
   import type { MediaProvider, WatchStatus } from '$shared/config/domain'
   import type { HomeSearchResult } from './home.types'
@@ -135,10 +137,19 @@
     }, 300)
   }
 
-  const addProduct = async (provider: MediaProvider, externalId: string) => {
-    if (!chosenListId) return
+  let pendingItemKey = $state<string | null>(null)
 
-    addProductMutation.mutate({ provider, externalId })
+  const addProduct = async (provider: MediaProvider, externalId: string) => {
+    if (!chosenListId || pendingItemKey) return
+
+    const key = `${provider}:${externalId}`
+
+    pendingItemKey = key
+    try {
+      await addProductMutation.mutateAsync({ provider, externalId })
+    } finally {
+      pendingItemKey = null
+    }
   }
 </script>
 
@@ -318,42 +329,50 @@
         <p class="mt-3 text-sm text-muted-foreground">{L.common_searching()}</p>
       {/if}
 
-      <div class="mt-3 max-h-96 space-y-2 overflow-y-auto">
-        {#each searchQuery.data ?? [] as result (`${result.provider}:${result.externalId}`)}
-          <div class="flex items-center gap-3 rounded-md border p-2">
-            {#if result.posterUrl}
-              <img src={result.posterUrl} alt={result.title} class="h-16 w-12 shrink-0 rounded object-cover" />
-            {:else}
-              <div class="h-16 w-12 shrink-0 rounded bg-muted"></div>
-            {/if}
-            <div class="min-w-0 flex-1">
-              <div class="text-sm font-medium">{result.title}</div>
-              <div class="mt-0.5 flex flex-wrap items-center gap-1.5">
-                <span class="text-xs text-muted-foreground">
-                  {result.provider}{result.year ? ` · ${result.year}` : ''}
-                </span>
-                <span
-                  class="rounded-full border px-2 py-0.5 text-[10px] leading-none font-semibold {getMediaTypeMeta(
-                    result.mediaType,
-                  ).color}"
-                >
-                  {getMediaTypeMeta(result.mediaType).label}
-                </span>
+      <div class="relative mt-3">
+        <div class="scroll-fade max-h-96 space-y-2 overflow-y-auto" use:scrollFade>
+          {#each searchQuery.data ?? [] as result (`${result.provider}:${result.externalId}`)}
+            {@const itemKey = `${result.provider}:${result.externalId}`}
+            {@const isThisPending = pendingItemKey === itemKey}
+            <div class="flex items-stretch gap-0 overflow-hidden rounded-md border">
+              {#if result.posterUrl}
+                <img src={result.posterUrl} alt={result.title} class="h-20 w-14 shrink-0 object-cover" />
+              {:else}
+                <div class="h-20 w-14 shrink-0 bg-muted"></div>
+              {/if}
+              <div class="min-w-0 flex-1 px-3 py-2">
+                <div class="text-sm leading-snug font-medium">{result.title}</div>
+                <div class="mt-0.5 flex flex-wrap items-center gap-1.5">
+                  <span class="text-xs text-muted-foreground">
+                    {result.provider}{result.year ? ` · ${result.year}` : ''}
+                  </span>
+                  <span
+                    class="rounded-full border px-2 py-0.5 text-[10px] leading-none font-semibold {getMediaTypeMeta(
+                      result.mediaType,
+                    ).color}"
+                  >
+                    {getMediaTypeMeta(result.mediaType).label}
+                  </span>
+                </div>
+                <p class="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                  {result.overview ? stripHtml(result.overview) : L.common_no_overview()}
+                </p>
               </div>
-              <p class="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-                {result.overview ? stripHtml(result.overview) : L.common_no_overview()}
-              </p>
+              <button
+                class="flex w-12 shrink-0 items-center justify-center border-l bg-primary/5 text-primary transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                title={L.home_add_product()}
+                disabled={!!pendingItemKey}
+                onclick={() => addProduct(result.provider, result.externalId)}
+              >
+                {#if isThisPending}
+                  <LoaderCircleIcon class="size-5 animate-spin" />
+                {:else}
+                  <PlusIcon class="size-5" />
+                {/if}
+              </button>
             </div>
-            <button
-              class="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              title={L.home_add_product()}
-              disabled={addProductMutation.isPending}
-              onclick={() => addProduct(result.provider, result.externalId)}
-            >
-              <PlusIcon class="size-4" />
-            </button>
-          </div>
-        {/each}
+          {/each}
+        </div>
       </div>
     </div>
   </div>

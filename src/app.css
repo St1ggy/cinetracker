@@ -194,6 +194,18 @@
   }
 }
 
+/* Scroll fade — apply mask that fades content at top and bottom edges. */
+/* Use JS scroll events to update --scroll-fade-top / --scroll-fade-bottom (0 or 1). */
+.scroll-fade {
+  --sf-top: 0;
+  --sf-bottom: 1;
+  --sf-size: 28px;
+  mask-image:
+    linear-gradient(to bottom, transparent, black calc(var(--sf-top, 0) * var(--sf-size, 28px))),
+    linear-gradient(to top, transparent, black calc(var(--sf-bottom, 1) * var(--sf-size, 28px)));
+  mask-composite: intersect;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   ::view-transition-old(root) {
     animation: 180ms ease-in page-fade-out both;
