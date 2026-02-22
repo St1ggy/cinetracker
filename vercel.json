@@ -1,5 +1,5 @@
 {
   "framework": "sveltekit",
-  "installCommand": "PRISMA_GENERATE_SKIP_AUTOINSTALL=true npm install",
+  "installCommand": "npm install --ignore-scripts",
   "buildCommand": "npx prisma generate && npm run build"
 }
