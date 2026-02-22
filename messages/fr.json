@@ -139,5 +139,16 @@
   "media_enriched_from_sources": "Données de {count} sources",
   "media_enriching": "Chargement des données d'autres sources…",
   "media_votes": "{count} votes",
-  "home_remove_from_list": "Retirer de la liste"
+  "home_remove_from_list": "Retirer de la liste",
+  "home_sort_label": "Trier",
+  "home_sort_added_desc": "Ajouté (plus récent)",
+  "home_sort_added_asc": "Ajouté (plus ancien)",
+  "home_sort_title_asc": "Titre A–Z",
+  "home_sort_title_desc": "Titre Z–A",
+  "home_sort_year_desc": "Année (plus récente)",
+  "home_sort_year_asc": "Année (plus ancienne)",
+  "home_sort_rating_desc": "Ma note (plus haute)",
+  "home_view_grid": "Grille",
+  "home_view_compact": "Compact",
+  "home_view_list": "Liste"
 }

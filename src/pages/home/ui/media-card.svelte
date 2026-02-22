@@ -31,6 +31,7 @@
   type Props = {
     item: MediaItem
     showStatusLabel?: boolean
+    compact?: boolean
   }
 
   const { item, showStatusLabel = false }: Props = $props()
@@ -72,7 +73,7 @@
     <img
       src={item.media.posterUrl}
       alt={item.media.title}
-      class="aspect-2/3 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+      class="aspect-2/3 w-full object-cover transition-transform duration-300 {compact ? 'group-hover:scale-[1.03]' : 'group-hover:scale-105'}"
       loading="lazy"
     />
   {:else}
@@ -134,6 +135,7 @@
     {/if}
   </div>
 
+  {#if !compact}
   <div class="p-3 transition-opacity duration-200 group-hover:opacity-0">
     <h2 class="line-clamp-1 text-sm font-medium">{item.media.title}</h2>
     <div class="mt-1 flex flex-wrap items-center gap-1.5">
@@ -150,4 +152,5 @@
       </p>
     {/if}
   </div>
+  {/if}
 </a>

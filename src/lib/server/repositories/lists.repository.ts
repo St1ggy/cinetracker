@@ -3,6 +3,25 @@ import { type ListVisibility, type MediaType, Prisma, type WatchStatus } from '@
 
 import { prisma } from '$lib/server/prisma'
 
+const buildOrderBy = (sort?: string): Prisma.ListItemOrderByWithRelationInput[] => {
+  switch (sort) {
+    case 'added_asc':
+      return [{ createdAt: 'asc' }, { id: 'asc' }]
+    case 'title_asc':
+      return [{ media: { title: 'asc' } }]
+    case 'title_desc':
+      return [{ media: { title: 'desc' } }]
+    case 'year_desc':
+      return [{ media: { year: { sort: 'desc', nulls: 'last' } } }]
+    case 'year_asc':
+      return [{ media: { year: { sort: 'asc', nulls: 'last' } } }]
+    case 'rating_desc':
+      return [{ rating: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }]
+    default:
+      return [{ createdAt: 'desc' }, { id: 'desc' }]
+  }
+}
+
 export const listsRepository = {
   findById: async (listId: string) => prisma.list.findUnique({ where: { id: listId } }),
 
@@ -172,6 +191,7 @@ export const listsRepository = {
     types?: MediaType[]
     cast?: string[]
     status?: WatchStatus | null
+    sort?: string
     limit: number
     cursor?: string
   }) => {
@@ -231,7 +251,7 @@ export const listsRepository = {
         ...(params.status !== undefined && params.status !== null ? { status: params.status } : {}),
         ...(Object.keys(mediaWhere).length > 0 ? { media: mediaWhere } : {}),
       },
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      orderBy: buildOrderBy(params.sort),
       ...(params.cursor ? { cursor: { id: params.cursor }, skip: 1 } : {}),
       take: params.limit,
       include: {

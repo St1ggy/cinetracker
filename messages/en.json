@@ -139,5 +139,16 @@
   "media_enriched_from_sources": "Data from {count} sources",
   "media_enriching": "Loading data from other sources…",
   "media_votes": "{count} votes",
-  "home_remove_from_list": "Remove from list"
+  "home_remove_from_list": "Remove from list",
+  "home_sort_label": "Sort",
+  "home_sort_added_desc": "Added (newest)",
+  "home_sort_added_asc": "Added (oldest)",
+  "home_sort_title_asc": "Title A–Z",
+  "home_sort_title_desc": "Title Z–A",
+  "home_sort_year_desc": "Year (newest)",
+  "home_sort_year_asc": "Year (oldest)",
+  "home_sort_rating_desc": "My rating (highest)",
+  "home_view_grid": "Grid",
+  "home_view_compact": "Compact",
+  "home_view_list": "List"
 }

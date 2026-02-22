@@ -26,6 +26,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const genre = url.searchParams.get('genre') ?? ''
   const statusParameter = url.searchParams.get('status') ?? ''
   const status = VALID_STATUSES.includes(statusParameter as WatchStatus) ? (statusParameter as WatchStatus) : null
+  const sort = url.searchParams.get('sort') ?? ''
 
   const items = await listsRepository.findItemsByListWithFilters({
     listId: list.id,
@@ -34,6 +35,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     yearTo: Number.isNaN(yearTo) ? undefined : yearTo,
     genresFilter: genre ? [genre] : [],
     status: status ?? undefined,
+    sort: sort || undefined,
     limit: 60,
   })
 
@@ -52,6 +54,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
       yearTo: Number.isNaN(yearTo) ? null : yearTo,
       genre: genre || null,
       status,
+      sort: sort || null,
     },
   }
 }

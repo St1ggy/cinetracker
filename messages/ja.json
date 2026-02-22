@@ -139,5 +139,16 @@
   "media_enriched_from_sources": "{count}件のソースからのデータ",
   "media_enriching": "他のソースからデータを読み込み中…",
   "media_votes": "{count}件の投票",
-  "home_remove_from_list": "リストから削除"
+  "home_remove_from_list": "リストから削除",
+  "home_sort_label": "並び替え",
+  "home_sort_added_desc": "追加日（新しい順）",
+  "home_sort_added_asc": "追加日（古い順）",
+  "home_sort_title_asc": "タイトル昇順",
+  "home_sort_title_desc": "タイトル降順",
+  "home_sort_year_desc": "公開年（新しい順）",
+  "home_sort_year_asc": "公開年（古い順）",
+  "home_sort_rating_desc": "自分の評価（高い順）",
+  "home_view_grid": "グリッド",
+  "home_view_compact": "コンパクト",
+  "home_view_list": "リスト"
 }

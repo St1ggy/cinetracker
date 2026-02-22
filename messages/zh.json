@@ -139,5 +139,16 @@
   "media_enriched_from_sources": "来自{count}个来源的数据",
   "media_enriching": "正在加载其他来源的数据…",
   "media_votes": "{count}票",
-  "home_remove_from_list": "从列表中删除"
+  "home_remove_from_list": "从列表中删除",
+  "home_sort_label": "排序",
+  "home_sort_added_desc": "添加时间（最新）",
+  "home_sort_added_asc": "添加时间（最早）",
+  "home_sort_title_asc": "标题 A–Z",
+  "home_sort_title_desc": "标题 Z–A",
+  "home_sort_year_desc": "年份（最新）",
+  "home_sort_year_asc": "年份（最早）",
+  "home_sort_rating_desc": "我的评分（最高）",
+  "home_view_grid": "网格",
+  "home_view_compact": "紧凑",
+  "home_view_list": "列表"
 }

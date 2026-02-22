@@ -139,5 +139,16 @@
   "media_enriched_from_sources": "Данные из {count} источников",
   "media_enriching": "Загрузка данных из других источников…",
   "media_votes": "{count} голосов",
-  "home_remove_from_list": "Удалить из списка"
+  "home_remove_from_list": "Удалить из списка",
+  "home_sort_label": "Сортировка",
+  "home_sort_added_desc": "Добавлено (новые)",
+  "home_sort_added_asc": "Добавлено (старые)",
+  "home_sort_title_asc": "Название А–Я",
+  "home_sort_title_desc": "Название Я–А",
+  "home_sort_year_desc": "Год (новые)",
+  "home_sort_year_asc": "Год (старые)",
+  "home_sort_rating_desc": "Мой рейтинг (высокий)",
+  "home_view_grid": "Сетка",
+  "home_view_compact": "Компакт",
+  "home_view_list": "Список"
 }

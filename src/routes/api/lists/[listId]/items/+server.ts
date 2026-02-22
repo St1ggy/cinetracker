@@ -48,6 +48,7 @@ const listFiltersSchema = z.object({
   cast: z.string().optional(),
   status: z.enum(WATCH_STATUSES).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(60),
+  sort: z.string().optional(),
   cursor: z.string().optional(),
 })
 
@@ -68,6 +69,7 @@ export const GET = async ({ locals, params, url }) => {
     types: url.searchParams.get('types') ?? undefined,
     cast: url.searchParams.get('cast') ?? undefined,
     status: url.searchParams.get('status') ?? undefined,
+    sort: url.searchParams.get('sort') ?? undefined,
     cursor: url.searchParams.get('cursor') ?? undefined,
     limit: url.searchParams.get('limit') ?? undefined,
   })
@@ -95,6 +97,7 @@ export const GET = async ({ locals, params, url }) => {
     types,
     cast,
     status: parsed.status ?? undefined,
+    sort: parsed.sort,
     limit: parsed.limit,
     cursor: parsed.cursor,
   })
