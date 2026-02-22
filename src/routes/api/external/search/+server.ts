@@ -1,8 +1,8 @@
 import { error, json } from '@sveltejs/kit'
 import { z } from 'zod'
 
-import { searchExternal } from '$lib/server/external'
 import { decrypt } from '$lib/server/crypto'
+import { searchExternal } from '$lib/server/external'
 import { prisma } from '$lib/server/prisma'
 
 import type { DecryptedUserKey } from '$lib/server/external'

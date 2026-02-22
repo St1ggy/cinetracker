@@ -3,7 +3,7 @@ import { error, json } from '@sveltejs/kit'
 import { decrypt } from '$lib/server/crypto'
 import { importExternalMedia } from '$lib/server/external'
 import { prisma } from '$lib/server/prisma'
-import { isMediaProvider, PROVIDER_META } from '$shared/config/domain'
+import { PROVIDER_META, isMediaProvider } from '$shared/config/domain'
 
 import type { DecryptedUserKey } from '$lib/server/external'
 import type { MediaProvider } from '$shared/config/domain'

@@ -9,9 +9,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
   const [media, userItems] = await Promise.all([
     mediaRepository.findByIdWithDetails(params.mediaId),
-    session?.user?.id
-      ? listItemsRepository.findByUserAndMedia(session.user.id, params.mediaId)
-      : Promise.resolve([]),
+    session?.user?.id ? listItemsRepository.findByUserAndMedia(session.user.id, params.mediaId) : Promise.resolve([]),
   ])
 
   if (!media) {
