@@ -1,5 +1,5 @@
 {
   "framework": "sveltekit",
   "installCommand": "bun install --ignore-scripts",
-  "buildCommand": "bunx prisma migrate deploy && bunx prisma generate && bunx svelte-kit sync && bun run build"
+  "buildCommand": "bunx prisma generate && bunx svelte-kit sync && bun run build"
 }
