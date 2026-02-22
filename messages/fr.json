@@ -138,5 +138,6 @@
   "media_status": "Statut",
   "media_enriched_from_sources": "Données de {count} sources",
   "media_enriching": "Chargement des données d'autres sources…",
-  "media_votes": "{count} votes"
+  "media_votes": "{count} votes",
+  "home_remove_from_list": "Retirer de la liste"
 }

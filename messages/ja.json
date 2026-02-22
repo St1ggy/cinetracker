@@ -138,5 +138,6 @@
   "media_status": "ステータス",
   "media_enriched_from_sources": "{count}件のソースからのデータ",
   "media_enriching": "他のソースからデータを読み込み中…",
-  "media_votes": "{count}件の投票"
+  "media_votes": "{count}件の投票",
+  "home_remove_from_list": "リストから削除"
 }

@@ -22,7 +22,7 @@
   "common_close": "Закрыть",
   "common_apply": "Применить",
   "common_create": "Создать",
-  "common_reset": "Сброс",
+  "common_reset": "Сбросить",
   "common_searching": "Поиск…",
   "common_saved": "Сохранено",
   "common_owner": "Владелец: {name}",
@@ -138,5 +138,6 @@
   "media_status": "Статус",
   "media_enriched_from_sources": "Данные из {count} источников",
   "media_enriching": "Загрузка данных из других источников…",
-  "media_votes": "{count} голосов"
+  "media_votes": "{count} голосов",
+  "home_remove_from_list": "Удалить из списка"
 }

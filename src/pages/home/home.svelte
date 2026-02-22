@@ -18,23 +18,18 @@
 
   // Filter state is intentionally initialized once from URL params — use untrack to suppress Svelte warning.
   let query = $state(untrack(() => data.filters?.q ?? ''))
-  let yearFrom = $state(untrack(() => data.filters?.yearFrom?.toString() ?? ''))
-  let yearTo = $state(untrack(() => data.filters?.yearTo?.toString() ?? ''))
   let genre = $state(untrack(() => data.filters?.genre ?? ''))
   let status = $state<WatchStatus | ''>(untrack(() => data.filters?.status ?? ''))
   let showAddModal = $state(false)
 
-  // Items fetched via TanStack Query so the list updates immediately after adding media.
+  const hasActiveFilters = $derived(!!(query || genre || status))
+
   const buildItemsUrl = () => {
     if (!data.list?.id) return null
 
     const parts: string[] = [`limit=60`]
 
     if (data.filters?.q) parts.push(`q=${encodeURIComponent(data.filters.q)}`)
-
-    if (data.filters?.yearFrom) parts.push(`yearFrom=${data.filters.yearFrom}`)
-
-    if (data.filters?.yearTo) parts.push(`yearTo=${data.filters.yearTo}`)
 
     if (data.filters?.genre) parts.push(`genres=${encodeURIComponent(data.filters.genre)}`)
 
@@ -61,15 +56,41 @@
     staleTime: 0,
   }))
 
-  const applyFilters = async () => {
-    const queryPart = query.trim() ? `q=${encodeURIComponent(query.trim())}` : ''
-    const genrePart = genre ? `genre=${encodeURIComponent(genre)}` : ''
-    const statusPart = status ? `status=${encodeURIComponent(status)}` : ''
-    const yearPart =
-      yearFrom && yearTo ? `yearFrom=${encodeURIComponent(yearFrom)}&yearTo=${encodeURIComponent(yearTo)}` : ''
-    const next = [queryPart, genrePart, statusPart, yearPart].filter(Boolean).join('&')
+  const applyFilters = async (overrides?: { query?: string; genre?: string; status?: WatchStatus | '' }) => {
+    const q = overrides?.query ?? query
+    const g = overrides?.genre ?? genre
+    const s = overrides?.status ?? status
 
-    await goto(next ? `/?${next}` : '/')
+    const parts: string[] = []
+
+    if (q.trim()) parts.push(`q=${encodeURIComponent(q.trim())}`)
+
+    if (g) parts.push(`genre=${encodeURIComponent(g)}`)
+
+    if (s) parts.push(`status=${encodeURIComponent(s)}`)
+
+    await goto(parts.length > 0 ? `/?${parts.join('&')}` : '/')
+  }
+
+  const handleGenreChange = (v: string) => {
+    genre = v
+    applyFilters({ genre: v })
+  }
+
+  const handleStatusChange = (v: WatchStatus | '') => {
+    status = v
+    applyFilters({ status: v })
+  }
+
+  const handleReset = () => {
+    query = ''
+    genre = ''
+    status = ''
+    goto('/')
+  }
+
+  const handleDelete = () => {
+    queryClient.invalidateQueries({ queryKey: ['list-items'] })
   }
 </script>
 
@@ -83,23 +104,21 @@
   <section class="space-y-4">
     <MediaFilterBar
       {query}
-      {yearFrom}
-      {yearTo}
       {genre}
       {status}
+      {hasActiveFilters}
       genres={data.genres ?? []}
-      onApply={applyFilters}
+      onReset={handleReset}
       onAddClick={() => (showAddModal = true)}
       onQueryChange={(v) => (query = v)}
-      onYearFromChange={(v) => (yearFrom = v)}
-      onYearToChange={(v) => (yearTo = v)}
-      onGenreChange={(v) => (genre = v)}
-      onStatusChange={(v) => (status = v)}
+      onQueryApply={() => applyFilters()}
+      onGenreChange={handleGenreChange}
+      onStatusChange={handleStatusChange}
     />
 
     <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
       {#each itemsQuery.data?.items ?? [] as item (item.id)}
-        <MediaCard {item} />
+        <MediaCard {item} listId={data.list?.id} onDelete={handleDelete} />
       {/each}
     </div>
   </section>

@@ -138,5 +138,6 @@
   "media_status": "状态",
   "media_enriched_from_sources": "来自{count}个来源的数据",
   "media_enriching": "正在加载其他来源的数据…",
-  "media_votes": "{count}票"
+  "media_votes": "{count}票",
+  "home_remove_from_list": "从列表中删除"
 }

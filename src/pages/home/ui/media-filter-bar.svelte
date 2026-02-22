@@ -1,6 +1,7 @@
 <script lang="ts">
   import PlusIcon from '@lucide/svelte/icons/plus'
   import SearchIcon from '@lucide/svelte/icons/search'
+  import XIcon from '@lucide/svelte/icons/x'
 
   import { L } from '$lib'
   import * as Select from '$lib/components/ui/select'
@@ -13,32 +14,28 @@
 
   type Props = {
     query: string
-    yearFrom: string
-    yearTo: string
     genre: string
     status: WatchStatus | ''
     genres: Genre[]
-    onApply: () => void
+    hasActiveFilters: boolean
+    onReset: () => void
     onAddClick: () => void
     onQueryChange: (v: string) => void
-    onYearFromChange: (v: string) => void
-    onYearToChange: (v: string) => void
+    onQueryApply: () => void
     onGenreChange: (v: string) => void
     onStatusChange: (v: WatchStatus | '') => void
   }
 
   const {
     query,
-    yearFrom,
-    yearTo,
     genre,
     status,
     genres,
-    onApply,
+    hasActiveFilters,
+    onReset,
     onAddClick,
     onQueryChange,
-    onYearFromChange,
-    onYearToChange,
+    onQueryApply,
     onGenreChange,
     onStatusChange,
   }: Props = $props()
@@ -54,20 +51,9 @@
       placeholder={L.home_search_title_placeholder()}
       value={query}
       oninput={(event_) => onQueryChange((event_.currentTarget as HTMLInputElement).value)}
+      onkeydown={(event_) => event_.key === 'Enter' && onQueryApply()}
     />
   </div>
-  <input
-    class="w-28 rounded-md border bg-background px-3 py-2 text-sm"
-    placeholder={L.home_year_from_placeholder()}
-    value={yearFrom}
-    oninput={(event_) => onYearFromChange((event_.currentTarget as HTMLInputElement).value)}
-  />
-  <input
-    class="w-28 rounded-md border bg-background px-3 py-2 text-sm"
-    placeholder={L.home_year_to_placeholder()}
-    value={yearTo}
-    oninput={(event_) => onYearToChange((event_.currentTarget as HTMLInputElement).value)}
-  />
   <Select.Root type="single" value={genre || '__all__'} onValueChange={(v) => onGenreChange(v === '__all__' ? '' : v)}>
     <Select.Trigger class="h-9 min-w-[130px] text-sm">
       {genre ? (genres.find((g) => g.slug === genre)?.name ?? genre) : L.home_all_genres()}
@@ -94,9 +80,15 @@
       {/each}
     </Select.Content>
   </Select.Root>
-  <button class="rounded-md border px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground" onclick={onApply}>
-    {L.common_apply()}
-  </button>
+  {#if hasActiveFilters}
+    <button
+      class="inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+      onclick={onReset}
+    >
+      <XIcon class="size-3.5" />
+      {L.common_reset()}
+    </button>
+  {/if}
   <button
     class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground hover:bg-primary/90"
     onclick={onAddClick}
