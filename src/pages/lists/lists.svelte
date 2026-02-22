@@ -10,7 +10,7 @@
   import type { ListVisibility } from '$shared/config/domain'
   import type { PageData } from '../../routes/lists/$types'
 
-  const data: PageData = page.data as PageData
+  const data = $derived(page.data as PageData)
 
   let title = $state('')
   let description = $state('')

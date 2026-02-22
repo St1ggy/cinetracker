@@ -7,6 +7,7 @@
   import PlusIcon from '@lucide/svelte/icons/plus'
   import SearchIcon from '@lucide/svelte/icons/search'
   import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
+  import { untrack } from 'svelte'
 
   import { L } from '$lib'
   import * as Select from '$lib/components/ui/select'
@@ -18,18 +19,19 @@
   import type { HomeSearchResult } from './home.types'
   import type { PageData } from '../../routes/$types'
 
-  const data: PageData = page.data as PageData
+  const data = $derived(page.data as PageData)
   const watchStatusLabels = getWatchStatusLabels(L)
 
-  let query = $state(data.filters?.q ?? '')
-  let yearFrom = $state(data.filters?.yearFrom?.toString() ?? '')
-  let yearTo = $state(data.filters?.yearTo?.toString() ?? '')
-  let genre = $state(data.filters?.genre ?? '')
-  let status = $state<WatchStatus | ''>(data.filters?.status ?? '')
+  // Filter state is intentionally initialized once from URL params — use untrack to suppress Svelte warning.
+  let query = $state(untrack(() => data.filters?.q ?? ''))
+  let yearFrom = $state(untrack(() => data.filters?.yearFrom?.toString() ?? ''))
+  let yearTo = $state(untrack(() => data.filters?.yearTo?.toString() ?? ''))
+  let genre = $state(untrack(() => data.filters?.genre ?? ''))
+  let status = $state<WatchStatus | ''>(untrack(() => data.filters?.status ?? ''))
   let showAddModal = $state(false)
   let searchInput = $state('')
   let debouncedSearchInput = $state('')
-  let chosenListId = $state(data.list?.id ?? '')
+  let chosenListId = $state(untrack(() => data.list?.id ?? ''))
   const queryClient = useQueryClient()
 
   const applyFilters = async () => {
@@ -132,7 +134,9 @@
       />
       <Select.Root type="single" value={genre || '__all__'} onValueChange={(v) => (genre = v === '__all__' ? '' : v)}>
         <Select.Trigger class="h-9 min-w-[130px] text-sm">
-          {genre ? (data.genres?.find((g) => g.slug === genre)?.name ?? genre) : L.home_all_genres()}
+          {genre
+            ? (data.genres?.find((g: { slug: string; name: string }) => g.slug === genre)?.name ?? genre)
+            : L.home_all_genres()}
         </Select.Trigger>
         <Select.Content>
           <Select.Item value="__all__" label={L.home_all_genres()} />
@@ -171,17 +175,17 @@
 
     <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
       {#each data.items as item (item.id)}
-        {@const statusMeta = WATCH_STATUS_META[item.status ?? 'PLAN_TO_WATCH']}
+        {@const statusMeta = WATCH_STATUS_META[(item.status as keyof typeof WATCH_STATUS_META) ?? 'PLAN_TO_WATCH']}
         <a href={`/media/${item.media.id}`} class="group relative block overflow-hidden rounded-lg border bg-card">
           {#if item.media.posterUrl}
             <img
               src={item.media.posterUrl}
               alt={item.media.title}
-              class="aspect-[2/3] w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              class="aspect-2/3 w-full object-cover transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
             />
           {:else}
-            <div class="aspect-[2/3] w-full bg-muted"></div>
+            <div class="aspect-2/3 w-full bg-muted"></div>
           {/if}
 
           <div

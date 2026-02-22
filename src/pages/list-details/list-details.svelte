@@ -13,7 +13,7 @@
   import type { ListVisibility } from '$shared/config/domain'
   import type { PageData } from '../../routes/lists/[listId]/$types'
 
-  const data: PageData = page.data as PageData
+  const data = $derived(page.data as PageData)
 
   const watchStatusLabels = getWatchStatusLabels(L)
 
@@ -69,17 +69,17 @@
 
   <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
     {#each data.items as item (item.id)}
-      {@const statusMeta = WATCH_STATUS_META[item.status ?? 'PLAN_TO_WATCH']}
+      {@const statusMeta = WATCH_STATUS_META[(item.status as keyof typeof WATCH_STATUS_META) ?? 'PLAN_TO_WATCH']}
       <a href={`/media/${item.media.id}`} class="group relative block overflow-hidden rounded-lg border bg-card">
         {#if item.media.posterUrl}
           <img
             src={item.media.posterUrl}
             alt={item.media.title}
-            class="aspect-[2/3] w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            class="aspect-2/3 w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
           />
         {:else}
-          <div class="aspect-[2/3] w-full bg-muted"></div>
+          <div class="aspect-2/3 w-full bg-muted"></div>
         {/if}
 
         <div
@@ -135,7 +135,7 @@
             </span>
           </div>
           <p class="mt-0.5 text-xs text-muted-foreground">
-            {item.status ? watchStatusLabels[item.status] : L.status_plan_to_watch()}
+            {item.status ? watchStatusLabels[item.status as keyof typeof watchStatusLabels] : L.status_plan_to_watch()}
           </p>
         </div>
       </a>

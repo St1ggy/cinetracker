@@ -8,6 +8,7 @@
   import GlobeIcon from '@lucide/svelte/icons/globe'
   import LayersIcon from '@lucide/svelte/icons/layers'
   import TvIcon from '@lucide/svelte/icons/tv'
+  import { untrack } from 'svelte'
 
   import { L } from '$lib'
   import * as Select from '$lib/components/ui/select'
@@ -18,10 +19,11 @@
   import type { WatchStatus } from '$shared/config/domain'
   import type { PageData } from '../../routes/media/[mediaId]/$types'
 
-  const data: PageData = page.data as PageData
-  const { media, userItems } = data
+  const data = $derived(page.data as PageData)
+  const media = $derived(data.media)
+  const userItems = $derived(data.userItems)
 
-  const isEpisodic = media.mediaType === 'TV' || media.mediaType === 'ANIME'
+  const isEpisodic = $derived(media.mediaType === 'TV' || media.mediaType === 'ANIME')
   const watchStatusLabels = getWatchStatusLabels(L)
 
   const formatRuntime = (minutes: number | null | undefined) => {
@@ -60,12 +62,14 @@
       .filter((entry): entry is { seasonNumber: number; episodes: number } => entry !== null)
   }
 
-  const genres = media.genres.map((mg) => mg.genre.name)
-  const cast = media.cast.map((mc) => ({ name: mc.person.name, role: mc.role }))
-  const seasons = seasonBreakdown()
-  const episodeDuration = formatEpisodeDuration(media.episodeRuntimeMin, media.episodeRuntimeMax)
-  const runtime = formatRuntime(media.runtimeMinutes)
-  const typeMeta = getMediaTypeMeta(media.mediaType)
+  const genres = $derived(media.genres.map((mg: { genre: { name: string } }) => mg.genre.name))
+  const cast = $derived(
+    media.cast.map((mc: { person: { name: string }; role: string }) => ({ name: mc.person.name, role: mc.role })),
+  )
+  const seasons = $derived(seasonBreakdown())
+  const episodeDuration = $derived(formatEpisodeDuration(media.episodeRuntimeMin, media.episodeRuntimeMax))
+  const runtime = $derived(formatRuntime(media.runtimeMinutes))
+  const typeMeta = $derived(getMediaTypeMeta(media.mediaType))
 
   // Progress panel state — one entry per userItem
   type ProgressState = {
@@ -75,17 +79,21 @@
     saveState: 'idle' | 'saving' | 'saved'
   }
 
+  type UserItem = NonNullable<PageData['userItems']>[number]
+
   const progressState = $state<Record<string, ProgressState>>(
-    Object.fromEntries(
-      (userItems ?? []).map((item) => [
-        item.id,
-        {
-          status: (item.status as WatchStatus) ?? 'PLAN_TO_WATCH',
-          currentSeason: item.currentSeason ?? '',
-          currentEpisode: item.currentEpisode ?? '',
-          saveState: 'idle' as const,
-        },
-      ]),
+    untrack(() =>
+      Object.fromEntries(
+        (userItems ?? []).map((item: UserItem) => [
+          item.id,
+          {
+            status: (item.status as WatchStatus) ?? 'PLAN_TO_WATCH',
+            currentSeason: item.currentSeason ?? '',
+            currentEpisode: item.currentEpisode ?? '',
+            saveState: 'idle' as const,
+          },
+        ]),
+      ),
     ),
   )
 
