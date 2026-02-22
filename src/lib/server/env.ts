@@ -5,8 +5,6 @@ const parseIntOr = (value: string | undefined, fallback: number) => {
 }
 
 export const appEnv = {
-  tmdbDefaultLanguage: process.env.TMDB_DEFAULT_LANGUAGE ?? 'en-US',
-  tmdbImageBaseUrl: process.env.TMDB_IMAGE_BASE_URL ?? 'https://image.tmdb.org/t/p/w500',
   anilistApiUrl: process.env.ANILIST_API_URL ?? 'https://graphql.anilist.co',
   externalCacheTtlSeconds: parseIntOr(process.env.EXTERNAL_CACHE_TTL_SECONDS, 60 * 60 * 24 * 7),
   externalSearchTtlSeconds: parseIntOr(process.env.EXTERNAL_SEARCH_TTL_SECONDS, 60 * 60 * 24),

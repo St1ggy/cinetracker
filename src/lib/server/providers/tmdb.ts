@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import { error } from '@sveltejs/kit'
 
-import { appEnv } from '$lib/server/env'
+import { getTmdbLanguage } from '$lib/server/locale'
 
 import type { CanonicalMedia, ProviderAdapter, ProviderCredentials, SearchResult, TmdbCredentials } from './types'
 import type { MediaType } from '@prisma/client'
@@ -14,10 +14,12 @@ const parseYear = (value?: string | null): number | null => {
   return Number.isNaN(parsed) ? null : parsed
 }
 
+const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
+
 const toImage = (path?: string | null, baseUrl?: string): string | null => {
   if (!path) return null
 
-  return `${baseUrl ?? appEnv.tmdbImageBaseUrl}${path}`
+  return `${baseUrl ?? TMDB_IMAGE_BASE_URL}${path}`
 }
 
 const toMediaType = (type: string | undefined): MediaType => {
@@ -112,7 +114,7 @@ export const tmdbAdapter: ProviderAdapter = {
     const url = new URL('https://api.themoviedb.org/3/search/multi')
 
     url.searchParams.set('query', query)
-    url.searchParams.set('language', appEnv.tmdbDefaultLanguage)
+    url.searchParams.set('language', getTmdbLanguage())
     url.searchParams.set('page', '1')
     url.searchParams.set('include_adult', 'false')
     applyApiKey(url, creds)
@@ -155,9 +157,10 @@ export const tmdbAdapter: ProviderAdapter = {
 
     if (Number.isNaN(id)) throw error(400, 'Invalid TMDB id')
 
+    const language = getTmdbLanguage()
     const tvUrl = new URL(`https://api.themoviedb.org/3/tv/${id}`)
 
-    tvUrl.searchParams.set('language', appEnv.tmdbDefaultLanguage)
+    tvUrl.searchParams.set('language', language)
     applyApiKey(tvUrl, creds)
 
     const tvResponse = await fetch(tvUrl, { headers: buildAuthHeaders(creds) })
@@ -168,7 +171,7 @@ export const tmdbAdapter: ProviderAdapter = {
 
     const movieUrl = new URL(`https://api.themoviedb.org/3/movie/${id}`)
 
-    movieUrl.searchParams.set('language', appEnv.tmdbDefaultLanguage)
+    movieUrl.searchParams.set('language', language)
     applyApiKey(movieUrl, creds)
 
     const movieResponse = await fetch(movieUrl, { headers: buildAuthHeaders(creds) })

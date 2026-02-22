@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit'
 
 import { appEnv } from '$lib/server/env'
+import { isJapaneseLocale } from '$lib/server/locale'
 
 import type { CanonicalMedia, ProviderAdapter, SearchResult } from './types'
 
@@ -39,13 +40,21 @@ query ($id: Int!) {
 }
 `
 
+const pickTitle = (titleObject: Record<string, string | undefined>): string => {
+  if (isJapaneseLocale()) {
+    return titleObject.native ?? titleObject.romaji ?? titleObject.english ?? 'Untitled'
+  }
+
+  return titleObject.english ?? titleObject.romaji ?? titleObject.native ?? 'Untitled'
+}
+
 const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
   const titleObject = (raw.title ?? {}) as Record<string, string | undefined>
 
   return {
     provider: 'ANILIST',
     externalId: String(raw.id),
-    title: titleObject.english ?? titleObject.romaji ?? titleObject.native ?? 'Untitled',
+    title: pickTitle(titleObject),
     originalTitle: titleObject.native ?? titleObject.romaji ?? null,
     year: ((raw.startDate as Record<string, number | undefined> | undefined)?.year ?? null) as number | null,
     mediaType: 'ANIME',
