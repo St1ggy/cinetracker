@@ -2,6 +2,9 @@
   import { invalidateAll } from '$app/navigation'
   import { page } from '$app/state'
   import { createMutation } from '@tanstack/svelte-query'
+  import { toast } from 'svelte-sonner'
+
+  import { L } from '$lib'
 
   import MediaCard from '../home/ui/media-card.svelte'
 
@@ -19,8 +22,12 @@
 
       if (!response.ok) throw new Error('Failed to toggle saved list')
     },
-    onSuccess: async () => {
+    onSuccess: async (_, variables) => {
       await invalidateAll()
+      toast.success(variables.method === 'POST' ? L.list_saved_success() : L.list_unsaved_success())
+    },
+    onError: () => {
+      toast.error(L.common_error_generic())
     },
   }))
 

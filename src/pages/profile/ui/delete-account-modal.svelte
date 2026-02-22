@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createMutation } from '@tanstack/svelte-query'
+  import { toast } from 'svelte-sonner'
 
   import { L } from '$lib'
 
@@ -23,6 +24,9 @@
     onSuccess: async () => {
       await fetch('/api/auth/signout', { method: 'POST' })
       globalThis.location.href = '/'
+    },
+    onError: () => {
+      toast.error(L.common_error_generic())
     },
   }))
 </script>

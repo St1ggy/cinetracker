@@ -5,6 +5,7 @@
   import XIcon from '@lucide/svelte/icons/x'
   import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query'
   import { ModeWatcher } from 'mode-watcher'
+  import { Toaster } from 'svelte-sonner'
 
   onNavigate((navigation) => {
     if (!document.startViewTransition) return
@@ -47,6 +48,7 @@
 {/if}
 
 <ModeWatcher />
+<Toaster position="bottom-right" richColors closeButton />
 
 <QueryClientProvider client={queryClient}>
   <div class="min-h-screen bg-background">

@@ -104,7 +104,7 @@
   "profile_api_key_setup": "Set up",
   "profile_api_key_collapse": "Close",
   "profile_api_key_saving": "Saving…",
-  "profile_api_key_saved": "Saved!",
+  "profile_api_key_saved": "API key saved",
   "profile_api_key_error": "Error saving key",
   "profile_danger_zone_title": "Danger Zone",
   "profile_delete_account": "Delete Account",
@@ -131,7 +131,7 @@
   "media_progress_episode": "Episode",
   "media_progress_save": "Save",
   "media_progress_saving": "Saving…",
-  "media_progress_saved": "Saved",
+  "media_progress_saved": "Progress saved",
   "media_progress_not_in_list": "This media is not in any of your lists yet.",
   "media_ratings": "Ratings",
   "media_director": "Director",
@@ -177,5 +177,12 @@
   "profile_handle_invalid_format": "Username must be 3-30 characters (letters, numbers, underscore)",
   "profile_handle_taken": "This username is already taken",
   "profile_handle_required_title": "Set your username",
-  "profile_handle_required_description": "You need a username to publish public lists or rate lists"
+  "profile_handle_required_description": "You need a username to publish public lists or rate lists",
+  "common_error_generic": "Something went wrong. Please try again.",
+  "lists_create_success": "List created",
+  "list_saved_success": "List saved",
+  "list_unsaved_success": "List removed from saved",
+  "home_added_success": "Added to list",
+  "profile_api_key_deleted": "API key removed",
+  "profile_handle_saved": "Username saved"
 }

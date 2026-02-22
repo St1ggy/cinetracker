@@ -104,7 +104,7 @@
   "profile_api_key_setup": "設定する",
   "profile_api_key_collapse": "閉じる",
   "profile_api_key_saving": "保存中…",
-  "profile_api_key_saved": "保存しました！",
+  "profile_api_key_saved": "APIキーを保存しました",
   "profile_api_key_error": "キーの保存中にエラーが発生しました",
   "profile_danger_zone_title": "危険な操作",
   "profile_delete_account": "アカウントを削除",
@@ -131,7 +131,7 @@
   "media_progress_episode": "エピソード",
   "media_progress_save": "保存",
   "media_progress_saving": "保存中…",
-  "media_progress_saved": "保存済み",
+  "media_progress_saved": "進捗を保存しました",
   "media_progress_not_in_list": "このメディアはまだどのリストにも追加されていません。",
   "media_ratings": "評価",
   "media_director": "監督",
@@ -177,5 +177,12 @@
   "profile_handle_invalid_format": "3〜30文字（英数字とアンダースコア）で入力してください",
   "profile_handle_taken": "このユーザー名はすでに使われています",
   "profile_handle_required_title": "ユーザー名を設定",
-  "profile_handle_required_description": "公開リストの投稿や評価にはユーザー名が必要です"
+  "profile_handle_required_description": "公開リストの投稿や評価にはユーザー名が必要です",
+  "common_error_generic": "エラーが発生しました。もう一度お試しください。",
+  "lists_create_success": "リストを作成しました",
+  "list_saved_success": "リストを保存しました",
+  "list_unsaved_success": "リストを保存済みから削除しました",
+  "home_added_success": "リストに追加しました",
+  "profile_api_key_deleted": "APIキーを削除しました",
+  "profile_handle_saved": "ユーザー名を保存しました"
 }

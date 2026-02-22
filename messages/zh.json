@@ -104,7 +104,7 @@
   "profile_api_key_setup": "设置",
   "profile_api_key_collapse": "关闭",
   "profile_api_key_saving": "保存中…",
-  "profile_api_key_saved": "已保存！",
+  "profile_api_key_saved": "API密钥已保存",
   "profile_api_key_error": "保存密钥时出错",
   "profile_danger_zone_title": "危险操作",
   "profile_delete_account": "删除账户",
@@ -131,7 +131,7 @@
   "media_progress_episode": "集",
   "media_progress_save": "保存",
   "media_progress_saving": "保存中…",
-  "media_progress_saved": "已保存",
+  "media_progress_saved": "进度已保存",
   "media_progress_not_in_list": "此媒体尚未添加到您的任何列表中。",
   "media_ratings": "评分",
   "media_director": "导演",
@@ -177,5 +177,12 @@
   "profile_handle_invalid_format": "用户名须为3-30个字符（字母、数字、下划线）",
   "profile_handle_taken": "该用户名已被占用",
   "profile_handle_required_title": "设置用户名",
-  "profile_handle_required_description": "发布公开列表或评分需要用户名"
+  "profile_handle_required_description": "发布公开列表或评分需要用户名",
+  "common_error_generic": "出现错误，请重试。",
+  "lists_create_success": "列表已创建",
+  "list_saved_success": "列表已保存",
+  "list_unsaved_success": "列表已从收藏中移除",
+  "home_added_success": "已添加到列表",
+  "profile_api_key_deleted": "API密钥已删除",
+  "profile_handle_saved": "用户名已保存"
 }

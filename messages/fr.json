@@ -104,7 +104,7 @@
   "profile_api_key_setup": "Configurer",
   "profile_api_key_collapse": "Fermer",
   "profile_api_key_saving": "Enregistrement…",
-  "profile_api_key_saved": "Enregistré !",
+  "profile_api_key_saved": "Clé API sauvegardée",
   "profile_api_key_error": "Erreur lors de l'enregistrement de la clé",
   "profile_danger_zone_title": "Zone dangereuse",
   "profile_delete_account": "Supprimer le compte",
@@ -131,7 +131,7 @@
   "media_progress_episode": "Épisode",
   "media_progress_save": "Enregistrer",
   "media_progress_saving": "Enregistrement…",
-  "media_progress_saved": "Enregistré",
+  "media_progress_saved": "Progression sauvegardée",
   "media_progress_not_in_list": "Ce média n'est encore dans aucune de vos listes.",
   "media_ratings": "Notes",
   "media_director": "Réalisateur",
@@ -177,5 +177,12 @@
   "profile_handle_invalid_format": "Le nom doit contenir 3-30 caractères (lettres, chiffres, _)",
   "profile_handle_taken": "Ce nom est déjà pris",
   "profile_handle_required_title": "Définissez votre nom d'utilisateur",
-  "profile_handle_required_description": "Vous avez besoin d'un nom d'utilisateur pour publier ou noter des listes"
+  "profile_handle_required_description": "Vous avez besoin d'un nom d'utilisateur pour publier ou noter des listes",
+  "common_error_generic": "Une erreur est survenue. Veuillez réessayer.",
+  "lists_create_success": "Liste créée",
+  "list_saved_success": "Liste sauvegardée",
+  "list_unsaved_success": "Liste retirée des sauvegardes",
+  "home_added_success": "Ajouté à la liste",
+  "profile_api_key_deleted": "Clé API supprimée",
+  "profile_handle_saved": "Nom d'utilisateur sauvegardé"
 }

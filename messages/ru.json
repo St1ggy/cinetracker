@@ -104,7 +104,7 @@
   "profile_api_key_setup": "Настроить",
   "profile_api_key_collapse": "Закрыть",
   "profile_api_key_saving": "Сохранение…",
-  "profile_api_key_saved": "Сохранено!",
+  "profile_api_key_saved": "API-ключ сохранён",
   "profile_api_key_error": "Ошибка сохранения ключа",
   "profile_danger_zone_title": "Опасная зона",
   "profile_delete_account": "Удалить аккаунт",
@@ -131,7 +131,7 @@
   "media_progress_episode": "Серия",
   "media_progress_save": "Сохранить",
   "media_progress_saving": "Сохранение…",
-  "media_progress_saved": "Сохранено",
+  "media_progress_saved": "Прогресс сохранён",
   "media_progress_not_in_list": "Это медиа ещё не добавлено ни в один из ваших списков.",
   "media_ratings": "Рейтинги",
   "media_director": "Режиссёр",
@@ -177,5 +177,12 @@
   "profile_handle_invalid_format": "Имя должно содержать 3-30 символов (буквы, цифры, _)",
   "profile_handle_taken": "Это имя уже занято",
   "profile_handle_required_title": "Задайте имя пользователя",
-  "profile_handle_required_description": "Имя пользователя нужно для публикации публичных списков или оценки"
+  "profile_handle_required_description": "Имя пользователя нужно для публикации публичных списков или оценки",
+  "common_error_generic": "Что-то пошло не так. Попробуйте ещё раз.",
+  "lists_create_success": "Список создан",
+  "list_saved_success": "Список сохранён",
+  "list_unsaved_success": "Список удалён из сохранённых",
+  "home_added_success": "Добавлено в список",
+  "profile_api_key_deleted": "API-ключ удалён",
+  "profile_handle_saved": "Имя пользователя сохранено"
 }

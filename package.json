@@ -66,6 +66,7 @@
     "mode-watcher": "^1.1.0",
     "pg": "^8.18.0",
     "prisma": "^7.4.1",
+    "svelte-sonner": "^1.0.7",
     "unstorage": "^1.17.4",
     "zod": "^4.3.6"
   },

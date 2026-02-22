@@ -3,6 +3,7 @@
   import PlusIcon from '@lucide/svelte/icons/plus'
   import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
   import { untrack } from 'svelte'
+  import { toast } from 'svelte-sonner'
 
   import { L } from '$lib'
   import * as Select from '$lib/components/ui/select'
@@ -72,8 +73,12 @@
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['external-search'] })
       await queryClient.invalidateQueries({ queryKey: ['list-items'] })
+      toast.success(L.home_added_success())
       onAdded()
       onclose()
+    },
+    onError: () => {
+      toast.error(L.common_error_generic())
     },
   }))
 

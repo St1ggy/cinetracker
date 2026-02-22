@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invalidateAll } from '$app/navigation'
   import { untrack } from 'svelte'
+  import { toast } from 'svelte-sonner'
 
   import { L } from '$lib'
   import * as Select from '$lib/components/ui/select'
@@ -81,12 +82,14 @@
       if (!response.ok) throw new Error('Failed to save progress')
 
       state.saveState = 'saved'
+      toast.success(L.media_progress_saved())
       await invalidateAll()
       setTimeout(() => {
         state.saveState = 'idle'
       }, 2000)
     } catch {
       state.saveState = 'idle'
+      toast.error(L.common_error_generic())
     }
   }
 </script>

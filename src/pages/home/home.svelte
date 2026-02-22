@@ -1,11 +1,12 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import { page } from '$app/state'
-  import { getStorageItem, setStorageItem } from '$shared/lib/storage'
   import { createQuery, useQueryClient } from '@tanstack/svelte-query'
   import { untrack } from 'svelte'
+  import { toast } from 'svelte-sonner'
 
   import { L } from '$lib'
+  import { getStorageItem, setStorageItem } from '$shared/lib/storage'
 
   import AddMediaModal from './ui/add-media-modal.svelte'
   import MediaCard from './ui/media-card.svelte'
@@ -76,6 +77,8 @@
 
       return response.json() as Promise<{ items: typeof data.items }>
     },
+    throwOnError: false,
+    meta: { onError: () => toast.error(L.common_error_generic()) },
     initialData: { items: untrack(() => data.items ?? []) },
     staleTime: 0,
   }))

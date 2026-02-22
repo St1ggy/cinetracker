@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createMutation, useQueryClient } from '@tanstack/svelte-query'
+  import { toast } from 'svelte-sonner'
 
   import { L } from '$lib'
   import { PROVIDER_META } from '$shared/config/domain'
@@ -34,7 +35,13 @@
         throw new Error(error.message ?? 'Failed to save API key')
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['user-api-keys'] }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['user-api-keys'] })
+      toast.success(L.profile_api_key_saved())
+    },
+    onError: (error_: Error) => {
+      toast.error(error_.message)
+    },
   }))
 
   const deleteMutation = createMutation(() => ({
@@ -43,12 +50,17 @@
 
       if (!response.ok) throw new Error('Failed to delete API key')
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['user-api-keys'] }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['user-api-keys'] })
+      toast.success(L.profile_api_key_deleted())
+    },
+    onError: () => {
+      toast.error(L.common_error_generic())
+    },
   }))
 
   const formValues = $state<Record<string, string>>({})
   let expanded = $state(false)
-  let saveStatus = $state<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
   const getFieldValue = (fieldKey: string) => formValues[fieldKey] ?? ''
   const setFieldValue = (fieldKey: string, value: string) => {
@@ -60,20 +72,12 @@
 
     if (Object.keys(nonEmpty).length === 0) return
 
-    saveStatus = 'saving'
     saveMutation.mutate(
       { credentials: nonEmpty },
       {
         onSuccess: () => {
-          saveStatus = 'saved'
           for (const k of Object.keys(formValues)) delete formValues[k]
           expanded = false
-          setTimeout(() => {
-            saveStatus = 'idle'
-          }, 2000)
-        },
-        onError: () => {
-          saveStatus = 'error'
         },
       },
     )
@@ -166,19 +170,10 @@
             <button
               class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               onclick={saveKey}
-              disabled={saveStatus === 'saving'}
+              disabled={saveMutation.isPending}
             >
-              {#if saveStatus === 'saving'}
-                {L.profile_api_key_saving()}
-              {:else if saveStatus === 'saved'}
-                {L.profile_api_key_saved()}
-              {:else}
-                {L.profile_api_key_save()}
-              {/if}
+              {saveMutation.isPending ? L.profile_api_key_saving() : L.profile_api_key_save()}
             </button>
-            {#if saveStatus === 'error'}
-              <span class="text-xs text-destructive">{L.profile_api_key_error()}</span>
-            {/if}
           </div>
         </div>
       </div>

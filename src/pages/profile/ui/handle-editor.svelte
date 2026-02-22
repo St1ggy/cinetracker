@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { toast } from 'svelte-sonner'
+
   import { L } from '$lib'
 
   const HANDLE_REGEX = /^\w{3,30}$/
@@ -59,6 +61,7 @@
       }
 
       editing = false
+      toast.success(L.profile_handle_saved())
       onSaved?.(data.handle)
     } finally {
       saving = false

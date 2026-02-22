@@ -2,6 +2,7 @@
   import { invalidateAll } from '$app/navigation'
   import { page } from '$app/state'
   import { createMutation } from '@tanstack/svelte-query'
+  import { toast } from 'svelte-sonner'
 
   import { L } from '$lib'
   import { getVisibilityLabel } from '$shared/lib/labels'
@@ -46,6 +47,10 @@
     },
     onSuccess: async () => {
       await invalidateAll()
+      toast.success(L.lists_create_success())
+    },
+    onError: () => {
+      toast.error(L.common_error_generic())
     },
   }))
 </script>
