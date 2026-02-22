@@ -27,6 +27,7 @@
   const { list, isOwner, isSaved, isSaving = false, onToggleSave }: Props = $props()
 
   const visibilityLabel = (value: ListVisibility) => getVisibilityLabel(L, value)
+  const ownerUrl = $derived(list.owner.handle ? `/u/${list.owner.handle}` : null)
   const ownerName = $derived(
     list.isAnonymous && !isOwner ? null : (list.owner.handle ?? list.owner.name ?? list.owner.email ?? '—'),
   )
@@ -38,7 +39,13 @@
       <h1 class="text-2xl font-semibold">{list.title}</h1>
       <p class="text-sm text-muted-foreground">{list.description ?? L.common_no_description()}</p>
       {#if ownerName}
-        <p class="mt-1 text-xs text-muted-foreground">{L.common_owner({ name: ownerName })}</p>
+        <p class="mt-1 text-xs text-muted-foreground">
+          {#if ownerUrl && !isOwner}
+            {L.common_owner({ name: '' })}<a href={ownerUrl} class="font-medium hover:underline">@{ownerName}</a>
+          {:else}
+            {L.common_owner({ name: ownerName })}
+          {/if}
+        </p>
       {:else if list.isAnonymous && isOwner}
         <p class="mt-1 text-xs text-muted-foreground">
           {L.common_owner({ name: ownerName ?? '—' })}

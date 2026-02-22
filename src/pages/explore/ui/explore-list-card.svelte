@@ -33,6 +33,7 @@
   const isOwn = $derived(session?.user?.id === list.owner.id)
 
   const ownerDisplay = $derived(list.isAnonymous ? null : (list.owner.handle ?? list.owner.name ?? list.owner.email))
+  const ownerUrl = $derived(list.owner.handle ? `/u/${list.owner.handle}` : null)
 </script>
 
 <article class="flex flex-col gap-3 rounded-xl border bg-card p-4 transition-shadow hover:shadow-md">
@@ -53,7 +54,14 @@
     <span>{L.explore_list_items_count({ count: list._count.items })}</span>
 
     {#if ownerDisplay}
-      <span>by <span class="font-medium text-foreground">@{ownerDisplay}</span></span>
+      <span>
+        by
+        {#if ownerUrl}
+          <a href={ownerUrl} class="font-medium text-foreground hover:underline">@{ownerDisplay}</a>
+        {:else}
+          <span class="font-medium text-foreground">@{ownerDisplay}</span>
+        {/if}
+      </span>
     {/if}
 
     {#if list.ratingCount > 0}
