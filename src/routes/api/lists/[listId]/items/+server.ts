@@ -46,7 +46,8 @@ const listFiltersSchema = z.object({
   genres: z.string().optional(),
   types: z.string().optional(),
   cast: z.string().optional(),
-  limit: z.coerce.number().int().min(1).max(50).default(24),
+  status: z.enum(WATCH_STATUSES).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(60),
   cursor: z.string().optional(),
 })
 
@@ -66,6 +67,7 @@ export const GET = async ({ locals, params, url }) => {
     genres: url.searchParams.get('genres') ?? undefined,
     types: url.searchParams.get('types') ?? undefined,
     cast: url.searchParams.get('cast') ?? undefined,
+    status: url.searchParams.get('status') ?? undefined,
     cursor: url.searchParams.get('cursor') ?? undefined,
     limit: url.searchParams.get('limit') ?? undefined,
   })
@@ -92,6 +94,7 @@ export const GET = async ({ locals, params, url }) => {
     genresFilter: genres,
     types,
     cast,
+    status: parsed.status ?? undefined,
     limit: parsed.limit,
     cursor: parsed.cursor,
   })

@@ -80,15 +80,15 @@ export const traktAdapter: ProviderAdapter = {
 
     if (!creds) return []
 
-    const url = new URL(`${BASE_URL}/search/movie,show`)
+    const searchUrl = `${BASE_URL}/search/movie,show?query=${encodeURIComponent(query)}&limit=10&page=1`
+    const response = await fetch(searchUrl, { headers: traktHeaders(creds.clientId) })
 
-    url.searchParams.set('query', query)
-    url.searchParams.set('limit', '10')
-    url.searchParams.set('page', '1')
+    if (!response.ok) {
+      // eslint-disable-next-line no-console
+      console.error(`[Trakt] search failed: HTTP ${response.status} — ${await response.text()}`)
 
-    const response = await fetch(url, { headers: traktHeaders(creds.clientId) })
-
-    if (!response.ok) return []
+      return []
+    }
 
     const payload = (await response.json()) as { type: string; movie?: unknown; show?: unknown }[]
     const results: SearchResult[] = []

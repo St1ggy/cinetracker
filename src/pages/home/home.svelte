@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { goto, invalidateAll } from '$app/navigation'
+  import { goto } from '$app/navigation'
   import { page } from '$app/state'
   import CircleCheckIcon from '@lucide/svelte/icons/circle-check'
   import CirclePlayIcon from '@lucide/svelte/icons/circle-play'
@@ -33,6 +33,43 @@
   let debouncedSearchInput = $state('')
   let chosenListId = $state(untrack(() => data.list?.id ?? ''))
   const queryClient = useQueryClient()
+
+  // Items fetched via TanStack Query so the list updates immediately after adding media.
+  const buildItemsUrl = () => {
+    if (!data.list?.id) return null
+
+    const parts: string[] = [`limit=60`]
+
+    if (data.filters?.q) parts.push(`q=${encodeURIComponent(data.filters.q)}`)
+
+    if (data.filters?.yearFrom) parts.push(`yearFrom=${data.filters.yearFrom}`)
+
+    if (data.filters?.yearTo) parts.push(`yearTo=${data.filters.yearTo}`)
+
+    if (data.filters?.genre) parts.push(`genres=${encodeURIComponent(data.filters.genre)}`)
+
+    if (data.filters?.status) parts.push(`status=${data.filters.status}`)
+
+    return `/api/lists/${data.list.id}/items?${parts.join('&')}`
+  }
+
+  const itemsQuery = createQuery(() => ({
+    queryKey: ['list-items', data.list?.id, data.filters],
+    enabled: !!data.list?.id,
+    queryFn: async () => {
+      const url = buildItemsUrl()
+
+      if (!url) return { items: [] }
+
+      const response = await fetch(url)
+
+      if (!response.ok) throw new Error('Failed to fetch items')
+
+      return response.json() as Promise<{ items: typeof data.items }>
+    },
+    initialData: { items: untrack(() => data.items ?? []) },
+    staleTime: 0,
+  }))
 
   const applyFilters = async () => {
     const queryPart = query.trim() ? `q=${encodeURIComponent(query.trim())}` : ''
@@ -78,7 +115,7 @@
       searchInput = ''
       debouncedSearchInput = ''
       await queryClient.invalidateQueries({ queryKey: ['external-search'] })
-      await invalidateAll()
+      await queryClient.invalidateQueries({ queryKey: ['list-items'] })
     },
   }))
 
@@ -174,7 +211,7 @@
     </div>
 
     <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-      {#each data.items as item (item.id)}
+      {#each itemsQuery.data?.items ?? [] as item (item.id)}
         {@const statusMeta = WATCH_STATUS_META[(item.status as keyof typeof WATCH_STATUS_META) ?? 'PLAN_TO_WATCH']}
         <a href={`/media/${item.media.id}`} class="group relative block overflow-hidden rounded-lg border bg-card">
           {#if item.media.posterUrl}
