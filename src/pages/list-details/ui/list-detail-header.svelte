@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { page } from '$app/state'
+
   import { L } from '$lib'
   import { getVisibilityLabel } from '$shared/lib/labels'
 
@@ -27,6 +29,7 @@
   const { list, isOwner, isSaved, isSaving = false, onToggleSave }: Props = $props()
 
   const visibilityLabel = (value: ListVisibility) => getVisibilityLabel(L, value)
+  const isAuthenticated = $derived(Boolean(page.data.session?.user?.id))
   const ownerUrl = $derived(list.owner.handle ? `/u/${list.owner.handle}` : null)
   const ownerName = $derived(
     list.isAnonymous && !isOwner ? null : (list.owner.handle ?? list.owner.name ?? list.owner.email ?? '—'),
@@ -55,7 +58,7 @@
     </div>
     <div class="flex gap-2">
       <span class="rounded border px-2 py-1 text-xs">{visibilityLabel(list.visibility)}</span>
-      {#if !isOwner}
+      {#if isAuthenticated && !isOwner}
         <button
           class="rounded-md border px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
           onclick={onToggleSave}
