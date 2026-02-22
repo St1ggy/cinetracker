@@ -8,12 +8,15 @@ import {
   requireReadableList,
   requireSessionUser,
 } from '$lib/server/lists'
-import { listsRepository } from '$lib/server/repositories'
+import { prisma } from '$lib/server/prisma'
+import { listsRepository, tagsRepository } from '$lib/server/repositories'
 
 const patchListSchema = z.object({
   title: z.string().trim().min(1).max(120).optional(),
   description: z.string().trim().max(400).optional().nullable(),
   visibility: z.enum(['PUBLIC', 'UNLISTED', 'PRIVATE']).optional(),
+  isAnonymous: z.boolean().optional(),
+  tags: z.array(z.string().trim().min(1).max(50)).max(10).optional(),
 })
 
 export const GET = async ({ locals, params, url }) => {
@@ -36,6 +39,19 @@ export const PATCH = async ({ locals, params, request }) => {
   const payload = patchListSchema.parse(await request.json())
 
   const visibility = payload.visibility ? parseVisibility(payload.visibility) : undefined
+  const isAnonymous = payload.isAnonymous
+
+  // Require a handle when changing to PUBLIC (non-anonymous)
+  const becomingPublic = visibility === 'PUBLIC' && list.visibility !== 'PUBLIC'
+
+  if (becomingPublic && !isAnonymous) {
+    const databaseUser = await prisma.user.findUnique({ where: { id: user.id }, select: { handle: true } })
+
+    if (!databaseUser?.handle) {
+      return json({ error: 'HANDLE_REQUIRED' }, { status: 400 })
+    }
+  }
+
   const shouldRotateTokenToUnlisted = visibility === 'UNLISTED' && !list.shareToken
   const clearToken = visibility === 'PUBLIC' || visibility === 'PRIVATE'
   let shareTokenUpdate: string | null | undefined
@@ -50,8 +66,18 @@ export const PATCH = async ({ locals, params, request }) => {
     title: payload.title,
     description: payload.description,
     visibility,
+    isAnonymous,
     shareToken: shareTokenUpdate,
   })
+
+  if (payload.tags !== undefined) {
+    const createdTags = await tagsRepository.findOrCreateByNames(payload.tags)
+
+    await listsRepository.setListTags(
+      list.id,
+      createdTags.map((t) => t.id),
+    )
+  }
 
   return json(updated)
 }

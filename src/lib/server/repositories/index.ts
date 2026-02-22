@@ -1,3 +1,5 @@
 export * from './list-items.repository'
 export * from './lists.repository'
 export * from './media.repository'
+export * from './tags.repository'
+export * from './list-ratings.repository'

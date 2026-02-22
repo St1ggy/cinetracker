@@ -6,6 +6,7 @@
   import { FREE_PROVIDERS, KEY_REQUIRED_PROVIDERS, PROVIDER_META } from '$shared/config/domain'
 
   import DeleteAccountModal from './ui/delete-account-modal.svelte'
+  import HandleEditor from './ui/handle-editor.svelte'
   import ProfileInfo from './ui/profile-info.svelte'
   import ProviderApiKeyRow from './ui/provider-api-key-row.svelte'
 
@@ -61,6 +62,21 @@
 
   let showDeleteConfirm = $state(false)
   const userEmail = $derived(page.data.session?.user?.email ?? '')
+  let currentHandle = $state<string | null>(null)
+  let nextChangeAt = $state<string | null>(null)
+
+  $effect(() => {
+    if (page.data.session?.user) {
+      fetch('/api/user/handle')
+        .then((r) => r.json())
+        .then((d: { handle: string | null; nextChangeAt: string | null }) => {
+          currentHandle = d.handle
+          nextChangeAt = d.nextChangeAt
+        })
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        .catch(() => {})
+    }
+  })
 </script>
 
 <div class="space-y-6">
@@ -108,6 +124,19 @@
             {/each}
           </div>
         </div>
+      </div>
+    </section>
+
+    <section class="rounded-lg border bg-card p-6">
+      <h2 class="text-lg font-semibold">{L.profile_handle_label()}</h2>
+      <div class="mt-4">
+        <HandleEditor
+          {currentHandle}
+          {nextChangeAt}
+          onSaved={(h) => {
+            currentHandle = h
+          }}
+        />
       </div>
     </section>
 

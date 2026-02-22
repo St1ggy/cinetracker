@@ -4,21 +4,34 @@ import { type ListVisibility, type MediaType, Prisma, type WatchStatus } from '@
 import { prisma } from '$lib/server/prisma'
 
 const buildOrderBy = (sort?: string): Prisma.ListItemOrderByWithRelationInput[] => {
+  // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
   switch (sort) {
-    case 'added_asc':
+    case 'added_asc': {
       return [{ createdAt: 'asc' }, { id: 'asc' }]
-    case 'title_asc':
+    }
+
+    case 'title_asc': {
       return [{ media: { title: 'asc' } }]
-    case 'title_desc':
+    }
+
+    case 'title_desc': {
       return [{ media: { title: 'desc' } }]
-    case 'year_desc':
+    }
+
+    case 'year_desc': {
       return [{ media: { year: { sort: 'desc', nulls: 'last' } } }]
-    case 'year_asc':
+    }
+
+    case 'year_asc': {
       return [{ media: { year: { sort: 'asc', nulls: 'last' } } }]
-    case 'rating_desc':
+    }
+
+    case 'rating_desc': {
       return [{ rating: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }]
-    default:
+    }
+    default: {
       return [{ createdAt: 'desc' }, { id: 'desc' }]
+    }
   }
 }
 
@@ -114,6 +127,7 @@ export const listsRepository = {
     title: string
     description?: string | null
     visibility: ListVisibility
+    isAnonymous?: boolean
     shareToken?: string | null
   }) =>
     prisma.list.create({
@@ -122,6 +136,7 @@ export const listsRepository = {
         title: payload.title,
         description: payload.description ?? null,
         visibility: payload.visibility,
+        isAnonymous: payload.isAnonymous ?? false,
         shareToken: payload.shareToken ?? null,
       },
     }),
@@ -132,6 +147,7 @@ export const listsRepository = {
       title?: string
       description?: string | null
       visibility?: ListVisibility
+      isAnonymous?: boolean
       shareToken?: string | null
     },
   ) => {
@@ -265,6 +281,68 @@ export const listsRepository = {
           },
         },
       },
+    })
+  },
+
+  setListTags: async (listId: string, tagIds: string[]) => {
+    await prisma.$transaction([
+      prisma.listTag.deleteMany({ where: { listId } }),
+      ...(tagIds.length > 0 ? [prisma.listTag.createMany({ data: tagIds.map((tagId) => ({ listId, tagId })) })] : []),
+    ])
+  },
+
+  findPublicWithFilters: async (params: {
+    q?: string
+    tags?: string[]
+    sort?: 'newest' | 'popular' | 'top_rated'
+    cursor?: string
+    limit: number
+  }) => {
+    const where: Prisma.ListWhereInput = { visibility: 'PUBLIC' }
+
+    if (params.q) {
+      where.title = { contains: params.q, mode: 'insensitive' }
+    }
+
+    if (params.tags && params.tags.length > 0) {
+      where.tags = {
+        some: { tag: { slug: { in: params.tags } } },
+      }
+    }
+
+    const buildPublicOrderBy = (): Prisma.ListOrderByWithRelationInput[] => {
+      if (params.sort === 'popular') return [{ items: { _count: 'desc' } }, { createdAt: 'desc' }]
+
+      if (params.sort === 'top_rated') return [{ ratings: { _count: 'desc' } }, { createdAt: 'desc' }]
+
+      return [{ createdAt: 'desc' }]
+    }
+
+    const lists = await prisma.list.findMany({
+      where,
+      orderBy: buildPublicOrderBy(),
+      take: params.limit,
+      ...(params.cursor ? { cursor: { id: params.cursor }, skip: 1 } : {}),
+      include: {
+        owner: {
+          select: { id: true, name: true, handle: true, email: true },
+        },
+        _count: { select: { items: true, ratings: true } },
+        tags: { include: { tag: true } },
+        ratings: { select: { value: true } },
+      },
+    })
+
+    return lists.map((list) => {
+      const ratingValues = list.ratings.map((r) => r.value)
+      const ratingAverage = ratingValues.length > 0 ? ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length : 0
+
+      return {
+        ...list,
+        ratings: undefined,
+        ratingAverage,
+        ratingCount: ratingValues.length,
+      }
     })
   },
 }

@@ -2,11 +2,18 @@
   import { L } from '$lib'
   import * as Select from '$lib/components/ui/select'
   import { getVisibilityLabel } from '$shared/lib/labels'
+  import HandleRequiredModal from '$shared/ui/handle-required-modal.svelte'
 
   import type { ListVisibility } from '$shared/config/domain'
 
   type Props = {
-    onCreate: (payload: { title: string; description: string | null; visibility: ListVisibility }) => void
+    onCreate: (payload: {
+      title: string
+      description: string | null
+      visibility: ListVisibility
+      tags: string[]
+      isAnonymous: boolean
+    }) => void
     isPending?: boolean
   }
 
@@ -15,16 +22,44 @@
   let title = $state('')
   let description = $state('')
   let visibility = $state<ListVisibility>('PRIVATE')
+  let tagsInput = $state('')
+  let isAnonymous = $state(false)
+  let showHandleRequired = $state(false)
+  let pendingPayload = $state<Parameters<typeof onCreate>[0] | null>(null)
 
   const visibilityLabel = (value: ListVisibility) => getVisibilityLabel(L, value)
+
+  const parseTags = (input: string): string[] =>
+    input
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .slice(0, 10)
 
   const handleCreate = () => {
     if (!title.trim()) return
 
-    onCreate({ title: title.trim(), description: description || null, visibility })
+    const payload = {
+      title: title.trim(),
+      description: description || null,
+      visibility,
+      tags: parseTags(tagsInput),
+      isAnonymous: visibility === 'PUBLIC' ? isAnonymous : false,
+    }
+
+    onCreate(payload)
     title = ''
     description = ''
     visibility = 'PRIVATE'
+    tagsInput = ''
+    isAnonymous = false
+  }
+
+  const onHandleSet = () => {
+    if (pendingPayload) {
+      onCreate(pendingPayload)
+      pendingPayload = null
+    }
   }
 </script>
 
@@ -57,4 +92,27 @@
       {L.common_create()}
     </button>
   </div>
+
+  <div class="mt-2 flex flex-wrap items-center gap-3">
+    <div class="flex flex-1 items-center gap-2">
+      <label class="text-xs text-muted-foreground" for="create-list-tags">{L.lists_tags_label()}</label>
+      <input
+        id="create-list-tags"
+        class="flex-1 rounded border bg-background px-2 py-1 text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+        placeholder={L.lists_tags_placeholder()}
+        bind:value={tagsInput}
+      />
+    </div>
+
+    {#if visibility === 'PUBLIC'}
+      <label class="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
+        <input type="checkbox" class="rounded" bind:checked={isAnonymous} />
+        {L.lists_publish_anonymously()}
+      </label>
+    {/if}
+  </div>
 </div>
+
+{#if showHandleRequired}
+  <HandleRequiredModal onclose={() => (showHandleRequired = false)} {onHandleSet} />
+{/if}

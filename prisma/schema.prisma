@@ -43,20 +43,22 @@ enum WatchStatus {
 }
 
 model User {
-  id            String      @id @default(uuid()) @db.Uuid
-  email         String?     @unique @db.VarChar(255)
-  emailVerified DateTime?   @map("email_verified") @db.Timestamptz(6)
-  name          String?     @db.VarChar(255)
-  image         String?
-  handle        String?     @unique @db.VarChar(255)
-  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
-  accounts      Account[]
-  sessions      Session[]
-  lists         List[]
-  listItems     ListItem[]
-  savedLists    SavedList[]
-  apiKeys       UserApiKey[]
+  id              String       @id @default(uuid()) @db.Uuid
+  email           String?      @unique @db.VarChar(255)
+  emailVerified   DateTime?    @map("email_verified") @db.Timestamptz(6)
+  name            String?      @db.VarChar(255)
+  image           String?
+  handle          String?      @unique @db.VarChar(255)
+  handleChangedAt DateTime?    @map("handle_changed_at") @db.Timestamptz(6)
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  accounts        Account[]
+  sessions        Session[]
+  lists           List[]
+  listItems       ListItem[]
+  savedLists      SavedList[]
+  apiKeys         UserApiKey[]
+  listRatings     ListRating[]
 
   @@map("users")
 }
@@ -122,12 +124,15 @@ model List {
   title       String         @db.VarChar(120)
   description String?        @db.VarChar(400)
   visibility  ListVisibility @default(PRIVATE)
+  isAnonymous Boolean        @default(false) @map("is_anonymous")
   shareToken  String?        @unique(map: "lists_share_token_unique") @map("share_token") @db.VarChar(255)
   createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
   owner       User           @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
   items       ListItem[]
   savedBy     SavedList[]
+  tags        ListTag[]
+  ratings     ListRating[]
 
   @@index([ownerUserId, updatedAt], map: "lists_owner_updated_idx")
   @@index([visibility, updatedAt], map: "lists_visibility_updated_idx")
@@ -287,4 +292,41 @@ model MediaRating {
   @@unique([mediaId, provider], map: "media_ratings_media_provider_unique")
   @@index([mediaId], map: "media_ratings_media_idx")
   @@map("media_ratings")
+}
+
+model Tag {
+  id        String    @id @default(uuid()) @db.Uuid
+  slug      String    @unique @db.VarChar(100)
+  name      String    @db.VarChar(100)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  lists     ListTag[]
+
+  @@index([name], map: "tags_name_idx")
+  @@map("tags")
+}
+
+model ListTag {
+  listId String @map("list_id") @db.Uuid
+  tagId  String @map("tag_id") @db.Uuid
+  list   List   @relation(fields: [listId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([listId, tagId])
+  @@index([tagId], map: "list_tags_tag_idx")
+  @@map("list_tags")
+}
+
+model ListRating {
+  id        String   @id @default(uuid()) @db.Uuid
+  listId    String   @map("list_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  value     Int      @db.SmallInt
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  list      List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, userId], map: "list_ratings_list_user_unique")
+  @@index([listId], map: "list_ratings_list_idx")
+  @@map("list_ratings")
 }

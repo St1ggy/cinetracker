@@ -5,6 +5,7 @@
 
   import { L } from '$lib'
   import { getVisibilityLabel } from '$shared/lib/labels'
+  import HandleRequiredModal from '$shared/ui/handle-required-modal.svelte'
 
   import CreateListForm from './ui/create-list-form.svelte'
 
@@ -13,15 +14,35 @@
 
   const data = $derived(page.data as PageData)
 
+  type CreateListPayload = {
+    title: string
+    description: string | null
+    visibility: ListVisibility
+    tags: string[]
+    isAnonymous: boolean
+  }
+
+  let showHandleRequired = $state(false)
+
   const createListMutation = createMutation(() => ({
-    mutationFn: async (payload: { title: string; description: string | null; visibility: ListVisibility }) => {
+    mutationFn: async (payload: CreateListPayload) => {
       const response = await fetch('/api/lists', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
 
-      if (!response.ok) throw new Error('Failed to create list')
+      const responseData = await response.json()
+
+      if (!response.ok) {
+        if (responseData?.error === 'HANDLE_REQUIRED') {
+          showHandleRequired = true
+
+          return
+        }
+
+        throw new Error('Failed to create list')
+      }
     },
     onSuccess: async () => {
       await invalidateAll()
@@ -70,3 +91,7 @@
     </div>
   </div>
 </section>
+
+{#if showHandleRequired}
+  <HandleRequiredModal onclose={() => (showHandleRequired = false)} onHandleSet={() => (showHandleRequired = false)} />
+{/if}

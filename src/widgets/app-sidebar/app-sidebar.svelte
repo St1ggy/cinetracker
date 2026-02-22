@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state'
+  import CompassIcon from '@lucide/svelte/icons/compass'
   import HomeIcon from '@lucide/svelte/icons/house'
   import ListIcon from '@lucide/svelte/icons/list'
   import UserIcon from '@lucide/svelte/icons/user'
@@ -34,6 +35,14 @@
     >
       <HomeIcon class="size-4" />
       <span>{L.nav_home()}</span>
+    </a>
+    <a
+      href="/explore"
+      class={`flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent ${isActive('/explore') ? 'bg-accent font-medium' : ''}`}
+      onclick={() => onNavigate?.()}
+    >
+      <CompassIcon class="size-4" />
+      <span>{L.nav_explore()}</span>
     </a>
     <a
       href="/lists"
