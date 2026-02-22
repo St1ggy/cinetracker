@@ -52,17 +52,23 @@ export const PUT = async ({ locals, request }) => {
   const plaintext = JSON.stringify(validatedCredentials)
   const { encrypted, iv, authTag } = encrypt(plaintext)
 
-  await prisma.userApiKey.upsert({
-    where: { userId_provider: { userId, provider: body.provider as MediaProvider } },
-    update: { encryptedData: encrypted, iv, authTag },
-    create: {
-      userId,
-      provider: body.provider as MediaProvider,
-      encryptedData: encrypted,
-      iv,
-      authTag,
-    },
-  })
+  await prisma.$transaction([
+    prisma.userApiKey.upsert({
+      where: { userId_provider: { userId, provider: body.provider as MediaProvider } },
+      update: { encryptedData: encrypted, iv, authTag },
+      create: {
+        userId,
+        provider: body.provider as MediaProvider,
+        encryptedData: encrypted,
+        iv,
+        authTag,
+      },
+    }),
+    prisma.media.updateMany({
+      where: { listItems: { some: { addedByUserId: userId } } },
+      data: { enrichedAt: null },
+    }),
+  ])
 
   return json({ success: true })
 }
@@ -80,7 +86,13 @@ export const DELETE = async ({ locals, url }) => {
 
   const provider = providerParameter as MediaProvider
 
-  await prisma.userApiKey.deleteMany({ where: { userId, provider } })
+  await prisma.$transaction([
+    prisma.userApiKey.deleteMany({ where: { userId, provider } }),
+    prisma.media.updateMany({
+      where: { listItems: { some: { addedByUserId: userId } } },
+      data: { enrichedAt: null },
+    }),
+  ])
 
   return json({ success: true })
 }
