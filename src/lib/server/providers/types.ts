@@ -11,11 +11,31 @@ export type SearchResult = {
   posterUrl?: string | null
 }
 
+export type CanonicalRating = {
+  source: string
+  value: number
+  maxValue: number
+  votes?: number
+}
+
+export type CanonicalCastMember = {
+  name: string
+  role?: string | null
+  order?: number | null
+  profileUrl?: string | null
+  tmdbPersonId?: number | null
+  anilistStaffId?: number | null
+}
+
 export type CanonicalMedia = {
   provider: MediaProvider
   externalId: string
+  externalUrl?: string | null
   title: string
   originalTitle?: string | null
+  tagline?: string | null
+  status?: string | null
+  director?: string | null
   year?: number | null
   mediaType: MediaType
   overview?: string | null
@@ -37,6 +57,8 @@ export type CanonicalMedia = {
   episodesCount?: number | null
   seasonBreakdown?: { seasonNumber: number; episodes: number }[] | null
   isAdult: boolean
+  ratings?: CanonicalRating[]
+  cast?: CanonicalCastMember[]
   raw: unknown
 }
 

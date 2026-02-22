@@ -105,10 +105,12 @@ export const tvdbAdapter: ProviderAdapter = {
             .map((s) => ({ seasonNumber: Number(s.number), episodes: Number(s.episodes_count ?? 0) }))
             .filter((s) => s.episodes > 0)
         : []
+      const slug = raw.slug as string | undefined
 
       const normalized: CanonicalMedia = {
         provider: 'TVDB',
         externalId,
+        externalUrl: slug ? `https://thetvdb.com/series/${slug}` : null,
         title: (raw.name as string | undefined) ?? 'Untitled',
         year: raw.firstAired ? Number.parseInt(String(raw.firstAired).slice(0, 4), 10) : null,
         mediaType: 'TV',
@@ -135,10 +137,12 @@ export const tvdbAdapter: ProviderAdapter = {
 
     const payload = (await movieResponse.json()) as { data?: Record<string, unknown> }
     const raw = payload.data ?? {}
+    const slug = raw.slug as string | undefined
 
     return {
       provider: 'TVDB',
       externalId,
+      externalUrl: slug ? `https://thetvdb.com/movies/${slug}` : null,
       title: (raw.name as string | undefined) ?? 'Untitled',
       year: raw.year ? Number.parseInt(String(raw.year), 10) : null,
       mediaType: 'MOVIE',

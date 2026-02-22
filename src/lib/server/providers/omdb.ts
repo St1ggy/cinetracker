@@ -1,6 +1,14 @@
 import { error } from '@sveltejs/kit'
 
-import type { CanonicalMedia, OmdbCredentials, ProviderAdapter, ProviderCredentials, SearchResult } from './types'
+import type {
+  CanonicalCastMember,
+  CanonicalMedia,
+  CanonicalRating,
+  OmdbCredentials,
+  ProviderAdapter,
+  ProviderCredentials,
+  SearchResult,
+} from './types'
 import type { MediaType } from '@prisma/client'
 
 const BASE_URL = 'https://www.omdbapi.com/'
@@ -19,6 +27,64 @@ const toMediaType = (type: string | undefined): MediaType => {
   return 'OTHER'
 }
 
+const parseOmdbRatings = (raw: Record<string, unknown>): CanonicalRating[] => {
+  const ratings: CanonicalRating[] = []
+  const rawRatings = raw.Ratings
+
+  if (Array.isArray(rawRatings)) {
+    for (const r of rawRatings as Record<string, string>[]) {
+      const source = r.Source ?? ''
+      const valueStr = r.Value ?? ''
+
+      if (source === 'Internet Movie Database') {
+        const parts = valueStr.split('/')
+
+        if (parts.length === 2) {
+          const value = Number.parseFloat(parts[0])
+          const max = Number.parseFloat(parts[1])
+
+          if (!Number.isNaN(value) && !Number.isNaN(max)) {
+            const imdbVotes = raw.imdbVotes ? Number(String(raw.imdbVotes).replaceAll(',', '')) : undefined
+
+            ratings.push({ source: 'IMDb', value, maxValue: max, votes: Number.isNaN(imdbVotes) ? undefined : imdbVotes })
+          }
+        }
+      } else if (source === 'Rotten Tomatoes') {
+        const pctStr = valueStr.replace('%', '')
+        const value = Number.parseFloat(pctStr)
+
+        if (!Number.isNaN(value)) {
+          ratings.push({ source: 'Rotten Tomatoes', value, maxValue: 100 })
+        }
+      } else if (source === 'Metacritic') {
+        const parts = valueStr.split('/')
+
+        if (parts.length === 2) {
+          const value = Number.parseFloat(parts[0])
+          const max = Number.parseFloat(parts[1])
+
+          if (!Number.isNaN(value) && !Number.isNaN(max)) {
+            ratings.push({ source: 'Metacritic', value, maxValue: max })
+          }
+        }
+      }
+    }
+  }
+
+  return ratings
+}
+
+const parseOmdbCast = (raw: Record<string, unknown>): CanonicalCastMember[] => {
+  const actorsStr = raw.Actors as string | undefined
+
+  if (!actorsStr || actorsStr === 'N/A') return []
+
+  return actorsStr
+    .split(',')
+    .map((name, idx) => ({ name: name.trim(), order: idx }))
+    .filter((m) => m.name.length > 0)
+}
+
 const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
   const year = raw.Year ? Number.parseInt(String(raw.Year).slice(0, 4), 10) : null
   const runtime = raw.Runtime ? Number.parseInt(String(raw.Runtime), 10) : null
@@ -35,12 +101,16 @@ const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
         .filter(Boolean)
     : []
   const imdbId = (raw.imdbID as string | undefined) ?? null
+  const director = raw.Director && raw.Director !== 'N/A' ? (raw.Director as string) : null
+  const externalUrl = imdbId ? `https://www.imdb.com/title/${imdbId}` : null
 
   return {
     provider: 'OMDB',
     externalId: imdbId ?? String(raw.imdbID ?? ''),
+    externalUrl,
     title: (raw.Title as string | undefined) ?? 'Untitled',
     originalTitle: null,
+    director,
     year: year && !Number.isNaN(year) ? year : null,
     mediaType: toMediaType(raw.Type as string | undefined),
     overview: raw.Plot && raw.Plot !== 'N/A' ? (raw.Plot as string) : null,
@@ -50,6 +120,8 @@ const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
     countries,
     runtimeMinutes: runtime && !Number.isNaN(runtime) ? runtime : null,
     isAdult: false,
+    ratings: parseOmdbRatings(raw),
+    cast: parseOmdbCast(raw),
     raw,
   }
 }

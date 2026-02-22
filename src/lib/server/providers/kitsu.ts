@@ -1,12 +1,31 @@
 import { error } from '@sveltejs/kit'
 
-import type { CanonicalMedia, ProviderAdapter, SearchResult } from './types'
+import type { CanonicalMedia, CanonicalRating, ProviderAdapter, SearchResult } from './types'
 
 const BASE_URL = 'https://kitsu.io/api/edge'
 
 const JSON_API_HEADERS = {
   Accept: 'application/vnd.api+json',
   'Content-Type': 'application/vnd.api+json',
+}
+
+const extractKitsuRatings = (attributes: Record<string, unknown>): CanonicalRating[] => {
+  const avgRating = attributes.averageRating as string | undefined
+
+  if (!avgRating) return []
+
+  const value = Number.parseFloat(avgRating)
+
+  if (Number.isNaN(value) || value === 0) return []
+
+  return [
+    {
+      source: 'Kitsu',
+      value: Math.round(value * 10) / 10,
+      maxValue: 100,
+      votes: (attributes.userCount as number | undefined) ?? undefined,
+    },
+  ]
 }
 
 const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
@@ -17,10 +36,12 @@ const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
   const genres: string[] = []
   const year = attributes.startDate ? Number.parseInt(String(attributes.startDate).slice(0, 4), 10) : null
   const kitsuNumericId = typeof raw.id === 'string' ? Number.parseInt(raw.id, 10) : null
+  const slug = attributes.slug as string | undefined
 
   return {
     provider: 'KITSU',
     externalId: String(raw.id ?? ''),
+    externalUrl: slug ? `https://kitsu.io/anime/${slug}` : null,
     title: String(title),
     originalTitle: (titles.ja_jp as string | undefined) ?? null,
     year: year && !Number.isNaN(year) ? year : null,
@@ -39,6 +60,7 @@ const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
     episodesCount: (attributes.episodeCount as number | undefined) ?? null,
     seasonBreakdown: attributes.episodeCount ? [{ seasonNumber: 1, episodes: Number(attributes.episodeCount) }] : null,
     isAdult: Boolean(attributes.nsfw),
+    ratings: extractKitsuRatings(attributes),
     raw,
   }
 }

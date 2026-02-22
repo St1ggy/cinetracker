@@ -1,6 +1,13 @@
 import { error } from '@sveltejs/kit'
 
-import type { CanonicalMedia, ProviderAdapter, ProviderCredentials, SearchResult, TraktCredentials } from './types'
+import type {
+  CanonicalMedia,
+  CanonicalRating,
+  ProviderAdapter,
+  ProviderCredentials,
+  SearchResult,
+  TraktCredentials,
+} from './types'
 import type { MediaType } from '@prisma/client'
 
 const BASE_URL = 'https://api.trakt.tv'
@@ -25,13 +32,32 @@ const toMediaType = (type: string | undefined): MediaType => {
   return 'OTHER'
 }
 
+const extractTraktRating = (obj: Record<string, unknown>): CanonicalRating[] => {
+  const rating = obj.rating as number | undefined
+  const votes = obj.votes as number | undefined
+
+  if (!rating || rating === 0) return []
+
+  return [
+    {
+      source: 'Trakt',
+      value: Math.round(rating * 10) / 10,
+      maxValue: 10,
+      votes,
+    },
+  ]
+}
+
 const normalizeMovie = (raw: Record<string, unknown>): CanonicalMedia => {
   const movie = (raw.movie ?? raw) as Record<string, unknown>
   const ids = (movie.ids ?? {}) as Record<string, unknown>
+  const slug = ids.slug as string | undefined
+  const externalUrl = slug ? `https://trakt.tv/movies/${slug}` : null
 
   return {
     provider: 'TRAKT',
     externalId: String(ids.trakt ?? ''),
+    externalUrl,
     title: (movie.title as string | undefined) ?? 'Untitled',
     year: (movie.year as number | undefined) ?? null,
     mediaType: 'MOVIE',
@@ -43,6 +69,7 @@ const normalizeMovie = (raw: Record<string, unknown>): CanonicalMedia => {
     countries: [],
     runtimeMinutes: (movie.runtime as number | undefined) ?? null,
     isAdult: Boolean(movie.certification === 'NC-17'),
+    ratings: extractTraktRating(movie),
     raw,
   }
 }
@@ -50,10 +77,13 @@ const normalizeMovie = (raw: Record<string, unknown>): CanonicalMedia => {
 const normalizeShow = (raw: Record<string, unknown>): CanonicalMedia => {
   const show = (raw.show ?? raw) as Record<string, unknown>
   const ids = (show.ids ?? {}) as Record<string, unknown>
+  const slug = ids.slug as string | undefined
+  const externalUrl = slug ? `https://trakt.tv/shows/${slug}` : null
 
   return {
     provider: 'TRAKT',
     externalId: String(ids.trakt ?? ''),
+    externalUrl,
     title: (show.title as string | undefined) ?? 'Untitled',
     year: (show.year as number | undefined) ?? null,
     mediaType: 'TV',
@@ -67,6 +97,7 @@ const normalizeShow = (raw: Record<string, unknown>): CanonicalMedia => {
     episodeRuntimeMax: (show.runtime as number | undefined) ?? null,
     seasonsCount: null,
     isAdult: false,
+    ratings: extractTraktRating(show),
     raw,
   }
 }

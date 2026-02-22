@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit'
 
 import { isJapaneseLocale } from '$lib/server/locale'
 
-import type { CanonicalMedia, ProviderAdapter, SearchResult } from './types'
+import type { CanonicalCastMember, CanonicalMedia, CanonicalRating, ProviderAdapter, SearchResult } from './types'
 
 const BASE_URL = 'https://api.jikan.moe/v4'
 
@@ -44,6 +44,34 @@ const extractDuration = (raw: Record<string, unknown>): number | null => {
   return Number.isNaN(minutes) ? null : minutes
 }
 
+const extractJikanRatings = (raw: Record<string, unknown>): CanonicalRating[] => {
+  const score = raw.score as number | undefined
+  const scoredBy = raw.scored_by as number | undefined
+
+  if (!score || score === 0) return []
+
+  return [
+    {
+      source: 'MyAnimeList',
+      value: Math.round(score * 100) / 100,
+      maxValue: 10,
+      votes: scoredBy,
+    },
+  ]
+}
+
+const extractJikanCast = (raw: Record<string, unknown>): CanonicalCastMember[] => {
+  const characters = raw.characters as { character: { name: string }; role: string }[] | undefined
+
+  if (!Array.isArray(characters)) return []
+
+  return characters.slice(0, 15).map((c, idx) => ({
+    name: c.character?.name ?? '',
+    role: c.role ?? null,
+    order: idx,
+  }))
+}
+
 const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
   const { title, originalTitle } = extractTitle(raw)
   const year = extractYear(raw)
@@ -56,6 +84,7 @@ const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
   return {
     provider: 'JIKAN',
     externalId: String(malId ?? ''),
+    externalUrl: malId ? `https://myanimelist.net/anime/${malId}` : null,
     title,
     originalTitle,
     year,
@@ -72,6 +101,8 @@ const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
     episodesCount: (raw.episodes as number | undefined) ?? null,
     seasonBreakdown: raw.episodes ? [{ seasonNumber: 1, episodes: Number(raw.episodes) }] : null,
     isAdult: Boolean(raw.rating && String(raw.rating).startsWith('Rx')),
+    ratings: extractJikanRatings(raw),
+    cast: extractJikanCast(raw),
     raw,
   }
 }

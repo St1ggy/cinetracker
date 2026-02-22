@@ -3,7 +3,15 @@ import { error } from '@sveltejs/kit'
 
 import { getTmdbLanguage } from '$lib/server/locale'
 
-import type { CanonicalMedia, ProviderAdapter, ProviderCredentials, SearchResult, TmdbCredentials } from './types'
+import type {
+  CanonicalCastMember,
+  CanonicalMedia,
+  CanonicalRating,
+  ProviderAdapter,
+  ProviderCredentials,
+  SearchResult,
+  TmdbCredentials,
+} from './types'
 import type { MediaType } from '@prisma/client'
 
 const parseYear = (value?: string | null): number | null => {
@@ -15,6 +23,7 @@ const parseYear = (value?: string | null): number | null => {
 }
 
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
+const TMDB_PROFILE_BASE_URL = 'https://image.tmdb.org/t/p/w185'
 
 const toImage = (path?: string | null, baseUrl?: string): string | null => {
   if (!path) return null
@@ -36,6 +45,58 @@ const parsePositiveNumbers = (value: unknown): number[] => {
   return value.map(Number).filter((entry) => Number.isFinite(entry) && entry > 0)
 }
 
+const extractCast = (raw: Record<string, unknown>): CanonicalCastMember[] => {
+  const credits = raw.credits as Record<string, unknown> | undefined
+
+  if (!credits) return []
+
+  const castList = Array.isArray(credits.cast) ? (credits.cast as Record<string, unknown>[]) : []
+
+  return castList.slice(0, 20).map((member, idx) => ({
+    name: String(member.name ?? ''),
+    role: (member.character as string | undefined) ?? null,
+    order: (member.order as number | undefined) ?? idx,
+    profileUrl: toImage(member.profile_path as string | undefined, TMDB_PROFILE_BASE_URL),
+    tmdbPersonId: member.id ? Number(member.id) : null,
+  }))
+}
+
+const extractDirector = (raw: Record<string, unknown>): string | null => {
+  const credits = raw.credits as Record<string, unknown> | undefined
+
+  if (!credits) return null
+
+  const crew = Array.isArray(credits.crew) ? (credits.crew as Record<string, unknown>[]) : []
+  const director = crew.find((c) => c.job === 'Director')
+
+  return director ? String(director.name ?? '') : null
+}
+
+const extractRatings = (raw: Record<string, unknown>): CanonicalRating[] => {
+  const voteAverage = raw.vote_average as number | undefined
+  const voteCount = raw.vote_count as number | undefined
+
+  if (!voteAverage || voteAverage === 0) return []
+
+  return [
+    {
+      source: 'TMDB',
+      value: Math.round(voteAverage * 10) / 10,
+      maxValue: 10,
+      votes: voteCount,
+    },
+  ]
+}
+
+const extractExternalIds = (raw: Record<string, unknown>): { imdbId: string | null; tvdbId: number | null } => {
+  const externalIds = raw.external_ids as Record<string, unknown> | undefined
+
+  return {
+    imdbId: (externalIds?.imdb_id as string | undefined) ?? (raw.imdb_id as string | undefined) ?? null,
+    tvdbId: externalIds?.tvdb_id ? Number(externalIds.tvdb_id) : null,
+  }
+}
+
 const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
   const id = Number(raw.id)
   const title = (raw.title ?? raw.name ?? '') as string
@@ -55,19 +116,29 @@ const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
     : []
   const seasonsCountFromApi = raw.number_of_seasons as number | undefined
   const resolvedSeasonsCount = seasonsCountFromApi ?? (seasonBreakdown.length > 0 ? seasonBreakdown.length : null)
+  const { imdbId, tvdbId } = extractExternalIds(raw)
+  const externalUrl =
+    mediaType === 'TV'
+      ? `https://www.themoviedb.org/tv/${id}`
+      : `https://www.themoviedb.org/movie/${id}`
 
   return {
     provider: 'TMDB',
     externalId: String(id),
+    externalUrl,
     title,
     originalTitle,
+    tagline: (raw.tagline as string | undefined) || null,
+    status: (raw.status as string | undefined) ?? null,
+    director: extractDirector(raw),
     year: parseYear(releaseDate),
     mediaType,
     overview: (raw.overview as string | undefined) ?? null,
     posterUrl: toImage(raw.poster_path as string | undefined),
     backdropUrl: toImage(raw.backdrop_path as string | undefined),
-    imdbId: (raw.imdb_id as string | undefined) ?? null,
+    imdbId,
     tmdbId: id,
+    tvdbId,
     genres: [],
     countries: Array.isArray(raw.origin_country) ? (raw.origin_country as string[]) : [],
     runtimeMinutes: (raw.runtime as number | undefined) ?? null,
@@ -77,6 +148,8 @@ const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
     episodesCount: mediaType === 'TV' ? ((raw.number_of_episodes as number | undefined) ?? null) : null,
     seasonBreakdown: mediaType === 'TV' && seasonBreakdown.length > 0 ? seasonBreakdown : null,
     isAdult: Boolean(raw.adult),
+    ratings: extractRatings(raw),
+    cast: extractCast(raw),
     raw,
   }
 }
@@ -158,9 +231,12 @@ export const tmdbAdapter: ProviderAdapter = {
     if (Number.isNaN(id)) throw error(400, 'Invalid TMDB id')
 
     const language = getTmdbLanguage()
+    const appendToResponse = 'credits,external_ids'
+
     const tvUrl = new URL(`https://api.themoviedb.org/3/tv/${id}`)
 
     tvUrl.searchParams.set('language', language)
+    tvUrl.searchParams.set('append_to_response', appendToResponse)
     applyApiKey(tvUrl, creds)
 
     const tvResponse = await fetch(tvUrl, { headers: buildAuthHeaders(creds) })
@@ -172,6 +248,7 @@ export const tmdbAdapter: ProviderAdapter = {
     const movieUrl = new URL(`https://api.themoviedb.org/3/movie/${id}`)
 
     movieUrl.searchParams.set('language', language)
+    movieUrl.searchParams.set('append_to_response', appendToResponse)
     applyApiKey(movieUrl, creds)
 
     const movieResponse = await fetch(movieUrl, { headers: buildAuthHeaders(creds) })

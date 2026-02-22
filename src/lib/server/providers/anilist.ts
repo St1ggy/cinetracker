@@ -3,7 +3,7 @@ import { error } from '@sveltejs/kit'
 import { appEnv } from '$lib/server/env'
 import { isJapaneseLocale } from '$lib/server/locale'
 
-import type { CanonicalMedia, ProviderAdapter, SearchResult } from './types'
+import type { CanonicalCastMember, CanonicalMedia, CanonicalRating, ProviderAdapter, SearchResult } from './types'
 
 const searchQuery = `
 query ($search: String!, $page: Int = 1) {
@@ -36,6 +36,14 @@ query ($id: Int!) {
     duration
     episodes
     isAdult
+    averageScore
+    popularity
+    staff(sort: RELEVANCE, page: 1, perPage: 10) {
+      edges {
+        node { id name { full } }
+        role
+      }
+    }
   }
 }
 `
@@ -48,12 +56,42 @@ const pickTitle = (titleObject: Record<string, string | undefined>): string => {
   return titleObject.english ?? titleObject.romaji ?? titleObject.native ?? 'Untitled'
 }
 
+const extractAnilistRatings = (raw: Record<string, unknown>): CanonicalRating[] => {
+  const averageScore = raw.averageScore as number | undefined
+
+  if (!averageScore || averageScore === 0) return []
+
+  return [
+    {
+      source: 'AniList',
+      value: averageScore,
+      maxValue: 100,
+      votes: (raw.popularity as number | undefined) ?? undefined,
+    },
+  ]
+}
+
+const extractAnilistCast = (raw: Record<string, unknown>): CanonicalCastMember[] => {
+  const staff = raw.staff as { edges?: { node: { id: number; name: { full: string } }; role: string }[] } | undefined
+
+  if (!staff?.edges) return []
+
+  return staff.edges.map((edge, idx) => ({
+    name: edge.node.name.full,
+    role: edge.role ?? null,
+    order: idx,
+    anilistStaffId: edge.node.id,
+  }))
+}
+
 const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
   const titleObject = (raw.title ?? {}) as Record<string, string | undefined>
+  const id = Number(raw.id)
 
   return {
     provider: 'ANILIST',
     externalId: String(raw.id),
+    externalUrl: `https://anilist.co/anime/${id}`,
     title: pickTitle(titleObject),
     originalTitle: titleObject.native ?? titleObject.romaji ?? null,
     year: ((raw.startDate as Record<string, number | undefined> | undefined)?.year ?? null) as number | null,
@@ -63,7 +101,7 @@ const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
       (raw.coverImage as Record<string, string | undefined> | undefined)?.large ??
       null) as string | null,
     backdropUrl: (raw.bannerImage as string | undefined) ?? null,
-    anilistId: Number(raw.id),
+    anilistId: id,
     genres: Array.isArray(raw.genres) ? (raw.genres as string[]) : [],
     countries: raw.countryOfOrigin ? [raw.countryOfOrigin as string] : [],
     runtimeMinutes: (raw.duration as number | undefined) ?? null,
@@ -73,6 +111,8 @@ const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
     episodesCount: (raw.episodes as number | undefined) ?? null,
     seasonBreakdown: raw.episodes ? [{ seasonNumber: 1, episodes: Number(raw.episodes) }] : null,
     isAdult: Boolean(raw.isAdult),
+    ratings: extractAnilistRatings(raw),
+    cast: extractAnilistCast(raw),
     raw,
   }
 }
