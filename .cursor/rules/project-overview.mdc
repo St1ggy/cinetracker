@@ -1,0 +1,53 @@
+---
+description: CineTracker — stack, FSD architecture, folder structure, and key dependencies
+alwaysApply: true
+---
+
+# CineTracker — project overview
+
+## Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | SvelteKit 2 + Svelte 5 (runes) |
+| Language | TypeScript (strict) |
+| CSS | Tailwind CSS v4 |
+| UI components | shadcn-svelte (bits-ui) |
+| ORM | Prisma v7 + `@prisma/adapter-pg` |
+| Database | PostgreSQL (Vercel Postgres / Neon) |
+| Auth | Auth.js v1 + `@auth/prisma-adapter` + Google OAuth |
+| i18n | Paraglide.js (inlang) |
+| Data fetching | `@tanstack/svelte-query` (client-side) |
+| Themes | `mode-watcher` |
+| Deployment | Vercel adapter |
+
+## External media providers
+
+`ANILIST`, `JIKAN`, `KITSU` — free, no API key required.
+`TMDB`, `OMDB`, `TVDB`, `TRAKT` — require a user-supplied API key (stored encrypted in `user_api_keys`).
+
+## Architecture: Feature-Sliced Design
+
+```
+src/
+  pages/          # pages (home, lists, list-details, media-details, profile, layout, signin)
+  features/       # isolated features (theme-toggler, locale-selector)
+  widgets/        # composite blocks (app-sidebar)
+  shared/
+    config/       # domain.ts — WATCH_STATUSES, MEDIA_TYPES, MEDIA_TYPE_META, WATCH_STATUS_META, PROVIDER_META
+    lib/          # labels.ts, html.ts — utilities
+  lib/
+    server/       # server-side logic (providers/, repositories/, external.ts, crypto.ts)
+    components/ui/ # shadcn components (button, input, select, sidebar, sheet…)
+    paraglide/    # generated runtime
+  routes/         # SvelteKit routes (+page.svelte, +page.server.ts, api/**)
+```
+
+## Environment variables
+
+```
+DATABASE_URL            # PostgreSQL connection string
+AUTH_GOOGLE_ID          # Google OAuth client ID
+AUTH_GOOGLE_SECRET      # Google OAuth client secret
+API_KEYS_ENCRYPTION_KEY # 32-byte hex key for AES-256-GCM encryption of provider keys
+```

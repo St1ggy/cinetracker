@@ -1,0 +1,89 @@
+---
+description: Backend patterns — Prisma, repositories, API routes, external providers, encryption
+globs: src/lib/server/**,src/routes/**
+alwaysApply: false
+---
+
+# Backend — patterns
+
+## Repositories
+
+All database access goes through `src/lib/server/repositories/`. Never use `prisma.*` directly in routes.
+
+```typescript
+import { listsRepository, listItemsRepository, mediaRepository } from '$lib/server/repositories'
+
+// ✅ Correct
+const items = await listsRepository.findItemsByListWithFilters({ listId, ... })
+
+// ❌ Wrong — use the repository instead
+const items = await prisma.listItem.findMany(...)
+```
+
+## API routes — structure
+
+```typescript
+export const GET = async ({ locals, params, url }) => {
+  const session = await locals.auth()
+  if (!session?.user?.id) throw error(401, 'Authentication required')
+
+  // Validate with Zod
+  const body = schema.parse(await request.json())
+
+  return json(result)
+}
+```
+
+## Zod — mandatory validation
+
+```typescript
+import { z } from 'zod'
+import { WATCH_STATUSES } from '$shared/config/domain'
+
+const schema = z.object({
+  status: z.enum(WATCH_STATUSES).nullable(),
+  currentSeason: z.number().int().positive().nullable().optional(),
+  // z.record in Zod v4 requires two arguments:
+  keys: z.record(z.string(), z.string()),  // ✅
+  // keys: z.record(z.string()),            // ❌ Zod v4 error
+})
+```
+
+## External providers
+
+Providers live in `src/lib/server/providers/`. Each implements the `ProviderAdapter` interface from `types.ts`.
+
+Free providers: `ANILIST`, `JIKAN`, `KITSU` — used without a key.
+Paid providers: `TMDB`, `OMDB`, `TVDB`, `TRAKT` — require a user key from `user_api_keys`.
+
+```typescript
+import { searchExternal, importExternalMedia } from '$lib/server/external'
+
+// userKeys — decrypted keys fetched from DB
+const userKeys = await loadUserKeys(session.user.id)
+const results = await searchExternal(query, userKeys)
+```
+
+## API key encryption
+
+```typescript
+import { encrypt, decrypt } from '$lib/server/crypto'
+// AES-256-GCM, key from API_KEYS_ENCRYPTION_KEY
+const { encrypted, iv, authTag } = encrypt(plaintext)
+const plaintext = decrypt(encrypted, iv, authTag)
+```
+
+## Prisma — schema and migrations
+
+After modifying `prisma/schema.prisma`:
+
+```bash
+npx prisma db push          # sync schema (dev)
+npx prisma generate         # regenerate client
+```
+
+Config lives in `prisma.config.ts`, URL is read from `env('DATABASE_URL')`.
+
+## Search result deduplication
+
+`searchExternal` automatically deduplicates results from multiple providers using the key `${normalizeTitle}|${year}|${mediaType}`, keeping the most complete entry (with poster and overview).

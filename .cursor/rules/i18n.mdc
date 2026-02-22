@@ -1,0 +1,86 @@
+---
+description: Localisation via Paraglide.js — rules for working with translations
+globs: src/**,messages/**
+alwaysApply: false
+---
+
+# Localisation (Paraglide.js)
+
+## Supported languages
+
+`en` (English), `fr` (Français), `ja` (日本語), `ru` (Русский), `zh` (中文)
+
+## Rule: all user-facing strings must go through Paraglide
+
+```svelte
+<!-- ❌ Never hardcode strings -->
+<p>All genres</p>
+<button>Apply</button>
+
+<!-- ✅ Use L -->
+import { L } from '$lib'
+<p>{L.home_all_genres()}</p>
+<button>{L.common_apply()}</button>
+```
+
+## Adding a new key
+
+**Must be added to ALL 5 files** at the same time:
+
+```
+messages/en.json  ← primary
+messages/ru.json
+messages/fr.json
+messages/ja.json
+messages/zh.json
+```
+
+Keys are snake_case. Example:
+
+```json
+// en.json
+"home_all_statuses": "All statuses",
+
+// ru.json
+"home_all_statuses": "Все статусы",
+
+// fr.json
+"home_all_statuses": "Tous les statuts",
+
+// ja.json
+"home_all_statuses": "すべてのステータス",
+
+// zh.json
+"home_all_statuses": "全部状态",
+```
+
+## Parameterised strings
+
+```json
+"media_season_number": "Season {n}",
+"common_by": "by {name}",
+```
+
+```svelte
+{L.media_season_number({ n: season })}
+{L.common_by({ name: author })}
+```
+
+## Country formatting
+
+Never hardcode country names. Use `formatCountry` from `$shared/lib/labels`:
+
+```svelte
+import { formatCountry } from '$shared/lib/labels'
+{formatCountry('US')}  // 🇺🇸 United States (or localised equivalent)
+```
+
+Flags are built via Unicode Regional Indicators (offset 127397), not emoji libraries.
+
+## Watch status labels
+
+```svelte
+import { getWatchStatusLabels } from '$shared/lib/labels'
+const watchStatusLabels = getWatchStatusLabels(L)
+// { WATCHED: '...', IN_PROGRESS: '...', PLAN_TO_WATCH: '...' }
+```

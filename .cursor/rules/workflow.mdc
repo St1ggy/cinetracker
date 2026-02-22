@@ -1,0 +1,54 @@
+---
+description: Workflow — mandatory checks after every code change
+alwaysApply: true
+---
+
+# Workflow — mandatory steps
+
+## After EVERY code change
+
+Execute **in this exact order**:
+
+### 1. ESLint autofix
+
+```bash
+npx eslint --fix <changed files>
+```
+
+Run only on changed files (not the whole project — too slow):
+
+```bash
+# Example
+npx eslint --fix src/pages/home/home.svelte src/lib/server/repositories/lists.repository.ts
+```
+
+### 2. Type-check
+
+```bash
+npm run check
+# Equivalent: svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+```
+
+Catches TypeScript errors in `.svelte` files that `tsc` alone cannot see.
+
+## Fixing found errors
+
+| Error type | Action |
+|-----------|--------|
+| Prettier / formatting | `npx eslint --fix` will auto-fix |
+| Import order | `npx eslint --fix` will auto-fix |
+| TypeScript type error | Fix manually, then re-run `npm run check` |
+| Svelte `{@const}` outside block | Move inside `{#each}` / `{#if}` |
+| Tailwind dynamic class purge | Replace with `style="..."` using a CSS variable |
+
+## Project commands
+
+```bash
+npm run dev          # dev server
+npm run check        # svelte-check + tsc
+npm run lint         # eslint without fix
+npm run build        # production build
+
+npx prisma db push   # sync schema to DB
+npx prisma generate  # regenerate Prisma client
+```

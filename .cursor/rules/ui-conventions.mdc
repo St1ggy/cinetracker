@@ -1,0 +1,105 @@
+---
+description: UI conventions — shadcn components, styles, buttons, cards, Select
+globs: src/**/*.svelte
+alwaysApply: false
+---
+
+# UI — conventions
+
+## Select — always shadcn, never native `<select>`
+
+```svelte
+import * as Select from '$lib/components/ui/select'
+
+<!-- ✅ Correct — always specify type="single" or type="multiple" -->
+<Select.Root type="single" value={genre} onValueChange={(v) => (genre = v)}>
+  <Select.Trigger class="h-9 text-sm">
+    {genre ? labelFor(genre) : 'Placeholder'}
+  </Select.Trigger>
+  <Select.Content>
+    <Select.Item value="opt1" label="Option 1" />
+  </Select.Content>
+</Select.Root>
+
+<!-- ❌ Forbidden -->
+<select bind:value={genre}>...</select>
+```
+
+For "all" / empty option use the sentinel `'__all__'`, not an empty string:
+
+```svelte
+value={genre || '__all__'}
+onValueChange={(v) => (genre = v === '__all__' ? '' : v)}
+```
+
+## Buttons — hover states are required
+
+```svelte
+<!-- outline style -->
+<button class="rounded-md border px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">
+
+<!-- primary style -->
+<button class="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground hover:bg-primary/90">
+
+<!-- destructive -->
+<button class="rounded-md border border-destructive text-destructive hover:bg-destructive/10">
+```
+
+Global `transition-all duration-150` and `active:scale-[0.97]` are applied to all buttons via `app.css`.
+
+## Media type chips
+
+```svelte
+import { getMediaTypeMeta } from '$shared/lib/labels'
+
+<span class="rounded-full border px-2 py-0.5 text-[10px] font-semibold {getMediaTypeMeta(item.mediaType).color}">
+  {getMediaTypeMeta(item.mediaType).label}
+</span>
+```
+
+## Watch status icons
+
+Use `style=` for colour, not a dynamic Tailwind class variable:
+
+```svelte
+import { WATCH_STATUS_META } from '$shared/config/domain'
+{@const statusMeta = WATCH_STATUS_META[item.status ?? 'PLAN_TO_WATCH']}
+
+<div class="rounded-full p-1 text-white shadow" style="background-color: {statusMeta.bgColor}">
+  {#if statusMeta.icon === 'circle-check'}<CircleCheckIcon />
+  {:else if statusMeta.icon === 'circle-play'}<CirclePlayIcon />
+  {:else}<ClockIcon />
+  {/if}
+</div>
+```
+
+## Media cards (grid)
+
+Cards are links with `group relative overflow-hidden`. Poster + absolute hover overlay at the bottom. Status icon — `absolute top-2 right-2`.
+
+```svelte
+<a href="/media/{id}" class="group relative block overflow-hidden rounded-lg border bg-card">
+  <img class="aspect-2/3 w-full object-cover transition-transform duration-300 group-hover:scale-105" .../>
+  <!-- status icon -->
+  <div class="absolute top-2 right-2 ...">...</div>
+  <!-- hover overlay -->
+  <div class="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/90 ... opacity-0 group-hover:opacity-100">...</div>
+  <!-- static footer -->
+  <div class="p-3 transition-opacity group-hover:opacity-0">...</div>
+</a>
+```
+
+## Countries
+
+Always display as a full localised name with flag:
+
+```svelte
+import { formatCountry } from '$shared/lib/labels'
+{formatCountry('US')}  // 🇺🇸 United States
+```
+
+## Global styles (app.css)
+
+- `button` — `transition-all duration-150`, `cursor-pointer`, `active:scale-[0.97]`
+- `a` — `transition-colors duration-150`
+- `input:focus-visible` — `border-ring` + ring via `color-mix`

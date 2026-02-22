@@ -1,0 +1,96 @@
+---
+description: Project living memory — new decisions, requirements, and conventions. Updated as development progresses.
+alwaysApply: true
+---
+
+# CineTracker — project memory
+
+> **For AI:** After every new architectural decision, convention change, or feature addition — **add an entry here** with the date and a brief description.
+
+---
+
+## 2026-02-22 — Initial conventions
+
+### Data model
+- `ListItem` has fields `status: WatchStatus?`, `currentSeason: Int?`, `currentEpisode: Int?`
+- `WatchStatus` enum: `WATCHED`, `IN_PROGRESS`, `PLAN_TO_WATCH`
+- Default when adding to a list — `PLAN_TO_WATCH` (not `null`)
+- Legacy records with `status = null` are treated as `PLAN_TO_WATCH` in the UI
+
+### Progress management
+- Changing status and episode — **only on the media detail page** (`/media/[mediaId]`)
+- On list cards — status display only (icon), no editing
+
+### Media cards
+- Grid: `grid-cols-2 md:grid-cols-3 xl:grid-cols-5`
+- Card is a `<a>` link with `group relative overflow-hidden`
+- Hover overlay — `absolute inset-x-0 bottom-0`, `opacity-0 group-hover:opacity-100`
+- Status icon — `absolute top-2 right-2` with `style="background-color: ..."` (not a dynamic Tailwind class)
+- Bottom panel: `p-3 transition-opacity group-hover:opacity-0`
+
+### Home page filters
+- URL params: `q`, `genre`, `status`, `yearFrom`, `yearTo`
+- "All" in a Select filter: sentinel `'__all__'` instead of an empty string
+
+### Select component
+- Always `Select.Root type="single"` or `type="multiple"` — omitting `type` causes a TypeScript error
+- Native `<select>` is forbidden
+
+### Country flags
+- Computed via Unicode offset `127397` (= `U+1F1E6` − 65)
+- `formatCountry(code)` in `$shared/lib/labels.ts`
+
+### Icons
+- `circle-check` (not `check-circle`), `circle-play` (not `play-circle`) — deprecated variants have no `.svelte.d.ts`
+
+### Global CSS transitions (`app.css`)
+- `button`: `transition-all duration-150`, `active:scale-[0.97]`
+- `a`: `transition-colors duration-150`
+- `input:focus-visible`: ring via `color-mix(in srgb, var(--ring) 50%, transparent)`
+
+---
+
+## 2026-02-22 — Mandatory checks after every code change
+
+### What changed
+- After **every** code change, run:
+  1. `npx eslint --fix <changed files>` — auto-fix and lint check
+  2. `npm run check` — TypeScript + svelte-check
+
+### Commands
+
+```bash
+npx eslint --fix src/path/to/file.svelte src/path/to/other.ts
+npm run check
+```
+
+### Why
+- The project uses strict ESLint with many rules (imports, prettier, unicorn, sonarjs)
+- `svelte-check` catches type errors in `.svelte` files that `tsc` cannot see
+- Without this, formatting and type errors accumulate silently
+
+---
+
+## 2026-02-22 — Dependency update notes
+
+### typescript-eslint v8.56+
+- Having both `project` and `projectService` in `parserOptions` is now an error
+- `@st1ggy/linter-config` sets both; strip `project` via `Object.fromEntries` filter in `eslint.config.js`
+
+### @st1ggy/linter-config v2.42+
+- Now ships type declarations — remove `@ts-expect-error` from config file imports
+- `import/default` rule may produce false positives for subpath exports; suppress with `// eslint-disable-next-line import/default`
+
+---
+
+## Template for new entries
+
+```
+## YYYY-MM-DD — Short description of the change
+
+### What changed
+- ...
+
+### Why
+- ...
+```
