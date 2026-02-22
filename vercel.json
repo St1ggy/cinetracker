@@ -1,5 +1,5 @@
 {
   "framework": "sveltekit",
-  "installCommand": "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 PRISMA_GENERATE_SKIP_AUTOINSTALL=true npm install",
+  "installCommand": "PRISMA_GENERATE_SKIP_AUTOINSTALL=true npm install",
   "buildCommand": "npx prisma generate && npm run build"
 }
