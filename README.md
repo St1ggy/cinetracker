@@ -2,7 +2,7 @@
 
 A personal media tracker for movies, TV shows and anime — with public lists, community ratings, and a tag-based catalog.
 
-**Live:** https://cinetracker.vercel.app · **Repo:** https://github.com/St1ggy/cinetracker
+**Live:** https://cinetracker-pied.vercel.app · **Repo:** https://github.com/St1ggy/cinetracker
 
 ---
 
