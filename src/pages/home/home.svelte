@@ -89,10 +89,6 @@
     goto('/')
   }
 
-  const handleDelete = () => {
-    queryClient.invalidateQueries({ queryKey: ['list-items'] })
-  }
-</script>
 
 {#if !data.authenticated}
   <section class="rounded-lg border bg-card p-8 text-center">
@@ -118,7 +114,7 @@
 
     <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
       {#each itemsQuery.data?.items ?? [] as item (item.id)}
-        <MediaCard {item} listId={data.list?.id} onDelete={handleDelete} />
+        <MediaCard {item} />
       {/each}
     </div>
   </section>

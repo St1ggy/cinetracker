@@ -125,3 +125,43 @@ All super-important AI context was consolidated into `context.mdc` (same `.curso
 ### Why
 - ...
 ```
+
+## 2026-02-22 — Component size and prop-drilling rules
+
+### Rules (mandatory)
+
+- **Small components**: every component must have a single, clear responsibility. If a component grows beyond ~100–120 lines, extract sub-components into `ui/`.
+- **No prop-drilling**: never pass props through intermediate components just to get data to a deeply nested child. Alternatives:
+  - Access `page.data` directly via `import { page } from '$app/state'` in any sub-component that needs server-loaded data.
+  - Use Svelte context (`setContext` / `getContext`) for shared state within a component subtree.
+  - Use TanStack Query's `useQueryClient()` for shared async/server state (cache is global).
+  - Keep callbacks at the component where the data lives; don't thread them down multiple levels.
+
+### Pattern for page data in sub-components
+
+```svelte
+<!-- ✅ Sub-component reads page data directly, no drilling needed -->
+<script lang="ts">
+  import { page } from '$app/state'
+  import type { PageData } from '../../../routes/$types'
+
+  const listId = $derived((page.data as PageData).list?.id)
+</script>
+```
+
+### Pattern for avoiding callback drilling
+
+```svelte
+<!-- ✅ Instead of passing onDelete down through 3 levels, child calls API directly
+     and invalidates via useQueryClient() -->
+<script lang="ts">
+  import { useQueryClient } from '@tanstack/svelte-query'
+
+  const queryClient = useQueryClient()
+
+  const handleDelete = async () => {
+    await fetch(`/api/...`, { method: 'DELETE' })
+    queryClient.invalidateQueries({ queryKey: ['list-items'] })
+  }
+</script>
+```

@@ -3,11 +3,15 @@
   import CirclePlayIcon from '@lucide/svelte/icons/circle-play'
   import ClockIcon from '@lucide/svelte/icons/clock'
   import Trash2Icon from '@lucide/svelte/icons/trash-2'
+  import { useQueryClient } from '@tanstack/svelte-query'
+  import { page } from '$app/state'
 
   import { L } from '$lib'
   import { WATCH_STATUS_META } from '$shared/config/domain'
   import { stripHtml } from '$shared/lib/html'
   import { getMediaTypeMeta, getWatchStatusLabels } from '$shared/lib/labels'
+
+  import type { PageData } from '../../../routes/$types'
 
   type MediaItem = {
     id: string
@@ -26,12 +30,13 @@
 
   type Props = {
     item: MediaItem
-    listId?: string
     showStatusLabel?: boolean
-    onDelete?: () => void
   }
 
-  const { item, listId, showStatusLabel = false, onDelete }: Props = $props()
+  const { item, showStatusLabel = false }: Props = $props()
+
+  const queryClient = useQueryClient()
+  const listId = $derived((page.data as PageData).list?.id)
 
   const watchStatusLabels = getWatchStatusLabels(L)
   const statusMeta = $derived(WATCH_STATUS_META[(item.status as keyof typeof WATCH_STATUS_META) ?? 'PLAN_TO_WATCH'])
@@ -54,7 +59,7 @@
       const response = await fetch(`/api/lists/${listId}/items/${item.id}`, { method: 'DELETE' })
 
       if (response.ok) {
-        onDelete?.()
+        queryClient.invalidateQueries({ queryKey: ['list-items'] })
       }
     } finally {
       isDeleting = false
