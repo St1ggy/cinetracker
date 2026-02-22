@@ -2,8 +2,8 @@ import { paraglideVitePlugin } from '@inlang/paraglide-js'
 import { sveltekit } from '@sveltejs/kit/vite'
 import tailwindcss from '@tailwindcss/vite'
 import { readFileSync } from 'node:fs'
+import { defineConfig } from 'vite'
 import devtoolsJson from 'vite-plugin-devtools-json'
-import { defineConfig } from 'vitest/config'
 
 const package_ = JSON.parse(readFileSync('./package.json', 'utf8')) as { version: string }
 
@@ -24,9 +24,4 @@ export default defineConfig({
       outdir: './src/lib/paraglide',
     }),
   ],
-  test: {
-    environment: 'node',
-    include: ['src/**/*.{test,spec}.{js,ts}'],
-    exclude: ['src/lib/server/**'],
-  },
 })
