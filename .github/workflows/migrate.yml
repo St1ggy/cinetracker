@@ -24,7 +24,7 @@ jobs:
 
       - name: Deploy migrations
         env:
-          DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL != '' && secrets.DIRECT_DATABASE_URL || secrets.DATABASE_URL }}
         run: bunx prisma migrate deploy
 
       - name: 'notify vercel'
