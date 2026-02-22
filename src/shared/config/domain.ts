@@ -92,7 +92,7 @@ export const PROVIDER_META: Record<
     label: 'Trakt',
     description: 'Movies & TV series with watch history sync',
     requiresKey: true,
-    keyUrl: 'https://trakt.tv/oauth/applications',
-    stepsCount: 6,
+    keyUrl: 'https://trakt.tv/oauth/applications/new',
+    stepsCount: 5,
   },
 }
