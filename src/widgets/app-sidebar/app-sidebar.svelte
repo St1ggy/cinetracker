@@ -63,22 +63,21 @@
     </a>
   </nav>
 
-  <div class="border-t p-4">
+  <div class="space-y-3 border-t p-4">
     <div class="flex items-center justify-between">
       <LocaleSelector />
       <ThemeToggler />
     </div>
-    <div class="mt-3 flex items-center justify-between">
-      <span class="text-xs font-medium text-muted-foreground/70">v{__APP_VERSION__}</span>
+    <div class="flex items-center justify-between">
+      <span class="text-sm font-semibold text-muted-foreground tabular-nums">v{__APP_VERSION__}</span>
       <a
         href="https://github.com/St1ggy/cinetracker"
         target="_blank"
         rel="noopener noreferrer"
-        class="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+        class="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
         aria-label="GitHub repository"
       >
-        <GithubIcon class="size-3.5" />
-        GitHub
+        <GithubIcon class="size-4" />
       </a>
     </div>
   </div>
