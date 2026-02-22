@@ -5,6 +5,10 @@ import devtoolsJson from 'vite-plugin-devtools-json'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
+  ssr: {
+    // Prevent Node from trying to load .svelte files directly from this package.
+    noExternal: ['@tanstack/svelte-query'],
+  },
   plugins: [
     tailwindcss(),
     sveltekit(),
@@ -24,6 +28,7 @@ export default defineConfig({
           environment: 'browser',
           browser: {
             enabled: true,
+            headless: true,
             provider: 'playwright',
             instances: [{ browser: 'chromium' }],
           },
