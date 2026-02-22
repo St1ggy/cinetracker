@@ -8,6 +8,7 @@
     title: string
     description: string | null
     visibility: ListVisibility
+    isAnonymous?: boolean
     owner: {
       handle: string | null
       name: string | null
@@ -26,7 +27,9 @@
   const { list, isOwner, isSaved, isSaving = false, onToggleSave }: Props = $props()
 
   const visibilityLabel = (value: ListVisibility) => getVisibilityLabel(L, value)
-  const ownerName = $derived(list.owner.handle ?? list.owner.name ?? list.owner.email ?? '—')
+  const ownerName = $derived(
+    list.isAnonymous && !isOwner ? null : (list.owner.handle ?? list.owner.name ?? list.owner.email ?? '—'),
+  )
 </script>
 
 <header class="rounded-lg border bg-card p-4">
@@ -34,7 +37,14 @@
     <div>
       <h1 class="text-2xl font-semibold">{list.title}</h1>
       <p class="text-sm text-muted-foreground">{list.description ?? L.common_no_description()}</p>
-      <p class="mt-1 text-xs text-muted-foreground">{L.common_owner({ name: ownerName })}</p>
+      {#if ownerName}
+        <p class="mt-1 text-xs text-muted-foreground">{L.common_owner({ name: ownerName })}</p>
+      {:else if list.isAnonymous && isOwner}
+        <p class="mt-1 text-xs text-muted-foreground">
+          {L.common_owner({ name: ownerName ?? '—' })}
+          <span class="ml-1 rounded border px-1 py-0.5 text-[10px]">{L.lists_anonymous()}</span>
+        </p>
+      {/if}
     </div>
     <div class="flex gap-2">
       <span class="rounded border px-2 py-1 text-xs">{visibilityLabel(list.visibility)}</span>
