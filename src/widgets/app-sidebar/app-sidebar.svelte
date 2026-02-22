@@ -62,8 +62,11 @@
     </a>
   </nav>
 
-  <div class="flex items-center justify-between border-t p-4">
-    <LocaleSelector />
-    <ThemeToggler />
+  <div class="border-t p-4">
+    <div class="flex items-center justify-between">
+      <LocaleSelector />
+      <ThemeToggler />
+    </div>
+    <p class="mt-2 text-center text-[10px] text-muted-foreground/50">v{__APP_VERSION__}</p>
   </div>
 </div>

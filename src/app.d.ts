@@ -16,14 +16,12 @@ declare module '@auth/sveltekit' {
 
 declare global {
   namespace App {
-    // interface Error {}
     type Locals = {
       auth: () => Promise<Session | null>
     }
     type PageData = {
       session?: Session | null
     }
-    // interface PageState {}
-    // interface Platform {}
   }
+  const __APP_VERSION__: string
 }
