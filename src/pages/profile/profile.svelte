@@ -8,6 +8,19 @@
   import type { MediaProvider } from '$shared/config/domain'
   import type { PageData } from '../../routes/profile/$types'
 
+  // Returns localised step strings for a given provider using i18n message keys.
+  const getProviderSteps = (provider: MediaProvider): string[] => {
+    const meta = PROVIDER_META[provider]
+
+    if (!meta.stepsCount) return []
+
+    return Array.from({ length: meta.stepsCount }, (_, index) => {
+      const key = `profile_${provider.toLowerCase()}_step_${index + 1}` as keyof typeof L
+
+      return typeof L[key] === 'function' ? (L[key] as () => string)() : ''
+    }).filter(Boolean)
+  }
+
   type Props = { data: PageData }
   const { data }: Props = $props()
 
@@ -238,15 +251,16 @@
                 </div>
 
                 {#if expanded}
+                  {@const steps = getProviderSteps(provider)}
                   <div class="border-t px-4 py-3">
                     <div class="space-y-4">
-                      {#if meta.steps && meta.steps.length > 0}
+                      {#if steps.length > 0}
                         <div class="rounded-md bg-muted/50 px-4 py-3">
                           <p class="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                             {L.profile_api_key_how_to_get()}
                           </p>
                           <ol class="space-y-1">
-                            {#each meta.steps as step, index (index)}
+                            {#each steps as step, index (index)}
                               <li class="flex gap-2 text-xs text-muted-foreground">
                                 <span class="shrink-0 font-semibold text-foreground">{index + 1}.</span>
                                 <span>{step}</span>
