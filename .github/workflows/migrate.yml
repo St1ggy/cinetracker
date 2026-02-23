@@ -14,7 +14,7 @@ jobs:
   migrate:
     name: Run Prisma Migrations (prod DB)
     runs-on: ubuntu-latest
-    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') && !startsWith(github.event.head_commit.message, 'chore(release):') }}
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -71,6 +71,10 @@ jobs:
             if echo "$OUT" | grep -qE "already exists|P3018"; then
               echo "Recovery: marking 20260220000000_initial as applied (schema already present)."
               npx prisma migrate resolve --applied 20260220000000_initial
+              npx prisma migrate deploy
+            elif echo "$OUT" | grep -qE "P3089|failed migrations"; then
+              echo "Recovery: resolving failed migration 20260220000000_initial and retrying."
+              npx prisma migrate resolve --rolled-back 20260220000000_initial
               npx prisma migrate deploy
             else
               echo "$OUT"
