@@ -1,3 +1,9 @@
+## [1.12.0](https://github.com/St1ggy/cinetracker/compare/v1.11.0...v1.12.0) (2026-02-23)
+
+### Features
+
+* **board:** Watched column shows watched time, In progress shows remaining time ([7303fa2](https://github.com/St1ggy/cinetracker/commit/7303fa29170d241d4671edb687f4efb0c2a10d70))
+
 ## [1.11.0](https://github.com/St1ggy/cinetracker/compare/v1.10.0...v1.11.0) (2026-02-23)
 
 ### Features
