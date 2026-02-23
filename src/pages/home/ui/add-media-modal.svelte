@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CircleCheckIcon from '@lucide/svelte/icons/circle-check'
   import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle'
   import PlusIcon from '@lucide/svelte/icons/plus'
   import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
@@ -49,6 +50,22 @@
 
   const chosenListTitle = $derived(allLists.find((l) => l.id === chosenListId)?.title ?? listTitle)
 
+  const addedKeysQuery = createQuery(() => ({
+    queryKey: ['added-media-keys', chosenListId],
+    enabled: !!chosenListId,
+    queryFn: async () => {
+      const response = await fetch(`/api/lists/${chosenListId}/added-media-keys`)
+
+      if (!response.ok) throw new Error('Failed to load added keys')
+
+      const payload = (await response.json()) as { keys: string[] }
+
+      return payload.keys
+    },
+  }))
+
+  const addedKeysSet = $derived(addedKeysQuery.data ? new Set(addedKeysQuery.data) : new Set<string>())
+
   let searchTimeout: ReturnType<typeof setTimeout> | undefined
 
   const onSearchInput = (value: string) => {
@@ -91,6 +108,7 @@
       if (!response.ok) throw new Error('Failed to add product')
     },
     onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['added-media-keys'] })
       await queryClient.invalidateQueries({ queryKey: ['external-search'] })
       await queryClient.invalidateQueries({ queryKey: ['list-items'] })
       toast.success(L.home_added_success())
@@ -156,6 +174,7 @@
         {#each searchQuery.data ?? [] as result (`${result.provider}:${result.externalId}`)}
           {@const itemKey = `${result.provider}:${result.externalId}`}
           {@const isThisPending = pendingItemKey === itemKey}
+          {@const isAlreadyAdded = addedKeysSet.has(itemKey)}
           {@const typeMeta = getMediaTypeMeta(result.mediaType)}
           <div class="flex items-stretch overflow-hidden rounded-md border">
             {#if result.posterUrl}
@@ -177,18 +196,27 @@
                 {result.overview ? stripHtml(result.overview) : L.common_no_overview()}
               </p>
             </div>
-            <button
-              class="flex w-12 shrink-0 items-center justify-center border-l bg-primary/5 text-primary transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
-              title={L.home_add_product()}
-              disabled={!!pendingItemKey}
-              onclick={() => addProduct(result.provider, result.externalId)}
-            >
-              {#if isThisPending}
-                <LoaderCircleIcon class="size-5 animate-spin" />
-              {:else}
-                <PlusIcon class="size-5" />
-              {/if}
-            </button>
+            {#if isAlreadyAdded}
+              <div
+                class="flex w-12 shrink-0 items-center justify-center border-l bg-muted/50 text-muted-foreground"
+                title={L.home_already_in_list()}
+              >
+                <CircleCheckIcon class="size-5 shrink-0 text-primary" aria-hidden="true" />
+              </div>
+            {:else}
+              <button
+                class="flex w-12 shrink-0 items-center justify-center border-l bg-primary/5 text-primary transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                title={L.home_add_product()}
+                disabled={!!pendingItemKey}
+                onclick={() => addProduct(result.provider, result.externalId)}
+              >
+                {#if isThisPending}
+                  <LoaderCircleIcon class="size-5 animate-spin" />
+                {:else}
+                  <PlusIcon class="size-5" />
+                {/if}
+              </button>
+            {/if}
           </div>
         {/each}
       </div>

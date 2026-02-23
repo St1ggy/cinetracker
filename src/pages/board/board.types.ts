@@ -14,5 +14,6 @@ export type KanbanItem = {
     episodeRuntimeMin: number | null
     episodeRuntimeMax: number | null
     episodesCount: number | null
+    genres?: { genre: { id: string; slug: string; name: string } }[]
   }
 }
