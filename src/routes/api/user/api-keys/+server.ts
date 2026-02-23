@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 import { encrypt } from '$lib/server/crypto'
 import { prisma } from '$lib/server/prisma'
+import { validateProviderCredentials } from '$lib/server/providers/validate-credentials'
 import { KEY_REQUIRED_PROVIDERS } from '$shared/config/domain'
 
 import type { MediaProvider } from '@prisma/client'
@@ -49,7 +50,16 @@ export const PUT = async ({ locals, request }) => {
 
   if (!credentialSchema) throw error(400, `No credential schema for provider: ${body.provider}`)
 
-  const validatedCredentials = credentialSchema.parse(body.credentials)
+  const validatedCredentials = credentialSchema.parse(body.credentials) as Record<string, string>
+
+  try {
+    await validateProviderCredentials(body.provider as MediaProvider, validatedCredentials)
+  } catch (error_) {
+    const message = error_ instanceof Error ? error_.message : 'Validation failed'
+
+    return json({ message }, { status: 400 })
+  }
+
   const plaintext = JSON.stringify(validatedCredentials)
   const { encrypted, iv, authTag } = encrypt(plaintext)
 
