@@ -8,7 +8,6 @@
   import { toast } from 'svelte-sonner'
 
   import { L } from '$lib'
-  import * as Select from '$lib/components/ui/select'
   import { getStorageItem, setStorageItem } from '$shared/lib/storage'
 
   import AddMediaModal from './ui/add-media-modal.svelte'
@@ -154,21 +153,6 @@
   </section>
 {:else}
   <section class="space-y-4">
-    {#if lists.length > 1}
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="text-sm font-medium text-muted-foreground">{L.home_list_label()}</span>
-        <Select.Root type="single" value={currentListId} onValueChange={(v) => v && (currentListId = v)}>
-          <Select.Trigger class="h-9 min-w-[140px] text-sm">
-            {currentList?.title ?? '—'}
-          </Select.Trigger>
-          <Select.Content>
-            {#each lists as list (list.id)}
-              <Select.Item value={list.id} label={list.title} />
-            {/each}
-          </Select.Content>
-        </Select.Root>
-      </div>
-    {/if}
     <MediaFilterBar
       {query}
       {genre}
@@ -183,7 +167,14 @@
       onStatusChange={handleStatusChange}
     />
 
-    <MediaViewControls {viewMode} onViewChange={(v) => (viewMode = v)} />
+    <MediaViewControls
+      {viewMode}
+      onViewChange={(v) => (viewMode = v)}
+      {lists}
+      {currentListId}
+      currentListTitle={currentList?.title ?? '—'}
+      onListChange={(id) => (currentListId = id)}
+    />
 
     {#if items.length === 0}
       <div class="flex flex-col items-center gap-3 rounded-xl border border-dashed bg-card/50 py-16 text-center">
