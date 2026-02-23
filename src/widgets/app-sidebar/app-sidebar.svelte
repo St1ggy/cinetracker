@@ -1,8 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state'
-  import CompassIcon from '@lucide/svelte/icons/compass'
-  import GithubIcon from '@lucide/svelte/icons/github'
   import HomeIcon from '@lucide/svelte/icons/house'
+  import InfoIcon from '@lucide/svelte/icons/info'
   import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard'
   import ListIcon from '@lucide/svelte/icons/list'
   import UserIcon from '@lucide/svelte/icons/user'
@@ -29,65 +28,54 @@
     <div class="font-semibold">{L.app_name()}</div>
   </div>
 
-  <nav class="flex-1 space-y-2 p-4">
+  <nav class="flex min-h-0 flex-1 flex-col p-4">
+    <div class="space-y-2">
+      <a
+        href="/"
+        class={`flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent ${isActive('/') ? 'bg-accent font-medium' : ''}`}
+        onclick={() => onNavigate?.()}
+      >
+        <HomeIcon class="size-4" />
+        <span>{L.nav_home()}</span>
+      </a>
+      <a
+        href="/board"
+        class={`flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent ${isActive('/board') ? 'bg-accent font-medium' : ''}`}
+        onclick={() => onNavigate?.()}
+      >
+        <LayoutDashboardIcon class="size-4" />
+        <span>{L.nav_board()}</span>
+      </a>
+      <a
+        href="/lists"
+        class={`flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent ${isActive('/lists') ? 'bg-accent font-medium' : ''}`}
+        onclick={() => onNavigate?.()}
+      >
+        <ListIcon class="size-4" />
+        <span>{L.nav_lists()}</span>
+      </a>
+      <a
+        href="/profile"
+        class={`flex min-w-0 items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent ${isActive('/profile') ? 'bg-accent font-medium' : ''}`}
+        onclick={() => onNavigate?.()}
+      >
+        <UserIcon class="size-4 shrink-0" />
+        <span class="truncate">{userLabel}</span>
+      </a>
+    </div>
+    <div class="min-h-0 flex-1" aria-hidden="true"></div>
     <a
-      href="/"
-      class={`flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent ${isActive('/') ? 'bg-accent font-medium' : ''}`}
+      href="/about"
+      class={`mt-2 flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent ${isActive('/about') ? 'bg-accent font-medium' : ''}`}
       onclick={() => onNavigate?.()}
     >
-      <HomeIcon class="size-4" />
-      <span>{L.nav_home()}</span>
-    </a>
-    <a
-      href="/board"
-      class={`flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent ${isActive('/board') ? 'bg-accent font-medium' : ''}`}
-      onclick={() => onNavigate?.()}
-    >
-      <LayoutDashboardIcon class="size-4" />
-      <span>{L.nav_board()}</span>
-    </a>
-    <a
-      href="/explore"
-      class={`flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent ${isActive('/explore') ? 'bg-accent font-medium' : ''}`}
-      onclick={() => onNavigate?.()}
-    >
-      <CompassIcon class="size-4" />
-      <span>{L.nav_explore()}</span>
-    </a>
-    <a
-      href="/lists"
-      class={`flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent ${isActive('/lists') ? 'bg-accent font-medium' : ''}`}
-      onclick={() => onNavigate?.()}
-    >
-      <ListIcon class="size-4" />
-      <span>{L.nav_lists()}</span>
-    </a>
-    <a
-      href="/profile"
-      class={`flex min-w-0 items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent ${isActive('/profile') ? 'bg-accent font-medium' : ''}`}
-      onclick={() => onNavigate?.()}
-    >
-      <UserIcon class="size-4 shrink-0" />
-      <span class="truncate">{userLabel}</span>
+      <InfoIcon class="size-4" />
+      <span>{L.nav_about()}</span>
     </a>
   </nav>
 
-  <div class="space-y-3 border-t p-4">
-    <div class="flex items-center justify-between">
-      <LocaleSelector />
-      <ThemeToggler />
-    </div>
-    <div class="flex items-center justify-between">
-      <span class="text-sm font-semibold text-muted-foreground tabular-nums">v{__APP_VERSION__}</span>
-      <a
-        href="https://github.com/St1ggy/cinetracker"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-        aria-label="GitHub repository"
-      >
-        <GithubIcon class="size-4" />
-      </a>
-    </div>
+  <div class="flex items-center justify-between border-t p-4">
+    <LocaleSelector />
+    <ThemeToggler />
   </div>
 </div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ExplorePage } from '$pages/explore'
+  // Load always redirects to /lists?view=all; this is not rendered.
 </script>
 
-<ExplorePage />
+<div></div>
