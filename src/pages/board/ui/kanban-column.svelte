@@ -157,7 +157,10 @@
              This div is the direct child that dndzone drags; the card renders inside it. -->
         <div animate:flip={{ duration: flipDurationMs }}>
           {#if (item as Record<string, unknown>)[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
-            <div class="h-20 rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/20"></div>
+            <!-- Render the actual card dimmed so the user sees exactly what will appear at this position -->
+            <div class="pointer-events-none opacity-40 select-none">
+              <KanbanCard {item} />
+            </div>
           {:else}
             <KanbanCard {item} />
           {/if}
