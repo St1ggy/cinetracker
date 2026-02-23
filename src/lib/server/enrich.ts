@@ -28,14 +28,24 @@ const EXTERNAL_ID_MAP: Record<MediaProvider, (ids: KnownIds) => string | number 
   JIKAN: (ids) => ids.malId,
   KITSU: (ids) => ids.kitsuId,
   TRAKT: (ids) => ids.traktId,
+  SHIKIMORI: (ids) => ids.malId,
+  WIKIDATA: (ids) => ids.imdbId,
+  // Simkl: prefer imdb prefix for movies/TV, fall back to mal prefix for anime
+  SIMKL: (ids) => {
+    if (ids.imdbId) return `imdb:${ids.imdbId}`
+
+    if (ids.malId) return `mal:${ids.malId}`
+
+    return null
+  },
 }
 
 const getExternalId = (provider: MediaProvider, ids: KnownIds): string | number | null => EXTERNAL_ID_MAP[provider](ids)
 
 // Only these providers make sense to cross-reference across different media types.
 // Provider groups: movies+TV (TMDB, OMDB, TRAKT, TVDB) and anime (ANILIST, JIKAN, KITSU).
-const MOVIE_TV_PROVIDERS: MediaProvider[] = ['TMDB', 'OMDB', 'TRAKT', 'TVDB']
-const ANIME_PROVIDERS: MediaProvider[] = ['ANILIST', 'JIKAN', 'KITSU']
+const MOVIE_TV_PROVIDERS: MediaProvider[] = ['TMDB', 'OMDB', 'TRAKT', 'TVDB', 'SIMKL', 'WIKIDATA']
+const ANIME_PROVIDERS: MediaProvider[] = ['ANILIST', 'JIKAN', 'KITSU', 'SHIKIMORI', 'SIMKL']
 
 const getCompatibleProviders = (media: MediaWithSources): MediaProvider[] => {
   if (media.mediaType === 'ANIME') return ANIME_PROVIDERS

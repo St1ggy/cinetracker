@@ -11,6 +11,8 @@ import type {
   ProviderCredentials,
   SearchResult,
   TmdbCredentials,
+  WatchProviderEntry,
+  WatchProviders,
 } from './types'
 import type { MediaType } from '@prisma/client'
 
@@ -24,6 +26,7 @@ const parseYear = (value?: string | null): number | null => {
 
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
 const TMDB_PROFILE_BASE_URL = 'https://image.tmdb.org/t/p/w185'
+const TMDB_LOGO_BASE_URL = 'https://image.tmdb.org/t/p/w45'
 
 const toImage = (path?: string | null, baseUrl?: string): string | null => {
   if (!path) return null
@@ -52,10 +55,10 @@ const extractCast = (raw: Record<string, unknown>): CanonicalCastMember[] => {
 
   const castList = Array.isArray(credits.cast) ? (credits.cast as Record<string, unknown>[]) : []
 
-  return castList.slice(0, 20).map((member, idx) => ({
+  return castList.slice(0, 20).map((member, index) => ({
     name: String(member.name ?? ''),
     role: (member.character as string | undefined) ?? null,
-    order: (member.order as number | undefined) ?? idx,
+    order: (member.order as number | undefined) ?? index,
     profileUrl: toImage(member.profile_path as string | undefined, TMDB_PROFILE_BASE_URL),
     tmdbPersonId: member.id ? Number(member.id) : null,
   }))
@@ -118,9 +121,7 @@ const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
   const resolvedSeasonsCount = seasonsCountFromApi ?? (seasonBreakdown.length > 0 ? seasonBreakdown.length : null)
   const { imdbId, tvdbId } = extractExternalIds(raw)
   const externalUrl =
-    mediaType === 'TV'
-      ? `https://www.themoviedb.org/tv/${id}`
-      : `https://www.themoviedb.org/movie/${id}`
+    mediaType === 'TV' ? `https://www.themoviedb.org/tv/${id}` : `https://www.themoviedb.org/movie/${id}`
 
   return {
     provider: 'TMDB',
@@ -172,6 +173,57 @@ const buildAuthHeaders = (creds: TmdbCredentials): Record<string, string> => {
 const applyApiKey = (url: URL, creds: TmdbCredentials): void => {
   if (!creds.bearerToken && creds.apiKey) {
     url.searchParams.set('api_key', creds.apiKey)
+  }
+}
+
+const DEFAULT_WATCH_REGION = 'US'
+
+const extractWatchProviders = (raw: Record<string, unknown>, mediaPath: string): WatchProviders | null => {
+  const results = raw.results as Record<string, unknown> | undefined
+
+  if (!results) return null
+
+  const region = Object.keys(results)[0] ?? DEFAULT_WATCH_REGION
+  const regionData = results[region] as Record<string, unknown> | undefined
+
+  if (!regionData) return null
+
+  const parseEntries = (entries?: unknown[]): WatchProviderEntry[] => {
+    if (!Array.isArray(entries)) return []
+
+    return entries.map((entry) => {
+      const item = entry as Record<string, unknown>
+
+      return {
+        name: String(item.provider_name ?? ''),
+        logoUrl: item.logo_path ? `${TMDB_LOGO_BASE_URL}${item.logo_path}` : null,
+      }
+    })
+  }
+
+  return {
+    stream: parseEntries(regionData.flatrate as unknown[]),
+    rent: parseEntries(regionData.rent as unknown[]),
+    buy: parseEntries(regionData.buy as unknown[]),
+    link: (regionData.link as string | undefined) ?? mediaPath ?? null,
+  }
+}
+
+const fetchWatchProviders = async (mediaPath: string, creds: TmdbCredentials): Promise<WatchProviders | null> => {
+  try {
+    const url = new URL(`https://api.themoviedb.org${mediaPath}/watch/providers`)
+
+    applyApiKey(url, creds)
+
+    const response = await fetch(url, { headers: buildAuthHeaders(creds) })
+
+    if (!response.ok) return null
+
+    const payload = (await response.json()) as Record<string, unknown>
+
+    return extractWatchProviders(payload, `https://www.themoviedb.org${mediaPath}/watch`)
+  } catch {
+    return null
   }
 }
 
@@ -242,7 +294,11 @@ export const tmdbAdapter: ProviderAdapter = {
     const tvResponse = await fetch(tvUrl, { headers: buildAuthHeaders(creds) })
 
     if (tvResponse.ok) {
-      return normalize({ ...(await tvResponse.json()), media_type: 'tv' })
+      const tvData = normalize({ ...(await tvResponse.json()), media_type: 'tv' })
+
+      tvData.watchProviders = await fetchWatchProviders(`/3/tv/${id}`, creds)
+
+      return tvData
     }
 
     const movieUrl = new URL(`https://api.themoviedb.org/3/movie/${id}`)
@@ -255,6 +311,10 @@ export const tmdbAdapter: ProviderAdapter = {
 
     if (!movieResponse.ok) throw error(movieResponse.status, 'TMDB details not found')
 
-    return normalize({ ...(await movieResponse.json()), media_type: 'movie' })
+    const movieData = normalize({ ...(await movieResponse.json()), media_type: 'movie' })
+
+    movieData.watchProviders = await fetchWatchProviders(`/3/movie/${id}`, creds)
+
+    return movieData
   },
 }

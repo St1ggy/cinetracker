@@ -196,5 +196,10 @@
   "lists_empty_saved": "No saved lists",
   "lists_empty_saved_cta": "Explore lists from the community",
   "list_empty_items": "This list is empty",
-  "list_empty_items_cta": "Add some media to get started"
+  "list_empty_items_cta": "Add some media to get started",
+  "media_where_to_watch": "Where to Watch",
+  "media_stream": "Stream",
+  "media_rent": "Rent",
+  "media_buy": "Buy",
+  "media_watch_providers_attribution": "Powered by JustWatch"
 }

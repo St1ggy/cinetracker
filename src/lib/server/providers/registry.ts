@@ -4,9 +4,12 @@ import { anilistAdapter } from './anilist'
 import { jikanAdapter } from './jikan'
 import { kitsuAdapter } from './kitsu'
 import { omdbAdapter } from './omdb'
+import { shikimoriAdapter } from './shikimori'
+import { simklAdapter } from './simkl'
 import { tmdbAdapter } from './tmdb'
 import { traktAdapter } from './trakt'
 import { tvdbAdapter } from './tvdb'
+import { wikidataAdapter } from './wikidata'
 
 import type { ProviderAdapter, ProviderCredentials } from './types'
 import type { MediaProvider } from '@prisma/client'
@@ -19,6 +22,9 @@ export const ALL_ADAPTERS: ProviderAdapter[] = [
   jikanAdapter,
   kitsuAdapter,
   traktAdapter,
+  shikimoriAdapter,
+  simklAdapter,
+  wikidataAdapter,
 ]
 
 const ADAPTER_MAP = new Map<MediaProvider, ProviderAdapter>(ALL_ADAPTERS.map((adapter) => [adapter.provider, adapter]))

@@ -22,6 +22,9 @@ enum MediaProvider {
   JIKAN
   KITSU
   TRAKT
+  SHIKIMORI
+  SIMKL
+  WIKIDATA
 
   @@map("media_provider")
 }

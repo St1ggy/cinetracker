@@ -196,5 +196,10 @@
   "lists_empty_saved": "保存済みリストなし",
   "lists_empty_saved_cta": "コミュニティのリストを探す",
   "list_empty_items": "このリストは空です",
-  "list_empty_items_cta": "コンテンツを追加して始めましょう"
+  "list_empty_items_cta": "コンテンツを追加して始めましょう",
+  "media_where_to_watch": "視聴可能なサービス",
+  "media_stream": "ストリーミング",
+  "media_rent": "レンタル",
+  "media_buy": "購入",
+  "media_watch_providers_attribution": "JustWatch提供"
 }

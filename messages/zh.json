@@ -196,5 +196,10 @@
   "lists_empty_saved": "暂无收藏列表",
   "lists_empty_saved_cta": "探索社区列表",
   "list_empty_items": "该列表为空",
-  "list_empty_items_cta": "添加内容以开始"
+  "list_empty_items_cta": "添加内容以开始",
+  "media_where_to_watch": "在哪里观看",
+  "media_stream": "流媒体",
+  "media_rent": "租借",
+  "media_buy": "购买",
+  "media_watch_providers_attribution": "由JustWatch提供"
 }

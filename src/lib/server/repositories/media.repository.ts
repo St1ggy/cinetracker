@@ -206,6 +206,7 @@ export const mediaRepository = {
           update: { name: member.name },
           create: { name: member.name, tmdbPersonId: member.tmdbPersonId },
         })
+        // eslint-disable-next-line unicorn/no-negated-condition
       } else if (member.anilistStaffId != null) {
         person = await prisma.person.upsert({
           where: { anilistStaffId: member.anilistStaffId },
@@ -256,7 +257,7 @@ export const mediaRepository = {
           take: 20,
         },
         sources: {
-          select: { provider: true, externalId: true, externalUrl: true },
+          select: { provider: true, externalId: true, externalUrl: true, normalizedJson: true },
         },
         ratings: {
           orderBy: { value: 'desc' },

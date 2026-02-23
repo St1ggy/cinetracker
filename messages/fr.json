@@ -196,5 +196,10 @@
   "lists_empty_saved": "Aucune liste sauvegardée",
   "lists_empty_saved_cta": "Explorez les listes de la communauté",
   "list_empty_items": "Cette liste est vide",
-  "list_empty_items_cta": "Ajoutez du contenu pour commencer"
+  "list_empty_items_cta": "Ajoutez du contenu pour commencer",
+  "media_where_to_watch": "Où regarder",
+  "media_stream": "En streaming",
+  "media_rent": "Location",
+  "media_buy": "Achat",
+  "media_watch_providers_attribution": "Propulsé par JustWatch"
 }

@@ -196,5 +196,10 @@
   "lists_empty_saved": "Нет сохранённых списков",
   "lists_empty_saved_cta": "Откройте списки сообщества",
   "list_empty_items": "Список пуст",
-  "list_empty_items_cta": "Добавьте медиа, чтобы начать"
+  "list_empty_items_cta": "Добавьте медиа, чтобы начать",
+  "media_where_to_watch": "Где смотреть",
+  "media_stream": "Стриминг",
+  "media_rent": "Аренда",
+  "media_buy": "Покупка",
+  "media_watch_providers_attribution": "На основе JustWatch"
 }

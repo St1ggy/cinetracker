@@ -27,6 +27,18 @@ export type CanonicalCastMember = {
   anilistStaffId?: number | null
 }
 
+export type WatchProviderEntry = {
+  name: string
+  logoUrl: string | null
+}
+
+export type WatchProviders = {
+  stream: WatchProviderEntry[]
+  rent: WatchProviderEntry[]
+  buy: WatchProviderEntry[]
+  link: string | null
+}
+
 export type CanonicalMedia = {
   provider: MediaProvider
   externalId: string
@@ -59,6 +71,7 @@ export type CanonicalMedia = {
   isAdult: boolean
   ratings?: CanonicalRating[]
   cast?: CanonicalCastMember[]
+  watchProviders?: WatchProviders | null
   raw: unknown
 }
 
@@ -75,5 +88,6 @@ export type TmdbCredentials = { apiKey?: string; bearerToken?: string }
 export type OmdbCredentials = { apiKey: string }
 export type TvdbCredentials = { apiKey: string; pin?: string }
 export type TraktCredentials = { clientId: string }
+export type SimklCredentials = { clientId: string }
 
 export { type MediaProvider } from '@prisma/client'

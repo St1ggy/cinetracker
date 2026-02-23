@@ -7,6 +7,7 @@
   import MediaHero from './ui/media-hero.svelte'
   import MediaProgressPanel from './ui/media-progress-panel.svelte'
 
+  import type { WatchProviders } from '$lib/server/providers/types'
   import type { PageData } from '../../routes/media/[mediaId]/$types'
 
   const data = $derived(page.data as PageData)
@@ -64,6 +65,18 @@
       profileUrl: mc.profileUrl,
     })),
   )
+
+  const watchProviders = $derived.by<WatchProviders | null>(() => {
+    const tmdbSource = media.sources.find((s: { provider: string; normalizedJson?: unknown }) => s.provider === 'TMDB')
+
+    if (!tmdbSource) return null
+
+    const normalized = tmdbSource.normalizedJson as Record<string, unknown> | null | undefined
+
+    if (!normalized?.watchProviders) return null
+
+    return normalized.watchProviders as WatchProviders
+  })
 </script>
 
 <svelte:head>
@@ -81,6 +94,71 @@
   </button>
 
   <MediaHero {media} {isEnriching} />
+
+  {#if watchProviders && (watchProviders.stream.length > 0 || watchProviders.rent.length > 0 || watchProviders.buy.length > 0)}
+    <section class="rounded-xl border bg-card p-4">
+      <div class="mb-3 flex items-center justify-between">
+        <h2 class="text-sm font-semibold">{L.media_where_to_watch()}</h2>
+        {#if watchProviders.link}
+          <a
+            href={watchProviders.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-xs text-muted-foreground hover:text-foreground"
+          >
+            {L.media_watch_providers_attribution()}
+          </a>
+        {/if}
+      </div>
+      <div class="space-y-3">
+        {#if watchProviders.stream.length > 0}
+          <div>
+            <p class="mb-1.5 text-xs font-medium text-muted-foreground">{L.media_stream()}</p>
+            <div class="flex flex-wrap gap-2">
+              {#each watchProviders.stream as entry (entry.name)}
+                <div class="flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs">
+                  {#if entry.logoUrl}
+                    <img src={entry.logoUrl} alt={entry.name} class="size-4 rounded-sm object-contain" />
+                  {/if}
+                  {entry.name}
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
+        {#if watchProviders.rent.length > 0}
+          <div>
+            <p class="mb-1.5 text-xs font-medium text-muted-foreground">{L.media_rent()}</p>
+            <div class="flex flex-wrap gap-2">
+              {#each watchProviders.rent as entry (entry.name)}
+                <div class="flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs">
+                  {#if entry.logoUrl}
+                    <img src={entry.logoUrl} alt={entry.name} class="size-4 rounded-sm object-contain" />
+                  {/if}
+                  {entry.name}
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
+        {#if watchProviders.buy.length > 0}
+          <div>
+            <p class="mb-1.5 text-xs font-medium text-muted-foreground">{L.media_buy()}</p>
+            <div class="flex flex-wrap gap-2">
+              {#each watchProviders.buy as entry (entry.name)}
+                <div class="flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs">
+                  {#if entry.logoUrl}
+                    <img src={entry.logoUrl} alt={entry.name} class="size-4 rounded-sm object-contain" />
+                  {/if}
+                  {entry.name}
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
+      </div>
+    </section>
+  {/if}
 
   {#if userItems != null}
     <MediaProgressPanel mediaId={media.id} {isEpisodic} {userItems} {seasons} />
