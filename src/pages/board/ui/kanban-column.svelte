@@ -122,23 +122,25 @@
     </div>
   {/if}
 
-  <div
-    class="scroll-fade flex-1 overflow-y-auto p-2"
-    style="min-height: 80px"
-    use:scrollFade
-    use:dndzone={{ items: localItems, type: 'kanban', dropTargetStyle: {} }}
-    onconsider={handleConsider}
-    onfinalize={handleFinalize}
-  >
+  <!-- Wrap dndzone in a scroll container so the action receives a fixed-height
+       scrollable element. dndzone must only have KanbanCards as direct children —
+       any wrapper div inside makes the library treat the wrapper as the single
+       draggable unit (causing all cards to move together). -->
+  <div class="scroll-fade relative flex-1 overflow-y-auto" use:scrollFade>
+    <div
+      class="flex min-h-full flex-col gap-2 p-2"
+      use:dndzone={{ items: localItems, type: 'kanban', flipDurationMs: 150, dropTargetStyle: {} }}
+      onconsider={handleConsider}
+      onfinalize={handleFinalize}
+    >
+      {#each localItems as item (item.id)}
+        <KanbanCard {item} />
+      {/each}
+    </div>
+
     {#if localItems.length === 0}
-      <div class="flex items-center justify-center py-8 text-xs text-muted-foreground">
+      <div class="pointer-events-none absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
         {L.board_empty_column()}
-      </div>
-    {:else}
-      <div class="space-y-2">
-        {#each localItems as item (item.id)}
-          <KanbanCard {item} />
-        {/each}
       </div>
     {/if}
   </div>
