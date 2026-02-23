@@ -41,7 +41,7 @@ query ($id: Int!) {
     popularity
     staff(sort: RELEVANCE, page: 1, perPage: 10) {
       edges {
-        node { id name { full } }
+        node { id name { full } image { large } }
         role
       }
     }
@@ -73,22 +73,25 @@ const extractAnilistRatings = (raw: Record<string, unknown>): CanonicalRating[] 
 }
 
 const extractAnilistCast = (raw: Record<string, unknown>): CanonicalCastMember[] => {
-  const staff = raw.staff as { edges?: { node: { id: number; name: { full: string } }; role: string }[] } | undefined
+  const staff = raw.staff as
+    | { edges?: { node: { id: number; name: { full: string }; image?: { large?: string | null } }; role: string }[] }
+    | undefined
 
   if (!staff?.edges) return []
 
-  return staff.edges.map((edge, idx) => ({
+  return staff.edges.map((edge, index) => ({
     name: edge.node.name.full,
     role: edge.role ?? null,
-    order: idx,
+    order: index,
     anilistStaffId: edge.node.id,
+    profileUrl: edge.node.image?.large ?? null,
   }))
 }
 
 const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
   const titleObject = (raw.title ?? {}) as Record<string, string | undefined>
   const id = Number(raw.id)
-  const malId = raw.idMal != null ? Number(raw.idMal) : null
+  const malId = raw.idMal == null ? null : Number(raw.idMal)
   const coverImage = raw.coverImage as Record<string, string | undefined> | undefined
   const posterUrl = coverImage?.extraLarge ?? coverImage?.large ?? null
 

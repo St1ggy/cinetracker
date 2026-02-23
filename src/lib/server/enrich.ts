@@ -160,9 +160,14 @@ const processProviderFetch = async (context: FetchContext): Promise<void> => {
       )
     }
 
-    // Only enrich cast if none is saved yet and this provider has cast data
-    if (context.media.cast.length === 0 && normalized.cast && normalized.cast.length > 0) {
-      await mediaRepository.replaceMediaCast(context.mediaId, normalized.cast)
+    // Enrich cast if: no cast yet, OR existing cast has no photos but new data has photos
+    if (normalized.cast && normalized.cast.length > 0) {
+      const existingHasPhotos = context.media.cast.some((c) => c.profileUrl)
+      const incomingHasPhotos = normalized.cast.some((c) => c.profileUrl)
+
+      if (context.media.cast.length === 0 || (!existingHasPhotos && incomingHasPhotos)) {
+        await mediaRepository.replaceMediaCast(context.mediaId, normalized.cast)
+      }
     }
 
     const updates = collectTextUpdates(context.media, normalized)
