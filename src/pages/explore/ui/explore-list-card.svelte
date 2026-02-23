@@ -82,7 +82,7 @@
       <div class="flex flex-wrap gap-1">
         {#each list.tags as { tag } (tag.id)}
           <a
-            href="/explore?tag={tag.slug}"
+            href="/lists?view=all&tag={tag.slug}"
             class="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:bg-muted/70 hover:text-foreground"
           >
             #{tag.name}

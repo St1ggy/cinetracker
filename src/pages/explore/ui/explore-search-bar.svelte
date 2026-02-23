@@ -8,20 +8,22 @@
   type Props = {
     query?: string
     activeTags?: string[]
+    basePath?: string
   }
 
-  let { query = $bindable(''), activeTags = $bindable([]) }: Props = $props()
+  // eslint-disable-next-line prefer-const -- activeTags is reassigned in removeTag
+  let { query = $bindable(''), activeTags = $bindable([]), basePath = '/lists' }: Props = $props()
 
   let inputValue = $state(query)
 
   const buildUrl = (): string => {
-    const parts: string[] = []
+    const parts: string[] = ['view=all']
 
     if (inputValue.trim()) parts.push(`q=${encodeURIComponent(inputValue.trim())}`)
 
     for (const tag of activeTags) parts.push(`tag=${encodeURIComponent(tag)}`)
 
-    return parts.length > 0 ? `/explore?${parts.join('&')}` : '/explore'
+    return parts.length > 1 ? `${basePath}?${parts.join('&')}` : `${basePath}?view=all`
   }
 
   const applySearch = () => goto(buildUrl())

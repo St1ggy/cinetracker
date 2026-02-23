@@ -9,20 +9,21 @@
     tags: Tag[]
     activeTags?: string[]
     query?: string
+    basePath?: string
   }
 
-  const { tags, activeTags = [], query = '' }: Props = $props()
+  const { tags, activeTags = [], query = '', basePath = '/lists' }: Props = $props()
 
   const toggle = (slug: string) => {
     const next = activeTags.includes(slug) ? activeTags.filter((t) => t !== slug) : [...activeTags, slug]
 
-    const parts: string[] = []
+    const parts = ['view=all']
 
     if (query) parts.push(`q=${encodeURIComponent(query)}`)
 
     for (const tag of next) parts.push(`tag=${encodeURIComponent(tag)}`)
 
-    goto(parts.length > 0 ? `/explore?${parts.join('&')}` : '/explore')
+    goto(parts.length > 1 ? `${basePath}?${parts.join('&')}` : `${basePath}?view=all`)
   }
 </script>
 
