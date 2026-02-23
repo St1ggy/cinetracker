@@ -1,3 +1,10 @@
+## [1.16.0](https://github.com/St1ggy/cinetracker/compare/v1.15.0...v1.16.0) (2026-02-23)
+
+### Features
+
+* list share permission, user default list, and board API ([eb56122](https://github.com/St1ggy/cinetracker/commit/eb56122ff26a4dbbd336fb3ed9933cb11009fcc7))
+* **lists:** default tab My lists and tab order ([d7a6901](https://github.com/St1ggy/cinetracker/commit/d7a6901bce25c9a38a2f2e6362dd4c12cd7b9a51))
+
 ## [1.15.0](https://github.com/St1ggy/cinetracker/compare/v1.14.0...v1.15.0) (2026-02-23)
 
 ### Features
