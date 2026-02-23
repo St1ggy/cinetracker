@@ -34,22 +34,57 @@
     return `${h}h ${m}m`
   }
 
-  const remainingDuration = $derived(
+  const avgEpisodeRuntime = $derived(
+    (() => {
+      const { media } = item
+
+      if (media.episodeRuntimeMin != null && media.episodeRuntimeMax != null) {
+        return Math.round((media.episodeRuntimeMin + media.episodeRuntimeMax) / 2)
+      }
+
+      return media.episodeRuntimeMin ?? media.episodeRuntimeMax ?? 0
+    })(),
+  )
+
+  /** Watched time: for episodic = episodes watched × avg runtime, for movie = full runtime. */
+  const watchedDurationMinutes = $derived(
     (() => {
       const { media, currentEpisode } = item
 
       if (isEpisodic) {
-        const avgRuntime =
-          media.episodeRuntimeMin != null && media.episodeRuntimeMax != null
-            ? Math.round((media.episodeRuntimeMin + media.episodeRuntimeMax) / 2)
-            : (media.episodeRuntimeMin ?? media.episodeRuntimeMax ?? 0)
+        const watched = currentEpisode ?? 0
+
+        return watched * avgEpisodeRuntime
+      }
+
+      return media.runtimeMinutes ?? 0
+    })(),
+  )
+
+  /** Remaining time: for episodic = (total − watched) × avg runtime, for movie = full runtime. */
+  const remainingDurationMinutes = $derived(
+    (() => {
+      const { media, currentEpisode } = item
+
+      if (isEpisodic) {
         const watched = currentEpisode ?? 0
         const remaining = Math.max(0, (media.episodesCount ?? 0) - watched)
 
-        return formatDuration(remaining * avgRuntime)
+        return remaining * avgEpisodeRuntime
       }
 
-      return formatDuration(media.runtimeMinutes ?? 0)
+      return media.runtimeMinutes ?? 0
+    })(),
+  )
+
+  /** Display: WATCHED → watched time; IN_PROGRESS / PLAN_TO_WATCH → remaining time. */
+  const displayDuration = $derived(
+    (() => {
+      const s = item.status ?? 'PLAN_TO_WATCH'
+
+      if (s === 'WATCHED') return formatDuration(watchedDurationMinutes)
+
+      return formatDuration(remainingDurationMinutes)
     })(),
   )
 </script>
@@ -107,7 +142,7 @@
       </span>
     </div>
 
-    {#if isEpisodic && hasProgress}
+    {#if isEpisodic && hasProgress && item.status === 'IN_PROGRESS'}
       <p class="mt-1 text-xs text-muted-foreground">
         {#if item.currentSeason}{L.media_season_number({
             n: item.currentSeason,
@@ -116,10 +151,10 @@
       </p>
     {/if}
 
-    {#if remainingDuration}
+    {#if displayDuration}
       <p class="mt-1 flex items-center gap-1 text-xs text-muted-foreground/80">
         <ClockIcon class="size-3 shrink-0" />
-        {remainingDuration}
+        {displayDuration}
       </p>
     {/if}
   </div>

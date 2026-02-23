@@ -42,24 +42,43 @@
     if (!isDragging) localItems = [...incoming]
   })
 
+  function itemDurationMinutes(it: KanbanItem, kind: 'watched' | 'remaining' | 'total'): number {
+    const type = it.media.mediaType
+    const avgRuntime =
+      it.media.episodeRuntimeMin != null && it.media.episodeRuntimeMax != null
+        ? Math.round((it.media.episodeRuntimeMin + it.media.episodeRuntimeMax) / 2)
+        : (it.media.episodeRuntimeMin ?? it.media.episodeRuntimeMax ?? 0)
+
+    if (type === 'TV' || type === 'ANIME') {
+      if (kind === 'watched') {
+        const watched = it.currentEpisode ?? 0
+
+        return watched * avgRuntime
+      }
+
+      if (kind === 'remaining') {
+        const watched = it.currentEpisode ?? 0
+        const remaining = Math.max(0, (it.media.episodesCount ?? 0) - watched)
+
+        return remaining * avgRuntime
+      }
+
+      return (it.media.episodesCount ?? 0) * avgRuntime
+    }
+
+    return it.media.runtimeMinutes ?? 0
+  }
+
   const totalDurationMinutes = $derived(
     (() => {
+      let kind: 'watched' | 'remaining' | 'total' = 'total'
+
+      if (status === 'WATCHED') kind = 'watched'
+      else if (status === 'IN_PROGRESS') kind = 'remaining'
+
       let total = 0
 
-      for (const item of localItems) {
-        const type = item.media.mediaType
-
-        if (type === 'TV' || type === 'ANIME') {
-          const avgRuntime =
-            item.media.episodeRuntimeMin != null && item.media.episodeRuntimeMax != null
-              ? Math.round((item.media.episodeRuntimeMin + item.media.episodeRuntimeMax) / 2)
-              : (item.media.episodeRuntimeMin ?? item.media.episodeRuntimeMax ?? 0)
-
-          total += (item.media.episodesCount ?? 0) * avgRuntime
-        } else {
-          total += item.media.runtimeMinutes ?? 0
-        }
-      }
+      for (const it of localItems) total += itemDurationMinutes(it, kind)
 
       return total
     })(),
