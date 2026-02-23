@@ -8,7 +8,7 @@
   import { toast } from 'svelte-sonner'
 
   import { L } from '$lib'
-  import { getVisibilityLabel } from '$shared/lib/labels'
+  import VisibilityIcon from '$lib/components/ui/visibility-icon.svelte'
   import HandleRequiredModal from '$shared/ui/handle-required-modal.svelte'
 
   import CreateListForm from './ui/create-list-form.svelte'
@@ -21,7 +21,7 @@
 
   type ViewMode = 'all' | 'mine' | 'saved'
 
-  const view = $derived((page.url.searchParams.get('view') as ViewMode) ?? 'all')
+  const view = $derived((page.url.searchParams.get('view') as ViewMode) ?? 'mine')
 
   const hasSession = $derived(!!data.session?.user?.id)
 
@@ -75,9 +75,9 @@
   }))
 
   const tabs: { value: ViewMode; label: () => string; icon: typeof CompassIcon }[] = [
-    { value: 'all', label: () => L.lists_view_all(), icon: CompassIcon },
     { value: 'mine', label: () => L.lists_view_mine(), icon: FolderOpenIcon },
     { value: 'saved', label: () => L.lists_view_saved(), icon: BookmarkIcon },
+    { value: 'all', label: () => L.lists_view_all(), icon: CompassIcon },
   ]
 </script>
 
@@ -142,7 +142,9 @@
                       <span class="rounded border px-2 py-0.5 text-xs text-muted-foreground">{L.lists_anonymous()}</span
                       >
                     {/if}
-                    <span class="rounded border px-2 py-0.5 text-xs">{getVisibilityLabel(L, item.visibility)}</span>
+                    <span class="inline-flex shrink-0 items-center rounded border px-2 py-0.5 text-xs">
+                      <VisibilityIcon visibility={item.visibility} class="size-3.5" />
+                    </span>
                   </div>
                 </div>
                 <p class="mt-1.5 line-clamp-2 text-sm text-muted-foreground">
