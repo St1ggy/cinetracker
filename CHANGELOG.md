@@ -1,3 +1,9 @@
+## [1.4.1](https://github.com/St1ggy/cinetracker/compare/v1.4.0...v1.4.1) (2026-02-23)
+
+### Bug Fixes
+
+* update add-media modal description to mention all active providers ([c3f728b](https://github.com/St1ggy/cinetracker/commit/c3f728b660dd9e6c6336a2f0a6db81ad27679a5c))
+
 ## [1.4.0](https://github.com/St1ggy/cinetracker/compare/v1.3.0...v1.4.0) (2026-02-23)
 
 ### Features
