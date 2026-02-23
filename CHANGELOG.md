@@ -1,3 +1,9 @@
+## [1.4.2](https://github.com/St1ggy/cinetracker/compare/v1.4.1...v1.4.2) (2026-02-23)
+
+### Bug Fixes
+
+* add SIMKL credential schema to api-keys endpoint ([fe3a178](https://github.com/St1ggy/cinetracker/commit/fe3a17811ffd03edc0e268b737a04fb5613f973a))
+
 ## [1.4.1](https://github.com/St1ggy/cinetracker/compare/v1.4.0...v1.4.1) (2026-02-23)
 
 ### Bug Fixes
