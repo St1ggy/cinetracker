@@ -1,3 +1,9 @@
+## [1.5.1](https://github.com/St1ggy/cinetracker/compare/v1.5.0...v1.5.1) (2026-02-23)
+
+### Bug Fixes
+
+* correct kanban column order to PLAN_TO_WATCH → IN_PROGRESS → WATCHED ([8acb11e](https://github.com/St1ggy/cinetracker/commit/8acb11e1def96bad7aac7a28716bd6912ea61fda))
+
 ## [1.5.0](https://github.com/St1ggy/cinetracker/compare/v1.4.4...v1.5.0) (2026-02-23)
 
 ### Features
