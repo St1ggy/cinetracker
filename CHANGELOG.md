@@ -1,3 +1,9 @@
+## [1.18.1](https://github.com/St1ggy/cinetracker/compare/v1.18.0...v1.18.1) (2026-02-23)
+
+### Bug Fixes
+
+* **ci:** run prod migrations on every push to main (GITHUB_TOKEN push does not re-trigger) ([b92a481](https://github.com/St1ggy/cinetracker/commit/b92a4817c4af035cf387bbf4c309ace57ff42d25))
+
 ## [1.18.0](https://github.com/St1ggy/cinetracker/compare/v1.17.3...v1.18.0) (2026-02-23)
 
 ### Features
