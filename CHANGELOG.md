@@ -1,3 +1,9 @@
+## [1.7.0](https://github.com/St1ggy/cinetracker/compare/v1.6.0...v1.7.0) (2026-02-23)
+
+### Features
+
+* add auth provider display and media cache reset to profile ([d24afe8](https://github.com/St1ggy/cinetracker/commit/d24afe81ce007bf09354adce06881266edfb0e31))
+
 ## [1.6.0](https://github.com/St1ggy/cinetracker/compare/v1.5.1...v1.6.0) (2026-02-23)
 
 ### Features
