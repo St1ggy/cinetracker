@@ -1,3 +1,9 @@
+## [1.7.2](https://github.com/St1ggy/cinetracker/compare/v1.7.1...v1.7.2) (2026-02-23)
+
+### Bug Fixes
+
+* **board:** make KanbanCards direct children of dndzone ([1cb2177](https://github.com/St1ggy/cinetracker/commit/1cb217783eeed1b68e711d56f088aa6bd070eff6))
+
 ## [1.7.1](https://github.com/St1ggy/cinetracker/compare/v1.7.0...v1.7.1) (2026-02-23)
 
 ### Bug Fixes
