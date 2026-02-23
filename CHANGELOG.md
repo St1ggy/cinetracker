@@ -1,3 +1,17 @@
+## [1.17.3](https://github.com/St1ggy/cinetracker/compare/v1.17.2...v1.17.3) (2026-02-23)
+
+### Bug Fixes
+
+* **ci:** remove [skip ci] from prod migrate, add P3089 recovery ([2a7c0d9](https://github.com/St1ggy/cinetracker/commit/2a7c0d90afc32a5362fdf968969c5974a489f9de))
+
+## [1.17.2](https://github.com/St1ggy/cinetracker/compare/v1.17.1...v1.17.2) (2026-02-23)
+
+### Bug Fixes
+
+* **ci:** generate Prisma client before check in dev workflow ([4d9b473](https://github.com/St1ggy/cinetracker/commit/4d9b4738a2fdce5562e7b8ee99920a023705bb85))
+* **ci:** pull Vercel preview env and set DATABASE_URL for dev workflow (align with prod) ([d3e180f](https://github.com/St1ggy/cinetracker/commit/d3e180f349673df895bd532a45fed1eb45458ed3))
+* **hooks:** add types for paraglideMiddleware callback ([1e117d7](https://github.com/St1ggy/cinetracker/commit/1e117d706d311b1d847d8d2bdf792ebdd06f950d))
+
 ## [1.17.1](https://github.com/St1ggy/cinetracker/compare/v1.17.0...v1.17.1) (2026-02-23)
 
 ### Bug Fixes
