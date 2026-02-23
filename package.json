@@ -62,7 +62,8 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:migrate:baseline": "node scripts/baseline-migrations.js",
     "prisma:push": "prisma db push",
-    "release": "semantic-release"
+    "release": "semantic-release",
+    "prepare-to-prod": "npx semantic-release --no-ci"
   },
   "type": "module",
   "dependencies": {
