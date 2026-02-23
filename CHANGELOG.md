@@ -1,3 +1,9 @@
+## [1.4.3](https://github.com/St1ggy/cinetracker/compare/v1.4.2...v1.4.3) (2026-02-23)
+
+### Bug Fixes
+
+* load all user lists in add-media modal list selector ([b47c420](https://github.com/St1ggy/cinetracker/commit/b47c420e4257e383ab6e05386d3381b6349b7d7e))
+
 ## [1.4.2](https://github.com/St1ggy/cinetracker/compare/v1.4.1...v1.4.2) (2026-02-23)
 
 ### Bug Fixes
