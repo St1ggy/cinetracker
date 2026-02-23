@@ -222,5 +222,11 @@
   "board_watched_mark_complete": "Marquer comme entièrement visionné",
   "board_watched_update_episode": "Mettre à jour la progression",
   "board_watched_episode_label": "Arrêté à l'épisode",
-  "board_watched_cancel": "Annuler"
+  "board_watched_cancel": "Annuler",
+  "profile_auth_provider": "Méthode de connexion :",
+  "profile_cache_title": "Cache des médias",
+  "profile_cache_description": "Forcer un rafraîchissement complet des métadonnées pour tous les titres de vos listes. À la prochaine visite de chaque titre, les données seront récupérées auprès de tous les fournisseurs connectés.",
+  "profile_cache_reset_button": "Réinitialiser le cache",
+  "profile_cache_resetting": "Réinitialisation…",
+  "profile_cache_reset_success": "Cache réinitialisé pour {count} titres"
 }

@@ -222,5 +222,11 @@
   "board_watched_mark_complete": "全話視聴済みとしてマーク",
   "board_watched_update_episode": "エピソードの進捗を更新",
   "board_watched_episode_label": "止まったエピソード",
-  "board_watched_cancel": "キャンセル"
+  "board_watched_cancel": "キャンセル",
+  "profile_auth_provider": "ログイン方法：",
+  "profile_cache_title": "メディアキャッシュ",
+  "profile_cache_description": "リスト内のすべてのタイトルのメタデータを強制的に更新します。次回各タイトルを開いたとき、接続されたすべてのプロバイダーからデータが再取得されます。",
+  "profile_cache_reset_button": "キャッシュをリセット",
+  "profile_cache_resetting": "リセット中…",
+  "profile_cache_reset_success": "{count}件のキャッシュをリセットしました"
 }

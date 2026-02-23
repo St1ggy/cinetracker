@@ -222,5 +222,11 @@
   "board_watched_mark_complete": "Mark as fully watched",
   "board_watched_update_episode": "Update episode progress",
   "board_watched_episode_label": "Stopped at episode",
-  "board_watched_cancel": "Cancel"
+  "board_watched_cancel": "Cancel",
+  "profile_auth_provider": "Sign-in method:",
+  "profile_cache_title": "Media Cache",
+  "profile_cache_description": "Force a full metadata refresh for all titles in your lists. On the next visit to each title, data will be re-fetched from all connected providers.",
+  "profile_cache_reset_button": "Reset Cache",
+  "profile_cache_resetting": "Resetting…",
+  "profile_cache_reset_success": "Cache reset for {count} titles"
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state'
   import { createQuery } from '@tanstack/svelte-query'
+  import { toast } from 'svelte-sonner'
 
   import { L } from '$lib'
   import { FREE_PROVIDERS, KEY_REQUIRED_PROVIDERS, PROVIDER_META } from '$shared/config/domain'
@@ -14,6 +15,7 @@
   import type { PageData } from '../../routes/profile/$types'
 
   type CredentialField = { key: string; label: string; type?: 'text' | 'password' }
+  type CacheResetState = 'idle' | 'resetting' | 'done'
 
   const PROVIDER_FIELDS: Record<string, CredentialField[]> = {
     TMDB: [
@@ -62,7 +64,30 @@
   const isConfigured = (provider: MediaProvider) => configuredQuery.data?.has(provider) ?? false
 
   let showDeleteConfirm = $state(false)
+  let cacheResetState = $state<CacheResetState>('idle')
+  let cacheResetCount = $state(0)
   const userEmail = $derived(page.data.session?.user?.email ?? '')
+  const authProviders = $derived((page.data as PageData).authProviders ?? [])
+
+  const handleCacheReset = async () => {
+    if (cacheResetState === 'resetting') return
+
+    cacheResetState = 'resetting'
+
+    try {
+      const response = await fetch('/api/user/media-cache', { method: 'DELETE' })
+
+      if (!response.ok) throw new Error('Failed to reset cache')
+
+      const result = (await response.json()) as { count: number }
+
+      cacheResetCount = result.count
+      cacheResetState = 'done'
+    } catch {
+      toast.error(L.common_error_generic())
+      cacheResetState = 'idle'
+    }
+  }
   let currentHandle = $state<string | null>(null)
   let nextChangeAt = $state<string | null>(null)
 
@@ -81,7 +106,7 @@
 </script>
 
 <div class="space-y-6">
-  <ProfileInfo user={page.data.session?.user} />
+  <ProfileInfo user={page.data.session?.user} {authProviders} />
 
   {#if page.data.session?.user}
     <section class="rounded-lg border bg-card p-6">
@@ -139,6 +164,25 @@
           }}
         />
       </div>
+    </section>
+
+    <section class="rounded-lg border bg-card p-6">
+      <h2 class="text-lg font-semibold">{L.profile_cache_title()}</h2>
+      <div class="mt-4 flex items-start justify-between gap-4">
+        <p class="text-sm text-muted-foreground">{L.profile_cache_description()}</p>
+        <button
+          class="shrink-0 rounded-md border px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+          onclick={handleCacheReset}
+          disabled={cacheResetState === 'resetting'}
+        >
+          {cacheResetState === 'resetting' ? L.profile_cache_resetting() : L.profile_cache_reset_button()}
+        </button>
+      </div>
+      {#if cacheResetState === 'done'}
+        <p class="mt-2 text-sm text-green-600 dark:text-green-400">
+          {L.profile_cache_reset_success({ count: cacheResetCount })}
+        </p>
+      {/if}
     </section>
 
     <section class="rounded-lg border border-destructive/40 bg-card p-6">

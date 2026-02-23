@@ -7,8 +7,14 @@
     id?: string
   }
 
-  type Props = { user: User | null | undefined }
-  const { user }: Props = $props()
+  type Props = {
+    user: User | null | undefined
+    authProviders?: string[]
+  }
+
+  const { user, authProviders = [] }: Props = $props()
+
+  const formatProvider = (provider: string) => provider.charAt(0).toUpperCase() + provider.slice(1)
 </script>
 
 <section class="rounded-lg border bg-card p-6">
@@ -18,6 +24,12 @@
       <p><span class="text-muted-foreground">{L.profile_name()}</span> {user.name ?? '—'}</p>
       <p><span class="text-muted-foreground">{L.profile_email()}</span> {user.email ?? '—'}</p>
       <p><span class="text-muted-foreground">{L.profile_user_id()}</span> {user.id}</p>
+      {#if authProviders.length > 0}
+        <p>
+          <span class="text-muted-foreground">{L.profile_auth_provider()}</span>
+          {authProviders.map((p) => formatProvider(p)).join(', ')}
+        </p>
+      {/if}
     </div>
     <form method="POST" action="/signout" class="mt-4">
       <button class="rounded-md border px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">

@@ -222,5 +222,11 @@
   "board_watched_mark_complete": "标记为全部看完",
   "board_watched_update_episode": "更新剧集进度",
   "board_watched_episode_label": "停在第几集",
-  "board_watched_cancel": "取消"
+  "board_watched_cancel": "取消",
+  "profile_auth_provider": "登录方式：",
+  "profile_cache_title": "媒体缓存",
+  "profile_cache_description": "强制刷新您列表中所有标题的元数据。下次访问每个标题时，将从所有已连接的提供商重新获取数据。",
+  "profile_cache_reset_button": "重置缓存",
+  "profile_cache_resetting": "重置中…",
+  "profile_cache_reset_success": "已为 {count} 个标题重置缓存"
 }

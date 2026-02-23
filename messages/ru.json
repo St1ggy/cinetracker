@@ -222,5 +222,11 @@
   "board_watched_mark_complete": "Отметить как полностью просмотрено",
   "board_watched_update_episode": "Обновить прогресс серии",
   "board_watched_episode_label": "Остановился на серии",
-  "board_watched_cancel": "Отмена"
+  "board_watched_cancel": "Отмена",
+  "profile_auth_provider": "Способ входа:",
+  "profile_cache_title": "Кэш медиа",
+  "profile_cache_description": "Принудительно обновить метаданные всех медиа из ваших списков. При следующем открытии каждого медиа данные будут повторно загружены из всех подключённых провайдеров.",
+  "profile_cache_reset_button": "Сбросить кэш",
+  "profile_cache_resetting": "Сброс…",
+  "profile_cache_reset_success": "Кэш сброшен для {count} медиа"
 }
