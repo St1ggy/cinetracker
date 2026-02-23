@@ -1,18 +1,5 @@
 #!/bin/sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Run semantic-release before push to main (version from conventional commits, changelog, then push)
-while read local_ref local_sha remote_ref remote_sha; do
-  if [ "$remote_ref" = "refs/heads/main" ]; then
-    set +e
-    npx semantic-release --no-ci
-    CODE=$?
-    set -e
-    if [ $CODE -eq 0 ]; then
-      echo "Release created and pushed by semantic-release."
-    fi
-    break
-  fi
-done
-
+# semantic-release runs in CI only (see .github/workflows/release.yml)
 exit 0
