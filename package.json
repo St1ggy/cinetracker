@@ -60,7 +60,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
-    "prisma:migrate:baseline": "prisma migrate resolve --applied 20260222000000_multi_source_enrichment && prisma migrate resolve --applied 20260222000001_reset_enriched_at && prisma migrate resolve --applied 20260222000002_add_tags_ratings_handle_anonymous && prisma migrate resolve --applied 20260222000003_add_shikimori_simkl_wikidata",
+    "prisma:migrate:baseline": "prisma migrate resolve --applied 20260220000000_initial && prisma migrate resolve --applied 20260222000000_multi_source_enrichment && prisma migrate resolve --applied 20260222000001_reset_enriched_at && prisma migrate resolve --applied 20260222000002_add_tags_ratings_handle_anonymous && prisma migrate resolve --applied 20260222000003_add_shikimori_simkl_wikidata && prisma migrate resolve --applied 20260223000000_add_list_share_permission && prisma migrate resolve --applied 20260224000000_add_user_default_list_id",
     "prisma:push": "prisma db push",
     "release": "semantic-release"
   },

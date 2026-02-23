@@ -170,6 +170,32 @@ npx prisma migrate deploy
 
 ---
 
+## 2026-02-23 — Initial migration and shadow DB (migrate dev)
+
+### What was done
+- Added **20260220000000_initial** migration that creates the base schema (users, lists, media, media_cast, etc.) before the existing “delta” migrations (multi_source_enrichment, etc.).
+- Without it, `prisma migrate dev` failed on the shadow database with: “The underlying table for model `media` does not exist”, because the first migration in the repo only did `ALTER TABLE media`.
+
+### Fix for existing dev DBs
+If `migrate dev` fails with P3006 / “media does not exist”, or the app fails with “Unknown field 'defaultListId'”:
+
+1. Mark the initial migration as applied (so shadow DB applies migrations in the right order):
+   ```bash
+   npx prisma migrate resolve --applied 20260220000000_initial
+   ```
+2. Apply any pending migrations (e.g. adds `default_list_id`, share_permission):
+   ```bash
+   npx prisma migrate deploy
+   ```
+3. Restart the dev server (`run dev`).
+
+For a **fresh** dev DB (empty): run `npx prisma migrate deploy` once; all 7 migrations will apply in order.
+
+### Baseline script
+`npm run prisma:migrate:baseline` marks all 7 migrations as applied on the current DB (for DBs that already have the full schema, e.g. after db push or restore). Use only when the DB schema already matches the migrations.
+
+---
+
 ## Template for new entries
 
 ```
