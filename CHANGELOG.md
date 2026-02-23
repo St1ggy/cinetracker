@@ -1,3 +1,9 @@
+## [1.4.0](https://github.com/St1ggy/cinetracker/compare/v1.3.0...v1.4.0) (2026-02-23)
+
+### Features
+
+* register Shikimori, Simkl, Wikidata providers in domain and profile ([c17087a](https://github.com/St1ggy/cinetracker/commit/c17087a5227380989e9c1083ef464cfd75c14e2f))
+
 ## [1.3.0](https://github.com/St1ggy/cinetracker/compare/v1.2.0...v1.3.0) (2026-02-23)
 
 ### Features
