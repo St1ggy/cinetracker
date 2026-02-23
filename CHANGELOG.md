@@ -1,3 +1,9 @@
+## [1.15.0](https://github.com/St1ggy/cinetracker/compare/v1.14.0...v1.15.0) (2026-02-23)
+
+### Features
+
+* **about:** add About page with app info, GitHub link, and legal (auth + data providers) ([8a0b380](https://github.com/St1ggy/cinetracker/commit/8a0b380047974e12a5c261b62a793bc663dc6f56))
+
 ## [1.14.0](https://github.com/St1ggy/cinetracker/compare/v1.13.0...v1.14.0) (2026-02-23)
 
 ### Features
