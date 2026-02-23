@@ -208,5 +208,19 @@
   "media_stream": "Стриминг",
   "media_rent": "Аренда",
   "media_buy": "Покупка",
-  "media_watch_providers_attribution": "На основе JustWatch"
+  "media_watch_providers_attribution": "На основе JustWatch",
+  "nav_board": "Доска",
+  "board_title": "Канбан-доска",
+  "board_total_duration": "{hours}ч {minutes}м",
+  "board_items_count": "{count} элементов",
+  "board_ghost_label": "В процессе",
+  "board_empty_column": "Нет элементов",
+  "board_status_changed": "Статус обновлён",
+  "board_no_list": "Создайте список на главной странице, чтобы использовать доску",
+  "board_watched_dialog_title": "Переместить в «Просмотрено»",
+  "board_watched_dialog_description": "Это многосерийное медиа. Что вы хотите сделать?",
+  "board_watched_mark_complete": "Отметить как полностью просмотрено",
+  "board_watched_update_episode": "Обновить прогресс серии",
+  "board_watched_episode_label": "Остановился на серии",
+  "board_watched_cancel": "Отмена"
 }

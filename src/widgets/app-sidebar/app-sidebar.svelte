@@ -3,6 +3,7 @@
   import CompassIcon from '@lucide/svelte/icons/compass'
   import GithubIcon from '@lucide/svelte/icons/github'
   import HomeIcon from '@lucide/svelte/icons/house'
+  import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard'
   import ListIcon from '@lucide/svelte/icons/list'
   import UserIcon from '@lucide/svelte/icons/user'
 
@@ -36,6 +37,14 @@
     >
       <HomeIcon class="size-4" />
       <span>{L.nav_home()}</span>
+    </a>
+    <a
+      href="/board"
+      class={`flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent ${isActive('/board') ? 'bg-accent font-medium' : ''}`}
+      onclick={() => onNavigate?.()}
+    >
+      <LayoutDashboardIcon class="size-4" />
+      <span>{L.nav_board()}</span>
     </a>
     <a
       href="/explore"

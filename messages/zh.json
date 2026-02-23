@@ -208,5 +208,19 @@
   "media_stream": "流媒体",
   "media_rent": "租借",
   "media_buy": "购买",
-  "media_watch_providers_attribution": "由JustWatch提供"
+  "media_watch_providers_attribution": "由JustWatch提供",
+  "nav_board": "看板",
+  "board_title": "看板视图",
+  "board_total_duration": "{hours}小时{minutes}分钟",
+  "board_items_count": "{count}项",
+  "board_ghost_label": "进行中",
+  "board_empty_column": "暂无内容",
+  "board_status_changed": "状态已更新",
+  "board_no_list": "请在首页创建列表以使用看板",
+  "board_watched_dialog_title": "移至已观看",
+  "board_watched_dialog_description": "这是一部连续剧。您想怎么做？",
+  "board_watched_mark_complete": "标记为全部看完",
+  "board_watched_update_episode": "更新剧集进度",
+  "board_watched_episode_label": "停在第几集",
+  "board_watched_cancel": "取消"
 }

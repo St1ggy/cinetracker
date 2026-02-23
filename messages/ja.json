@@ -208,5 +208,19 @@
   "media_stream": "ストリーミング",
   "media_rent": "レンタル",
   "media_buy": "購入",
-  "media_watch_providers_attribution": "JustWatch提供"
+  "media_watch_providers_attribution": "JustWatch提供",
+  "nav_board": "ボード",
+  "board_title": "カンバンボード",
+  "board_total_duration": "{hours}時間{minutes}分",
+  "board_items_count": "{count}件",
+  "board_ghost_label": "視聴中",
+  "board_empty_column": "アイテムなし",
+  "board_status_changed": "ステータスを更新しました",
+  "board_no_list": "ボードを使うにはホームページでリストを作成してください",
+  "board_watched_dialog_title": "「視聴済み」に移動",
+  "board_watched_dialog_description": "このタイトルはエピソード形式です。どうしますか？",
+  "board_watched_mark_complete": "全話視聴済みとしてマーク",
+  "board_watched_update_episode": "エピソードの進捗を更新",
+  "board_watched_episode_label": "止まったエピソード",
+  "board_watched_cancel": "キャンセル"
 }

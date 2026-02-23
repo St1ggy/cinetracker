@@ -208,5 +208,19 @@
   "media_stream": "En streaming",
   "media_rent": "Location",
   "media_buy": "Achat",
-  "media_watch_providers_attribution": "Propulsé par JustWatch"
+  "media_watch_providers_attribution": "Propulsé par JustWatch",
+  "nav_board": "Tableau",
+  "board_title": "Tableau Kanban",
+  "board_total_duration": "{hours}h {minutes}m",
+  "board_items_count": "{count} éléments",
+  "board_ghost_label": "En cours",
+  "board_empty_column": "Aucun élément",
+  "board_status_changed": "Statut mis à jour",
+  "board_no_list": "Créez une liste sur la page d'accueil pour utiliser le tableau",
+  "board_watched_dialog_title": "Déplacer vers Vu",
+  "board_watched_dialog_description": "Ce titre est épisodique. Que souhaitez-vous faire ?",
+  "board_watched_mark_complete": "Marquer comme entièrement visionné",
+  "board_watched_update_episode": "Mettre à jour la progression",
+  "board_watched_episode_label": "Arrêté à l'épisode",
+  "board_watched_cancel": "Annuler"
 }

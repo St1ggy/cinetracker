@@ -47,4 +47,12 @@ export default defineConfig(
       'svelte/no-navigation-without-resolve': 'off',
     },
   },
+  {
+    // sonarjs/no-unused-collection crashes (TypeError: Cannot read properties of null) when
+    // parsing Svelte files that use svelte-dnd-action's `use:dndzone` directive — plugin bug.
+    files: ['**/*.svelte'],
+    rules: {
+      'sonarjs/no-unused-collection': 'off',
+    },
+  },
 )

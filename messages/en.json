@@ -208,5 +208,19 @@
   "media_stream": "Stream",
   "media_rent": "Rent",
   "media_buy": "Buy",
-  "media_watch_providers_attribution": "Powered by JustWatch"
+  "media_watch_providers_attribution": "Powered by JustWatch",
+  "nav_board": "Board",
+  "board_title": "Kanban Board",
+  "board_total_duration": "{hours}h {minutes}m",
+  "board_items_count": "{count} items",
+  "board_ghost_label": "In progress",
+  "board_empty_column": "No items",
+  "board_status_changed": "Status updated",
+  "board_no_list": "Create a list on the Home page to use the Board",
+  "board_watched_dialog_title": "Move to Watched",
+  "board_watched_dialog_description": "This is an episodic title. What would you like to do?",
+  "board_watched_mark_complete": "Mark as fully watched",
+  "board_watched_update_episode": "Update episode progress",
+  "board_watched_episode_label": "Stopped at episode",
+  "board_watched_cancel": "Cancel"
 }
