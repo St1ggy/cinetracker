@@ -1,3 +1,13 @@
+## [1.18.0](https://github.com/St1ggy/cinetracker/compare/v1.17.3...v1.18.0) (2026-02-23)
+
+### Features
+
+* **home:** move list selector next to sort in view controls ([d97c45a](https://github.com/St1ggy/cinetracker/commit/d97c45a6a7a9bdac5f5e636ec01fd583bc9242cc))
+
+### Bug Fixes
+
+* **ci:** remove [skip ci] from prod migrate, add P3089 recovery ([2c21536](https://github.com/St1ggy/cinetracker/commit/2c21536bf1197c06a8b7d34d9f94fb034b4ddd6c))
+
 ## [1.17.3](https://github.com/St1ggy/cinetracker/compare/v1.17.2...v1.17.3) (2026-02-23)
 
 ### Bug Fixes
