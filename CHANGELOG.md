@@ -1,3 +1,9 @@
+## [1.17.0](https://github.com/St1ggy/cinetracker/compare/v1.16.0...v1.17.0) (2026-02-23)
+
+### Features
+
+* **profile:** default list select shows only list names, no duplicate ([3a0694d](https://github.com/St1ggy/cinetracker/commit/3a0694d6048bfb0b1a90a0d9d9a63fd50d63621d))
+
 ## [1.16.0](https://github.com/St1ggy/cinetracker/compare/v1.15.0...v1.16.0) (2026-02-23)
 
 ### Features
