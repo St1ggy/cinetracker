@@ -1,3 +1,9 @@
+## [1.6.0](https://github.com/St1ggy/cinetracker/compare/v1.5.1...v1.6.0) (2026-02-23)
+
+### Features
+
+* show remaining duration on each kanban card ([7595680](https://github.com/St1ggy/cinetracker/commit/7595680bd9442851bcc50bdcdedf0c452a2cba97))
+
 ## [1.5.1](https://github.com/St1ggy/cinetracker/compare/v1.5.0...v1.5.1) (2026-02-23)
 
 ### Bug Fixes
