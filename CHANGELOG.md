@@ -1,3 +1,9 @@
+## [1.8.0](https://github.com/St1ggy/cinetracker/compare/v1.7.2...v1.8.0) (2026-02-23)
+
+### Features
+
+* **board:** show dashed ghost placeholder on drag over drop zone ([1393778](https://github.com/St1ggy/cinetracker/commit/1393778d61140bf1555ad99a37a13b17c3ac5922))
+
 ## [1.7.2](https://github.com/St1ggy/cinetracker/compare/v1.7.1...v1.7.2) (2026-02-23)
 
 ### Bug Fixes
