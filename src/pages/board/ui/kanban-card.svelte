@@ -20,6 +20,38 @@
   const typeMeta = $derived(getMediaTypeMeta(item.media.mediaType))
   const isEpisodic = $derived(item.media.mediaType === 'TV' || item.media.mediaType === 'ANIME')
   const hasProgress = $derived(!!item.currentSeason || !!item.currentEpisode)
+
+  const formatDuration = (totalMinutes: number): string => {
+    if (totalMinutes <= 0) return ''
+
+    const h = Math.floor(totalMinutes / 60)
+    const m = totalMinutes % 60
+
+    if (h === 0) return `${m}m`
+
+    if (m === 0) return `${h}h`
+
+    return `${h}h ${m}m`
+  }
+
+  const remainingDuration = $derived(
+    (() => {
+      const { media, currentEpisode } = item
+
+      if (isEpisodic) {
+        const avgRuntime =
+          media.episodeRuntimeMin != null && media.episodeRuntimeMax != null
+            ? Math.round((media.episodeRuntimeMin + media.episodeRuntimeMax) / 2)
+            : (media.episodeRuntimeMin ?? media.episodeRuntimeMax ?? 0)
+        const watched = currentEpisode ?? 0
+        const remaining = Math.max(0, (media.episodesCount ?? 0) - watched)
+
+        return formatDuration(remaining * avgRuntime)
+      }
+
+      return formatDuration(media.runtimeMinutes ?? 0)
+    })(),
+  )
 </script>
 
 <a
@@ -81,6 +113,13 @@
             n: item.currentSeason,
           })}{/if}{#if item.currentSeason && item.currentEpisode},{/if}{#if item.currentEpisode}
           {L.media_episode_short({ n: item.currentEpisode })}{/if}
+      </p>
+    {/if}
+
+    {#if remainingDuration}
+      <p class="mt-1 flex items-center gap-1 text-xs text-muted-foreground/80">
+        <ClockIcon class="size-3 shrink-0" />
+        {remainingDuration}
       </p>
     {/if}
   </div>
