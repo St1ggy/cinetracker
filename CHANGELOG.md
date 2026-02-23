@@ -1,3 +1,9 @@
+## [1.9.0](https://github.com/St1ggy/cinetracker/compare/v1.8.0...v1.9.0) (2026-02-23)
+
+### Features
+
+* **board:** animate card reordering with FLIP transitions ([ab7bf2e](https://github.com/St1ggy/cinetracker/commit/ab7bf2efe7f5b496bc9e74a08d6608c21ce0acc9))
+
 ## [1.8.0](https://github.com/St1ggy/cinetracker/compare/v1.7.2...v1.8.0) (2026-02-23)
 
 ### Features
