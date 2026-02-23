@@ -166,19 +166,26 @@
        draggable unit (causing all cards to move together). -->
   <div class="scroll-fade relative flex-1 overflow-y-auto" use:scrollFade>
     <div
-      class="flex min-h-full flex-col gap-2 p-2"
-      use:dndzone={{ items: localItems, type: 'kanban', flipDurationMs, dropTargetStyle: {} }}
+      class="kanban-drop-zone flex min-h-full flex-col gap-2 p-2"
+      use:dndzone={{
+        items: localItems,
+        type: 'kanban',
+        flipDurationMs,
+        morphDisabled: true,
+        dropTargetStyle: {},
+        dropTargetClasses: ['board-column-drop-target'],
+      }}
       onconsider={handleConsider}
       onfinalize={handleFinalize}
     >
       {#each localItems as item (item.id)}
         <!-- animate:flip must be on a DOM element, not a component, so we wrap.
              This div is the direct child that dndzone drags; the card renders inside it. -->
-        <div animate:flip={{ duration: flipDurationMs }}>
+        <div class="kanban-dnd-item" animate:flip={{ duration: flipDurationMs }}>
           {#if (item as Record<string, unknown>)[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
-            <!-- Render the actual card dimmed so the user sees exactly what will appear at this position -->
-            <div class="pointer-events-none opacity-40 select-none">
-              <KanbanCard {item} />
+            <!-- Visible drop placeholder: dashed slot so user sees where the item will land -->
+            <div class="board-drop-slot flex items-center justify-center text-xs text-muted-foreground">
+              {L.board_drop_placeholder()}
             </div>
           {:else}
             <KanbanCard {item} />

@@ -194,7 +194,31 @@
   }
 }
 
-/* Scroll fade — apply mask that fades content at top and bottom edges. */
+/* Kanban: keep item wrapper and card border/radius stable during drag; drop slot always visible */
+.kanban-dnd-item {
+  border: none !important;
+  border-radius: var(--radius-lg) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.kanban-dnd-item > a {
+  border-radius: var(--radius-lg) !important;
+}
+
+.board-drop-slot {
+  min-height: 5rem;
+  border-radius: var(--radius-lg) !important;
+  border: 2px dashed hsl(var(--primary) / 0.6) !important;
+  background: hsl(var(--primary) / 0.1) !important;
+}
+
+/* Column drop target: highlight the scroll container so outline isn't clipped by overflow */
+.scroll-fade:has(.board-column-drop-target) {
+  outline: 2px dashed var(--color-primary);
+  outline-offset: 4px;
+  background-color: color-mix(in oklch, var(--color-primary) 12%, transparent);
+}
 /* Use JS scroll events to update --scroll-fade-top / --scroll-fade-bottom (0 or 1). */
 .scroll-fade {
   --sf-top: 0;

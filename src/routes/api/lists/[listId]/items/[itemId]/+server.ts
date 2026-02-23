@@ -10,6 +10,7 @@ const patchSchema = z.object({
   notes: z.string().max(500).optional().nullable(),
   rating: z.number().int().min(1).max(10).optional().nullable(),
   status: z.enum(WATCH_STATUSES).optional().nullable(),
+  currentSeason: z.number().int().positive().optional().nullable(),
   currentEpisode: z.number().int().positive().optional().nullable(),
 })
 
@@ -47,6 +48,7 @@ export const PATCH = async ({ locals, params, request }) => {
     notes: payload.notes,
     rating: payload.rating,
     status: payload.status,
+    currentSeason: payload.currentSeason,
     currentEpisode: payload.currentEpisode,
   })
 
