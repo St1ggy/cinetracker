@@ -78,22 +78,28 @@
   async function handleFinalize(
     event_: CustomEvent<{ items: KanbanItem[]; info: { id: string | number; trigger: string; source: string } }>,
   ) {
-    localItems = event_.detail.items
-
     const { trigger, id } = event_.detail.info
     const movedId = String(id)
 
     // DROPPED_INTO_ZONE fires when item lands in this column — could be from another column or same.
     // Check the item's original status to confirm it actually moved columns.
     if (trigger === TRIGGERS.DROPPED_INTO_ZONE) {
-      const movedItem = localItems.find((item) => String(item.id) === movedId)
+      const movedItem = event_.detail.items.find((item) => String(item.id) === movedId)
       const crossColumn = movedItem && (movedItem.status ?? 'PLAN_TO_WATCH') !== status
 
       if (crossColumn) {
+        // Optimistically update the dropped item's status so the icon reflects the new
+        // column immediately — without waiting for the PATCH + refetch to complete.
+        localItems = event_.detail.items.map((item) => (String(item.id) === movedId ? { ...item, status } : item))
+
         // Await so isDragging stays true while PATCH + refetch complete.
         // This prevents the $effect from syncing with stale parent data mid-flight.
         await onStatusChange(movedId, status)
+      } else {
+        localItems = event_.detail.items
       }
+    } else {
+      localItems = event_.detail.items
     }
 
     isDragging = false
@@ -122,6 +128,16 @@
   {#if totalDurationMinutes > 0}
     <div class="border-b px-4 py-2 text-xs text-muted-foreground">
       {L.board_total_duration({ hours, minutes })}
+    </div>
+  {/if}
+
+  {#if ghostItems.length > 0}
+    <div class="border-b px-2 py-2">
+      <div class="flex flex-col gap-2">
+        {#each ghostItems as item (item.id)}
+          <KanbanCard {item} ghost />
+        {/each}
+      </div>
     </div>
   {/if}
 
@@ -155,14 +171,4 @@
       </div>
     {/if}
   </div>
-
-  {#if ghostItems.length > 0}
-    <div class="border-t px-2 py-2">
-      <div class="space-y-2">
-        {#each ghostItems as item (item.id)}
-          <KanbanCard {item} ghost />
-        {/each}
-      </div>
-    </div>
-  {/if}
 </div>
