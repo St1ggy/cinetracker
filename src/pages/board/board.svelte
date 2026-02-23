@@ -145,7 +145,7 @@
   </div>
 {:else}
   <div class="flex gap-4 overflow-x-auto pb-4" style="height: calc(100vh - 7rem)">
-    {#each WATCH_STATUSES as status (status)}
+    {#each WATCH_STATUSES.toReversed() as status (status)}
       <KanbanColumn
         {status}
         items={columns[status]}
