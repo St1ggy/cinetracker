@@ -48,7 +48,7 @@
   }
 </script>
 
-<section class="mx-auto max-w-5xl space-y-6 px-4 py-6">
+<section class="space-y-6">
   <div class="rounded-xl border bg-card p-6 shadow-sm">
     <header class="mb-5">
       <h1 class="text-2xl font-bold tracking-tight">{L.explore_title()}</h1>
