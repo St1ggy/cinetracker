@@ -27,7 +27,7 @@ const cleanedSt1ggyConfig = st1ggyConfig.map((c) => {
 
 export default defineConfig(
   includeIgnoreFile(gitignorePath),
-  globalIgnores(['src/lib/components/ui/**/*']),
+  globalIgnores(['src/lib/components/ui/**/*', 'scripts/**']),
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
   {
     files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],

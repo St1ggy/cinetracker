@@ -199,6 +199,19 @@ If prod already had the schema (from migrations 20260222…–20260224) before 2
 
 ---
 
+## 2026-02-23 — Branches: dev (development), main (prod)
+
+### Workflow
+- **Разработка** в ветке **`dev`**. Push в `dev` → CI (dev): сборка + миграции на **dev БД**.
+- **Прод** — **`main`**. В main пушишь вручную (мерж из dev). При `git push origin main` срабатывает pre-push: **semantic-release** поднимает версию (feat→minor, fix→patch), коммитит и пушит. В CI на main — миграции на **prod БД**.
+
+### GitHub Actions
+- **CI (dev)** (`ci-dev.yml`): push в `dev` → Build, затем Migrations (dev DB). Секрет: `DEV_DATABASE_URL` или `DIRECT_DEV_DATABASE_URL`.
+- **Migrate DB (prod)** (`migrate.yml`): push в `main` → миграции на prod БД.
+- **Release** (`release.yml`): push в `main` → semantic-release (часто пропуск, т.к. версию уже поднял pre-push).
+
+---
+
 ## Template for new entries
 
 ```
