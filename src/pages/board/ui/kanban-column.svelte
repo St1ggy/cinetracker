@@ -3,6 +3,7 @@
   import CirclePlayIcon from '@lucide/svelte/icons/circle-play'
   import ClockIcon from '@lucide/svelte/icons/clock'
   import { untrack } from 'svelte'
+  import { flip } from 'svelte/animate'
   import { SHADOW_ITEM_MARKER_PROPERTY_NAME, TRIGGERS, dndzone } from 'svelte-dnd-action'
 
   import { L } from '$lib'
@@ -67,6 +68,8 @@
   const hours = $derived(Math.floor(totalDurationMinutes / 60))
   const minutes = $derived(totalDurationMinutes % 60)
 
+  const flipDurationMs = 200
+
   function handleConsider(event_: CustomEvent<{ items: KanbanItem[] }>) {
     isDragging = true
     localItems = event_.detail.items
@@ -129,18 +132,20 @@
   <div class="scroll-fade relative flex-1 overflow-y-auto" use:scrollFade>
     <div
       class="flex min-h-full flex-col gap-2 p-2"
-      use:dndzone={{ items: localItems, type: 'kanban', flipDurationMs: 150, dropTargetStyle: {} }}
+      use:dndzone={{ items: localItems, type: 'kanban', flipDurationMs, dropTargetStyle: {} }}
       onconsider={handleConsider}
       onfinalize={handleFinalize}
     >
       {#each localItems as item (item.id)}
-        {#if (item as Record<string, unknown>)[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
-          <div
-            class="h-20 rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/20 transition-colors"
-          ></div>
-        {:else}
-          <KanbanCard {item} />
-        {/if}
+        <!-- animate:flip must be on a DOM element, not a component, so we wrap.
+             This div is the direct child that dndzone drags; the card renders inside it. -->
+        <div animate:flip={{ duration: flipDurationMs }}>
+          {#if (item as Record<string, unknown>)[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
+            <div class="h-20 rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/20"></div>
+          {:else}
+            <KanbanCard {item} />
+          {/if}
+        </div>
       {/each}
     </div>
 
