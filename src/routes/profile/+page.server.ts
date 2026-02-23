@@ -29,5 +29,7 @@ export const load: PageServerLoad = async ({ locals }) => {
     authProviders: accounts.map((a) => a.provider),
     defaultListId: user?.defaultListId ?? null,
     lists: lists ?? [],
+    // When no default list is set, the "main" list is the first one; exclude it from dropdown to avoid duplicate
+    mainListIdWhenNoDefault: !user?.defaultListId && (lists?.length ?? 0) > 0 ? lists![0].id : null,
   }
 }

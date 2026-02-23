@@ -106,14 +106,28 @@
     }
   })
 
+  // Show only list titles: when no default is set, the "main" option shows the first list's name
+  const firstListTitle = $derived((data.lists ?? [])[0]?.title)
   const defaultListLabel = $derived(
     (() => {
       const id = (page.data as PageData).defaultListId
 
-      if (!id) return L.profile_default_list_main()
+      if (!id) return firstListTitle ?? L.profile_default_list_main()
 
-      return (page.data as PageData).lists?.find((l) => l.id === id)?.title ?? L.profile_default_list_main()
+      return (
+        (page.data as PageData).lists?.find((l) => l.id === id)?.title ??
+        firstListTitle ??
+        L.profile_default_list_main()
+      )
     })(),
+  )
+
+  // When defaultListId is null, the first list is shown as __none__; exclude it to avoid duplicate
+  const listsForDefaultSelect = $derived(
+    (data.lists ?? []).filter(
+      (l) =>
+        !(data.defaultListId == null && data.mainListIdWhenNoDefault != null && l.id === data.mainListIdWhenNoDefault),
+    ),
   )
 
   async function handleDefaultListChange(value: string) {
@@ -206,8 +220,8 @@
             {defaultListLabel}
           </Select.Trigger>
           <Select.Content>
-            <Select.Item value="__none__" label={L.profile_default_list_main()} />
-            {#each data.lists ?? [] as list (list.id)}
+            <Select.Item value="__none__" label={firstListTitle ?? L.profile_default_list_main()} />
+            {#each listsForDefaultSelect as list (list.id)}
               <Select.Item value={list.id} label={list.title} />
             {/each}
           </Select.Content>
