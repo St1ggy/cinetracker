@@ -106,14 +106,17 @@
     <div class="flex items-center gap-2">
       {#if configured}
         <button
-          class="rounded-md border px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+          class="rounded-md border border-destructive px-3 py-1.5 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
           onclick={() => deleteMutation.mutate()}
           disabled={deleteMutation.isPending}
         >
           {L.profile_api_key_delete()}
         </button>
       {/if}
-      <button class="rounded-md border px-3 py-1 text-xs hover:bg-accent" onclick={() => (expanded = !expanded)}>
+      <button
+        class="rounded-md border px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+        onclick={() => (expanded = !expanded)}
+      >
         {expanded ? L.profile_api_key_collapse() : L.profile_api_key_setup()}
       </button>
     </div>
@@ -168,7 +171,7 @@
 
           <div class="flex items-center gap-2">
             <button
-              class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               onclick={saveKey}
               disabled={saveMutation.isPending}
             >

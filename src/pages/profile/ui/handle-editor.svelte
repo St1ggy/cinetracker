@@ -80,13 +80,13 @@
       {#if !cooldownActive}
         <button
           type="button"
-          class="rounded border px-2 py-0.5 text-xs hover:bg-accent"
+          class="rounded-md border px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
           onclick={() => {
             input = currentHandle ?? ''
             editing = true
           }}
         >
-          Edit
+          {L.profile_handle_edit()}
         </button>
       {/if}
     </div>
@@ -109,14 +109,18 @@
       />
       <button
         type="button"
-        class="rounded bg-primary px-3 py-1 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        class="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
         disabled={saving}
         onclick={save}
       >
-        {saving ? '...' : 'Save'}
+        {saving ? L.profile_handle_saving() : L.profile_handle_save()}
       </button>
-      <button type="button" class="rounded border px-3 py-1 text-xs hover:bg-accent" onclick={() => (editing = false)}>
-        Cancel
+      <button
+        type="button"
+        class="rounded-md border px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+        onclick={() => (editing = false)}
+      >
+        {L.profile_handle_cancel()}
       </button>
     </div>
 

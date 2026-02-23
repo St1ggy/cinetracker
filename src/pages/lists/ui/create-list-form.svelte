@@ -63,53 +63,60 @@
   }
 </script>
 
-<div class="rounded-lg border bg-card p-4">
-  <h2 class="font-medium">{L.lists_create_title()}</h2>
-  <div class="mt-3 grid gap-2 md:grid-cols-[1fr,2fr,auto,auto]">
-    <input
-      class="rounded-md border bg-background px-3 py-2 text-sm"
-      placeholder={L.lists_title_placeholder()}
-      bind:value={title}
-    />
-    <input
-      class="rounded-md border bg-background px-3 py-2 text-sm"
-      placeholder={L.lists_description_placeholder()}
-      bind:value={description}
-    />
-    <Select.Root type="single" value={visibility} onValueChange={(v) => (visibility = v as ListVisibility)}>
-      <Select.Trigger class="h-9 text-sm">{visibilityLabel(visibility)}</Select.Trigger>
-      <Select.Content>
-        <Select.Item value="PRIVATE" label={L.visibility_private()} />
-        <Select.Item value="UNLISTED" label={L.visibility_unlisted()} />
-        <Select.Item value="PUBLIC" label={L.visibility_public()} />
-      </Select.Content>
-    </Select.Root>
-    <button
-      class="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-      onclick={handleCreate}
-      disabled={isPending}
-    >
-      {L.common_create()}
-    </button>
-  </div>
+<div class="rounded-lg border bg-card p-5">
+  <h2 class="text-base font-semibold">{L.lists_create_title()}</h2>
 
-  <div class="mt-2 flex flex-wrap items-center gap-3">
-    <div class="flex flex-1 items-center gap-2">
-      <label class="text-xs text-muted-foreground" for="create-list-tags">{L.lists_tags_label()}</label>
+  <div class="mt-4 space-y-3">
+    <div class="grid gap-3 sm:grid-cols-2">
       <input
-        id="create-list-tags"
-        class="flex-1 rounded border bg-background px-2 py-1 text-xs focus:ring-1 focus:ring-ring focus:outline-none"
-        placeholder={L.lists_tags_placeholder()}
-        bind:value={tagsInput}
+        class="rounded-lg border bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+        placeholder={L.lists_title_placeholder()}
+        bind:value={title}
+      />
+      <input
+        class="rounded-lg border bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+        placeholder={L.lists_description_placeholder()}
+        bind:value={description}
       />
     </div>
 
-    {#if visibility === 'PUBLIC'}
-      <label class="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
-        <input type="checkbox" class="rounded" bind:checked={isAnonymous} />
-        {L.lists_publish_anonymously()}
-      </label>
-    {/if}
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="flex flex-1 items-center gap-2">
+        <label class="shrink-0 text-xs font-medium text-muted-foreground" for="create-list-tags"
+          >{L.lists_tags_label()}</label
+        >
+        <input
+          id="create-list-tags"
+          class="flex-1 rounded-md border bg-background px-2.5 py-1.5 text-xs placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+          placeholder={L.lists_tags_placeholder()}
+          bind:value={tagsInput}
+        />
+      </div>
+
+      <Select.Root type="single" value={visibility} onValueChange={(v) => (visibility = v as ListVisibility)}>
+        <Select.Trigger class="h-9 min-w-[120px] text-sm">{visibilityLabel(visibility)}</Select.Trigger>
+        <Select.Content>
+          <Select.Item value="PRIVATE" label={L.visibility_private()} />
+          <Select.Item value="UNLISTED" label={L.visibility_unlisted()} />
+          <Select.Item value="PUBLIC" label={L.visibility_public()} />
+        </Select.Content>
+      </Select.Root>
+
+      {#if visibility === 'PUBLIC'}
+        <label class="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
+          <input type="checkbox" class="rounded" bind:checked={isAnonymous} />
+          {L.lists_publish_anonymously()}
+        </label>
+      {/if}
+
+      <button
+        class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        onclick={handleCreate}
+        disabled={isPending || !title.trim()}
+      >
+        {L.common_create()}
+      </button>
+    </div>
   </div>
 </div>
 

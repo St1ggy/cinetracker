@@ -184,5 +184,17 @@
   "list_unsaved_success": "Liste retirée des sauvegardes",
   "home_added_success": "Ajouté à la liste",
   "profile_api_key_deleted": "Clé API supprimée",
-  "profile_handle_saved": "Nom d'utilisateur sauvegardé"
+  "profile_handle_saved": "Nom d'utilisateur sauvegardé",
+  "profile_handle_edit": "Modifier",
+  "profile_handle_save": "Enregistrer",
+  "profile_handle_cancel": "Annuler",
+  "profile_handle_saving": "Enregistrement...",
+  "explore_empty_suggestion": "Essayez d'autres termes ou tags",
+  "explore_empty_clear": "Effacer les filtres",
+  "lists_empty_owned": "Aucune liste",
+  "lists_empty_owned_cta": "Créez votre première liste ci-dessus",
+  "lists_empty_saved": "Aucune liste sauvegardée",
+  "lists_empty_saved_cta": "Explorez les listes de la communauté",
+  "list_empty_items": "Cette liste est vide",
+  "list_empty_items_cta": "Ajoutez du contenu pour commencer"
 }

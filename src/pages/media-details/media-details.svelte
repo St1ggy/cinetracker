@@ -73,7 +73,7 @@
 <article class="space-y-6">
   <button
     type="button"
-    class="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+    class="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
     onclick={() => globalThis.history.back()}
   >
     <ArrowLeftIcon class="size-4" />
@@ -88,20 +88,20 @@
 
   <div class="grid gap-4 md:grid-cols-2">
     {#if cast.length > 0}
-      <section class="rounded-xl border bg-card p-4">
-        <h2 class="mb-3 text-sm font-semibold">{L.media_cast()}</h2>
-        <ul class="space-y-2">
+      <section class="rounded-lg border bg-card p-5">
+        <h2 class="mb-4 text-base font-semibold">{L.media_cast()}</h2>
+        <ul class="space-y-3">
           {#each cast as member (member.name)}
             <li class="flex items-center gap-3">
               {#if member.profileUrl}
                 <img
                   src={member.profileUrl}
                   alt={member.name}
-                  class="size-8 shrink-0 rounded-full object-cover"
+                  class="size-9 shrink-0 rounded-full object-cover ring-1 ring-border"
                   loading="lazy"
                 />
               {:else}
-                <div class="size-8 shrink-0 rounded-full bg-muted"></div>
+                <div class="size-9 shrink-0 rounded-full bg-muted ring-1 ring-border"></div>
               {/if}
               <div class="min-w-0 flex-1">
                 <p class="truncate text-sm font-medium">{member.name}</p>
@@ -114,13 +114,13 @@
         </ul>
       </section>
     {:else if isEnriching}
-      <section class="rounded-xl border bg-card p-4">
-        <div class="mb-3 h-4 w-12 animate-pulse rounded bg-muted"></div>
-        <ul class="space-y-2">
-          {#each [1, 2, 3, 4, 5] as i (i)}
+      <section class="rounded-lg border bg-card p-5">
+        <div class="mb-4 h-4 w-16 animate-pulse rounded bg-muted"></div>
+        <ul class="space-y-3">
+          {#each [1, 2, 3, 4, 5] as index (index)}
             <li class="flex items-center gap-3">
-              <div class="size-8 shrink-0 animate-pulse rounded-full bg-muted"></div>
-              <div class="flex-1 space-y-1">
+              <div class="size-9 shrink-0 animate-pulse rounded-full bg-muted"></div>
+              <div class="flex-1 space-y-1.5">
                 <div class="h-3.5 w-32 animate-pulse rounded bg-muted"></div>
                 <div class="h-3 w-24 animate-pulse rounded bg-muted"></div>
               </div>
@@ -131,11 +131,11 @@
     {/if}
 
     {#if isEpisodic && seasons.length > 0}
-      <section class="rounded-xl border bg-card p-4">
-        <h2 class="mb-3 text-sm font-semibold">{L.media_seasons()}</h2>
-        <ul class="space-y-1.5">
+      <section class="rounded-lg border bg-card p-5">
+        <h2 class="mb-4 text-base font-semibold">{L.media_seasons()}</h2>
+        <ul class="space-y-2">
           {#each seasons as season (season.seasonNumber)}
-            <li class="flex items-center justify-between text-sm">
+            <li class="flex items-center justify-between rounded-md px-2 py-1.5 text-sm odd:bg-muted/30">
               <span class="text-muted-foreground">{L.media_season_number({ n: season.seasonNumber })}</span>
               <span class="font-medium">{L.list_episodes_count({ count: season.episodes })}</span>
             </li>

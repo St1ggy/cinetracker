@@ -184,5 +184,17 @@
   "list_unsaved_success": "Список удалён из сохранённых",
   "home_added_success": "Добавлено в список",
   "profile_api_key_deleted": "API-ключ удалён",
-  "profile_handle_saved": "Имя пользователя сохранено"
+  "profile_handle_saved": "Имя пользователя сохранено",
+  "profile_handle_edit": "Изменить",
+  "profile_handle_save": "Сохранить",
+  "profile_handle_cancel": "Отмена",
+  "profile_handle_saving": "Сохраняется...",
+  "explore_empty_suggestion": "Попробуйте другие слова или теги",
+  "explore_empty_clear": "Сбросить фильтры",
+  "lists_empty_owned": "Нет списков",
+  "lists_empty_owned_cta": "Создайте первый список выше",
+  "lists_empty_saved": "Нет сохранённых списков",
+  "lists_empty_saved_cta": "Откройте списки сообщества",
+  "list_empty_items": "Список пуст",
+  "list_empty_items_cta": "Добавьте медиа, чтобы начать"
 }

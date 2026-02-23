@@ -30,7 +30,6 @@
     title: string
     originalTitle: string | null
     tagline?: string | null
-    status?: string | null
     director?: string | null
     year: number | null
     mediaType: string
@@ -110,7 +109,7 @@
           <p class="text-sm text-muted-foreground">{media.originalTitle}</p>
         {/if}
         {#if media.tagline}
-          <p class="mt-1 text-sm italic text-muted-foreground">{media.tagline}</p>
+          <p class="mt-1 text-sm text-muted-foreground italic">{media.tagline}</p>
         {/if}
       </div>
 
@@ -193,7 +192,7 @@
         </div>
       {:else if isEnriching}
         <div class="flex gap-2">
-          {#each [1, 2] as i (i)}
+          {#each [1, 2] as index (index)}
             <div class="h-7 w-28 animate-pulse rounded-full bg-muted"></div>
           {/each}
         </div>

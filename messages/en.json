@@ -184,5 +184,17 @@
   "list_unsaved_success": "List removed from saved",
   "home_added_success": "Added to list",
   "profile_api_key_deleted": "API key removed",
-  "profile_handle_saved": "Username saved"
+  "profile_handle_saved": "Username saved",
+  "profile_handle_edit": "Edit",
+  "profile_handle_save": "Save",
+  "profile_handle_cancel": "Cancel",
+  "profile_handle_saving": "Saving...",
+  "explore_empty_suggestion": "Try different search terms or tags",
+  "explore_empty_clear": "Clear all filters",
+  "lists_empty_owned": "No lists yet",
+  "lists_empty_owned_cta": "Create your first list above",
+  "lists_empty_saved": "No saved lists",
+  "lists_empty_saved_cta": "Explore lists from the community",
+  "list_empty_items": "This list is empty",
+  "list_empty_items_cta": "Add some media to get started"
 }

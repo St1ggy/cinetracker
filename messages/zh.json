@@ -184,5 +184,17 @@
   "list_unsaved_success": "列表已从收藏中移除",
   "home_added_success": "已添加到列表",
   "profile_api_key_deleted": "API密钥已删除",
-  "profile_handle_saved": "用户名已保存"
+  "profile_handle_saved": "用户名已保存",
+  "profile_handle_edit": "编辑",
+  "profile_handle_save": "保存",
+  "profile_handle_cancel": "取消",
+  "profile_handle_saving": "保存中...",
+  "explore_empty_suggestion": "尝试不同的搜索词或标签",
+  "explore_empty_clear": "清除所有筛选",
+  "lists_empty_owned": "暂无列表",
+  "lists_empty_owned_cta": "在上方创建第一个列表",
+  "lists_empty_saved": "暂无收藏列表",
+  "lists_empty_saved_cta": "探索社区列表",
+  "list_empty_items": "该列表为空",
+  "list_empty_items_cta": "添加内容以开始"
 }

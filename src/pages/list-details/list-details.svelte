@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invalidateAll } from '$app/navigation'
   import { page } from '$app/state'
+  import LibraryBigIcon from '@lucide/svelte/icons/library-big'
   import { createMutation } from '@tanstack/svelte-query'
   import { toast } from 'svelte-sonner'
 
@@ -39,7 +40,7 @@
   }
 </script>
 
-<section class="space-y-4">
+<section class="space-y-5">
   <ListDetailHeader
     list={data.list}
     isOwner={data.isOwner}
@@ -48,9 +49,23 @@
     onToggleSave={toggleSaved}
   />
 
-  <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-    {#each data.items as item (item.id)}
-      <MediaCard {item} showStatusLabel />
-    {/each}
-  </div>
+  {#if data.items.length === 0}
+    <div class="flex flex-col items-center gap-3 rounded-xl border border-dashed bg-card/50 py-16 text-center">
+      <div class="rounded-full border bg-muted p-4">
+        <LibraryBigIcon class="size-7 text-muted-foreground" />
+      </div>
+      <div class="space-y-1">
+        <p class="text-sm font-medium">{L.list_empty_items()}</p>
+        {#if data.isOwner}
+          <p class="text-xs text-muted-foreground">{L.list_empty_items_cta()}</p>
+        {/if}
+      </div>
+    </div>
+  {:else}
+    <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+      {#each data.items as item (item.id)}
+        <MediaCard {item} showStatusLabel />
+      {/each}
+    </div>
+  {/if}
 </section>

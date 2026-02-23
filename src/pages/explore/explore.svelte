@@ -1,6 +1,8 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import { page } from '$app/state'
+  import CompassIcon from '@lucide/svelte/icons/compass'
+  import XIcon from '@lucide/svelte/icons/x'
 
   import { L } from '$lib'
 
@@ -29,7 +31,10 @@
     goto(`/explore?${parts.join('&')}`)
   }
 
+  const clearFilters = () => goto('/explore')
+
   const lastList = $derived(data.lists.at(-1))
+  const hasActiveFilters = $derived(!!(data.filters.q || data.filters.tags.length > 0))
 
   const buildCursorUrl = (filters: { q?: string; tags: string[]; sort: string }, cursor: string): string => {
     const parts: string[] = []
@@ -44,34 +49,65 @@
 </script>
 
 <section class="mx-auto max-w-5xl space-y-6 px-4 py-6">
-  <header>
-    <h1 class="text-2xl font-semibold">{L.explore_title()}</h1>
-    <p class="text-sm text-muted-foreground">{L.explore_description()}</p>
-  </header>
+  <div class="rounded-xl border bg-card p-6 shadow-sm">
+    <header class="mb-5">
+      <h1 class="text-2xl font-bold tracking-tight">{L.explore_title()}</h1>
+      <p class="mt-1 text-sm text-muted-foreground">{L.explore_description()}</p>
+    </header>
 
-  <ExploreSearchBar query={data.filters.q} activeTags={data.filters.tags} />
+    <div class="space-y-4">
+      <ExploreSearchBar query={data.filters.q} activeTags={data.filters.tags} />
+      <ExploreTagCloud tags={data.popularTags} activeTags={data.filters.tags} query={data.filters.q} />
+    </div>
+  </div>
 
-  <ExploreTagCloud tags={data.popularTags} activeTags={data.filters.tags} query={data.filters.q} />
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-1.5 rounded-lg border bg-card p-1">
+      {#each sorts as sort (sort.value)}
+        <button
+          type="button"
+          class={`rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-150 ${
+            data.filters.sort === sort.value
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+          }`}
+          onclick={() => changeSort(sort.value)}
+        >
+          {sort.label()}
+        </button>
+      {/each}
+    </div>
 
-  <div class="flex items-center gap-2">
-    {#each sorts as sort (sort.value)}
+    {#if hasActiveFilters}
       <button
         type="button"
-        class={`rounded-full border px-3 py-1 text-xs transition-colors ${
-          data.filters.sort === sort.value
-            ? 'border-primary bg-primary text-primary-foreground'
-            : 'border-border text-muted-foreground hover:border-primary hover:text-foreground'
-        }`}
-        onclick={() => changeSort(sort.value)}
+        class="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+        onclick={clearFilters}
       >
-        {sort.label()}
+        <XIcon class="size-3.5" />
+        {L.explore_empty_clear()}
       </button>
-    {/each}
+    {/if}
   </div>
 
   {#if data.lists.length === 0}
-    <div class="py-16 text-center text-muted-foreground">
-      <p class="text-lg">{L.explore_no_results()}</p>
+    <div class="flex flex-col items-center gap-4 rounded-xl border border-dashed bg-card/50 py-20 text-center">
+      <div class="rounded-full border bg-muted p-4">
+        <CompassIcon class="size-8 text-muted-foreground" />
+      </div>
+      <div class="space-y-1">
+        <p class="text-base font-medium">{L.explore_no_results()}</p>
+        <p class="text-sm text-muted-foreground">{L.explore_empty_suggestion()}</p>
+      </div>
+      {#if hasActiveFilters}
+        <button
+          type="button"
+          class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          onclick={clearFilters}
+        >
+          {L.explore_empty_clear()}
+        </button>
+      {/if}
     </div>
   {:else}
     <div class="grid gap-4 sm:grid-cols-2">
@@ -84,7 +120,7 @@
       <div class="flex justify-center">
         <a
           href={`/explore?${buildCursorUrl(data.filters, lastList.id)}`}
-          class="rounded-md border px-6 py-2 text-sm hover:bg-accent"
+          class="rounded-lg border bg-card px-8 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
         >
           {L.explore_load_more()}
         </a>

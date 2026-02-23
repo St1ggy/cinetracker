@@ -184,5 +184,17 @@
   "list_unsaved_success": "リストを保存済みから削除しました",
   "home_added_success": "リストに追加しました",
   "profile_api_key_deleted": "APIキーを削除しました",
-  "profile_handle_saved": "ユーザー名を保存しました"
+  "profile_handle_saved": "ユーザー名を保存しました",
+  "profile_handle_edit": "編集",
+  "profile_handle_save": "保存",
+  "profile_handle_cancel": "キャンセル",
+  "profile_handle_saving": "保存中...",
+  "explore_empty_suggestion": "別のキーワードやタグをお試しください",
+  "explore_empty_clear": "フィルターをクリア",
+  "lists_empty_owned": "リストがありません",
+  "lists_empty_owned_cta": "上のフォームで最初のリストを作成",
+  "lists_empty_saved": "保存済みリストなし",
+  "lists_empty_saved_cta": "コミュニティのリストを探す",
+  "list_empty_items": "このリストは空です",
+  "list_empty_items_cta": "コンテンツを追加して始めましょう"
 }

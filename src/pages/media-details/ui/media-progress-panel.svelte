@@ -94,8 +94,8 @@
   }
 </script>
 
-<section class="rounded-xl border bg-card p-4">
-  <h2 class="mb-4 text-sm font-semibold">{L.media_progress_title()}</h2>
+<section class="rounded-lg border bg-card p-5">
+  <h2 class="mb-4 text-base font-semibold">{L.media_progress_title()}</h2>
 
   {#if userItems.length === 0}
     <p class="text-sm text-muted-foreground">{L.media_progress_not_in_list()}</p>

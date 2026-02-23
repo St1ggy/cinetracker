@@ -1,6 +1,8 @@
 <script lang="ts">
   import { invalidateAll } from '$app/navigation'
   import { page } from '$app/state'
+  import BookmarkIcon from '@lucide/svelte/icons/bookmark'
+  import FolderOpenIcon from '@lucide/svelte/icons/folder-open'
   import { createMutation } from '@tanstack/svelte-query'
   import { toast } from 'svelte-sonner'
 
@@ -57,48 +59,82 @@
 
 <section class="space-y-6">
   <header>
-    <h1 class="text-2xl font-semibold">{L.lists_my_title()}</h1>
-    <p class="text-sm text-muted-foreground">{L.lists_manage_description()}</p>
+    <h1 class="text-2xl font-bold tracking-tight">{L.lists_my_title()}</h1>
+    <p class="mt-1 text-sm text-muted-foreground">{L.lists_manage_description()}</p>
   </header>
 
   <CreateListForm isPending={createListMutation.isPending} onCreate={(payload) => createListMutation.mutate(payload)} />
 
-  <div class="grid gap-3 md:grid-cols-2">
-    {#each data.ownedLists as item (item.id)}
-      <a href={`/lists/${item.id}`} class="rounded-lg border bg-card p-4 hover:bg-accent">
-        <div class="flex items-center justify-between gap-2">
-          <h3 class="font-medium">{item.title}</h3>
-          <div class="flex shrink-0 gap-1">
-            {#if item.isAnonymous}
-              <span class="rounded border px-2 py-0.5 text-xs text-muted-foreground">{L.lists_anonymous()}</span>
-            {/if}
-            <span class="rounded border px-2 py-0.5 text-xs">{getVisibilityLabel(L, item.visibility)}</span>
-          </div>
-        </div>
-        <p class="mt-1 line-clamp-2 text-sm text-muted-foreground">{item.description ?? L.common_no_description()}</p>
-        <div class="mt-2 text-xs text-muted-foreground">{L.common_items_count({ count: item._count.items })}</div>
-      </a>
-    {/each}
+  <div>
+    <h2 class="mb-3 flex items-center gap-2 text-lg font-semibold">
+      <FolderOpenIcon class="size-5 text-muted-foreground" />
+      {L.lists_my_title()}
+    </h2>
+    {#if data.ownedLists.length === 0}
+      <div class="rounded-lg border border-dashed bg-card/50 px-6 py-10 text-center">
+        <p class="text-sm font-medium text-muted-foreground">{L.lists_empty_owned()}</p>
+        <p class="mt-1 text-xs text-muted-foreground">{L.lists_empty_owned_cta()}</p>
+      </div>
+    {:else}
+      <div class="grid gap-3 md:grid-cols-2">
+        {#each data.ownedLists as item (item.id)}
+          <a
+            href={`/lists/${item.id}`}
+            class="group rounded-lg border bg-card p-4 transition-all duration-150 hover:border-primary/30 hover:shadow-sm"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <h3 class="leading-snug font-semibold transition-colors group-hover:text-primary">{item.title}</h3>
+              <div class="flex shrink-0 gap-1">
+                {#if item.isAnonymous}
+                  <span class="rounded border px-2 py-0.5 text-xs text-muted-foreground">{L.lists_anonymous()}</span>
+                {/if}
+                <span class="rounded border px-2 py-0.5 text-xs">{getVisibilityLabel(L, item.visibility)}</span>
+              </div>
+            </div>
+            <p class="mt-1.5 line-clamp-2 text-sm text-muted-foreground">
+              {item.description ?? L.common_no_description()}
+            </p>
+            <div class="mt-3 text-xs text-muted-foreground">{L.common_items_count({ count: item._count.items })}</div>
+          </a>
+        {/each}
+      </div>
+    {/if}
   </div>
 
   <div>
-    <h2 class="mb-2 text-lg font-semibold">{L.lists_saved_title()}</h2>
-    <div class="grid gap-3 md:grid-cols-2">
-      {#each data.savedLists as item (item.id)}
-        <a href={`/lists/${item.listId}`} class="rounded-lg border bg-card p-4 hover:bg-accent">
-          <div class="flex items-center justify-between gap-2">
-            <h3 class="font-medium">{item.list.title}</h3>
-            <span class="rounded border px-2 py-0.5 text-xs">{L.common_saved()}</span>
-          </div>
-          <p class="mt-1 text-xs text-muted-foreground">
-            {L.common_by({ name: item.list.owner.handle ?? item.list.owner.name ?? item.list.owner.email ?? '—' })}
-          </p>
-          <div class="mt-2 text-xs text-muted-foreground">
-            {L.common_items_count({ count: item.list._count.items })}
-          </div>
-        </a>
-      {/each}
-    </div>
+    <h2 class="mb-3 flex items-center gap-2 text-lg font-semibold">
+      <BookmarkIcon class="size-5 text-muted-foreground" />
+      {L.lists_saved_title()}
+    </h2>
+    {#if data.savedLists.length === 0}
+      <div class="rounded-lg border border-dashed bg-card/50 px-6 py-10 text-center">
+        <p class="text-sm font-medium text-muted-foreground">{L.lists_empty_saved()}</p>
+        <a href="/explore" class="mt-2 inline-block text-xs text-primary hover:underline">{L.lists_empty_saved_cta()}</a
+        >
+      </div>
+    {:else}
+      <div class="grid gap-3 md:grid-cols-2">
+        {#each data.savedLists as item (item.id)}
+          <a
+            href={`/lists/${item.listId}`}
+            class="group rounded-lg border bg-card p-4 transition-all duration-150 hover:border-primary/30 hover:shadow-sm"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <h3 class="leading-snug font-semibold transition-colors group-hover:text-primary">{item.list.title}</h3>
+              <span class="shrink-0 rounded-full border bg-secondary px-2.5 py-0.5 text-xs font-medium"
+                >{L.common_saved()}</span
+              >
+            </div>
+            <p class="mt-1.5 text-xs text-muted-foreground">
+              {L.common_by({ name: item.list.owner.handle ?? item.list.owner.name ?? item.list.owner.email ?? '—' })}
+            </p>
+            <div class="mt-3 text-xs text-muted-foreground">
+              {L.common_items_count({ count: item.list._count.items })}
+            </div>
+          </a>
+        {/each}
+      </div>
+    {/if}
   </div>
 </section>
 

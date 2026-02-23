@@ -68,7 +68,10 @@
   }
 </script>
 
-<a href={`/media/${item.media.id}`} class="group relative block overflow-hidden rounded-lg border bg-card">
+<a
+  href={`/media/${item.media.id}`}
+  class="group relative block overflow-hidden rounded-lg border bg-card shadow-sm transition-shadow duration-200 hover:shadow-md"
+>
   {#if item.media.posterUrl}
     <img
       src={item.media.posterUrl}
@@ -79,7 +82,9 @@
       loading="lazy"
     />
   {:else}
-    <div class="aspect-2/3 w-full bg-muted"></div>
+    <div class="flex aspect-2/3 w-full items-center justify-center bg-muted">
+      <span class="text-2xl text-muted-foreground/30">?</span>
+    </div>
   {/if}
 
   <div

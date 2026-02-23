@@ -1,6 +1,8 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import { page } from '$app/state'
+  import LibraryBigIcon from '@lucide/svelte/icons/library-big'
+  import PlusIcon from '@lucide/svelte/icons/plus'
   import { createQuery, useQueryClient } from '@tanstack/svelte-query'
   import { untrack } from 'svelte'
   import { toast } from 'svelte-sonner'
@@ -128,13 +130,19 @@
 </script>
 
 {#if !data.authenticated}
-  <section class="rounded-lg border bg-card p-8 text-center">
-    <h1 class="text-2xl font-semibold">{L.app_name()}</h1>
-    <p class="mt-2 text-muted-foreground">{L.home_guest_description()}</p>
-    <a href="/signin" class="mt-4 inline-block rounded-md border px-4 py-2 text-sm font-medium">{L.common_sign_in()}</a>
+  <section class="rounded-xl border bg-card p-10 text-center shadow-sm">
+    <div class="mx-auto max-w-sm space-y-3">
+      <h1 class="text-3xl font-bold tracking-tight">{L.app_name()}</h1>
+      <p class="text-muted-foreground">{L.home_guest_description()}</p>
+      <a
+        href="/signin"
+        class="mt-2 inline-block rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >{L.common_sign_in()}</a
+      >
+    </div>
   </section>
 {:else}
-  <section class="space-y-3">
+  <section class="space-y-4">
     <MediaFilterBar
       {query}
       {genre}
@@ -151,7 +159,37 @@
 
     <MediaViewControls {viewMode} onViewChange={(v) => (viewMode = v)} />
 
-    {#if viewMode === 'list'}
+    {#if items.length === 0}
+      <div class="flex flex-col items-center gap-3 rounded-xl border border-dashed bg-card/50 py-16 text-center">
+        <div class="rounded-full border bg-muted p-4">
+          <LibraryBigIcon class="size-7 text-muted-foreground" />
+        </div>
+        <div class="space-y-1">
+          <p class="text-sm font-medium">
+            {hasActiveFilters ? L.explore_no_results() : L.home_no_description_yet()}
+          </p>
+          {#if !hasActiveFilters}
+            <p class="text-xs text-muted-foreground">{L.home_add_product_description()}</p>
+          {/if}
+        </div>
+        {#if !hasActiveFilters}
+          <button
+            class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            onclick={() => (showAddModal = true)}
+          >
+            <PlusIcon class="size-4" />
+            {L.home_add_product()}
+          </button>
+        {:else}
+          <button
+            class="rounded-md border px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+            onclick={handleReset}
+          >
+            {L.common_reset()}
+          </button>
+        {/if}
+      </div>
+    {:else if viewMode === 'list'}
       <div class="space-y-1.5">
         {#each items as item (item.id)}
           <MediaListRow {item} />

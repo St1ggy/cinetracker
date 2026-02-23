@@ -28,16 +28,16 @@
 
 {#if tags.length > 0}
   <div class="space-y-2">
-    <p class="text-xs font-medium tracking-wide text-muted-foreground uppercase">{L.explore_popular_tags()}</p>
+    <p class="text-xs font-semibold tracking-wider text-muted-foreground uppercase">{L.explore_popular_tags()}</p>
     <div class="flex flex-wrap gap-1.5">
       {#each tags as tag (tag.id)}
         {@const active = activeTags.includes(tag.slug)}
         <button
           type="button"
-          class={`rounded-full border px-3 py-1 text-xs transition-colors ${
+          class={`rounded-full border px-3 py-1 text-xs font-medium transition-all duration-150 ${
             active
-              ? 'border-primary bg-primary text-primary-foreground'
-              : 'border-border bg-background text-muted-foreground hover:border-primary hover:text-foreground'
+              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+              : 'border-border bg-card text-muted-foreground hover:border-primary/60 hover:bg-muted hover:text-foreground'
           }`}
           onclick={() => toggle(tag.slug)}
         >
