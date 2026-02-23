@@ -3,7 +3,7 @@
   import CirclePlayIcon from '@lucide/svelte/icons/circle-play'
   import ClockIcon from '@lucide/svelte/icons/clock'
   import { untrack } from 'svelte'
-  import { TRIGGERS, dndzone } from 'svelte-dnd-action'
+  import { SHADOW_ITEM_MARKER_PROPERTY_NAME, TRIGGERS, dndzone } from 'svelte-dnd-action'
 
   import { L } from '$lib'
   import { WATCH_STATUS_META } from '$shared/config/domain'
@@ -134,7 +134,13 @@
       onfinalize={handleFinalize}
     >
       {#each localItems as item (item.id)}
-        <KanbanCard {item} />
+        {#if (item as Record<string, unknown>)[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
+          <div
+            class="h-20 rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/20 transition-colors"
+          ></div>
+        {:else}
+          <KanbanCard {item} />
+        {/if}
       {/each}
     </div>
 
