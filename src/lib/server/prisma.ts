@@ -1,6 +1,19 @@
-import 'dotenv/config'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@prisma/client'
+import { config } from 'dotenv'
+
+// Vite loads .env.development / .env.production by mode, but server modules may run before that.
+// Load in order: base, then mode, then local. Later files override (override: true).
+config() // .env
+const nodeEnv = process.env.NODE_ENV ?? 'development'
+
+if (nodeEnv === 'development') {
+  config({ path: '.env.development', override: true })
+} else if (nodeEnv === 'production') {
+  config({ path: '.env.production', override: true })
+}
+
+config({ path: '.env.local', override: true }) // local overrides (no error if missing)
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient
