@@ -1,3 +1,9 @@
+## [1.17.1](https://github.com/St1ggy/cinetracker/compare/v1.17.0...v1.17.1) (2026-02-23)
+
+### Bug Fixes
+
+* **ci:** recover from 'type already exists' when deploying initial migration to existing prod ([5e3b832](https://github.com/St1ggy/cinetracker/commit/5e3b832182bfd47718bdbf41a096ca014fbe54cc))
+
 ## [1.17.0](https://github.com/St1ggy/cinetracker/compare/v1.16.0...v1.17.0) (2026-02-23)
 
 ### Features
