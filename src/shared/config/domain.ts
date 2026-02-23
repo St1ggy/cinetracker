@@ -1,8 +1,31 @@
-export const MEDIA_PROVIDERS = ['TMDB', 'ANILIST', 'OMDB', 'TVDB', 'JIKAN', 'KITSU', 'TRAKT'] as const
+export const MEDIA_PROVIDERS = [
+  'TMDB',
+  'ANILIST',
+  'OMDB',
+  'TVDB',
+  'JIKAN',
+  'KITSU',
+  'TRAKT',
+  'SHIKIMORI',
+  'SIMKL',
+  'WIKIDATA',
+] as const
 export type MediaProvider = (typeof MEDIA_PROVIDERS)[number]
 
-export const FREE_PROVIDERS = ['ANILIST', 'JIKAN', 'KITSU'] as const satisfies readonly MediaProvider[]
-export const KEY_REQUIRED_PROVIDERS = ['TMDB', 'OMDB', 'TVDB', 'TRAKT'] as const satisfies readonly MediaProvider[]
+export const FREE_PROVIDERS = [
+  'ANILIST',
+  'JIKAN',
+  'KITSU',
+  'SHIKIMORI',
+  'WIKIDATA',
+] as const satisfies readonly MediaProvider[]
+export const KEY_REQUIRED_PROVIDERS = [
+  'TMDB',
+  'OMDB',
+  'TVDB',
+  'TRAKT',
+  'SIMKL',
+] as const satisfies readonly MediaProvider[]
 
 export const LIST_VISIBILITIES = ['PUBLIC', 'UNLISTED', 'PRIVATE'] as const
 export type ListVisibility = (typeof LIST_VISIBILITIES)[number]
@@ -94,5 +117,22 @@ export const PROVIDER_META: Record<
     requiresKey: true,
     keyUrl: 'https://trakt.tv/oauth/applications/new',
     stepsCount: 5,
+  },
+  SHIKIMORI: {
+    label: 'Shikimori',
+    description: 'Anime & manga — free, no key required',
+    requiresKey: false,
+  },
+  SIMKL: {
+    label: 'Simkl',
+    description: 'Movies, anime & TV series with watch history',
+    requiresKey: true,
+    keyUrl: 'https://simkl.com/settings/developer/',
+    stepsCount: 4,
+  },
+  WIKIDATA: {
+    label: 'Wikidata',
+    description: 'Structured metadata enrichment — free, no key required',
+    requiresKey: false,
   },
 }

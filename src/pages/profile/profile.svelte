@@ -26,6 +26,7 @@
       { key: 'pin', label: 'PIN (optional)', type: 'password' },
     ],
     TRAKT: [{ key: 'clientId', label: 'Client ID', type: 'text' }],
+    SIMKL: [{ key: 'clientId', label: 'Client ID', type: 'text' }],
   }
 
   // Returns localised step strings for a given provider using i18n message keys.
