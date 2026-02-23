@@ -1,3 +1,9 @@
+## [1.4.4](https://github.com/St1ggy/cinetracker/compare/v1.4.3...v1.4.4) (2026-02-23)
+
+### Bug Fixes
+
+* fetch and display cast profile photos ([11b338b](https://github.com/St1ggy/cinetracker/commit/11b338b33ee781b1bac5ac04c44eb31786b2655e))
+
 ## [1.4.3](https://github.com/St1ggy/cinetracker/compare/v1.4.2...v1.4.3) (2026-02-23)
 
 ### Bug Fixes
