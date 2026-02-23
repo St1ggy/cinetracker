@@ -1,3 +1,9 @@
+## [1.5.0](https://github.com/St1ggy/cinetracker/compare/v1.4.4...v1.5.0) (2026-02-23)
+
+### Features
+
+* add kanban board page with drag-and-drop status management ([25ddab1](https://github.com/St1ggy/cinetracker/commit/25ddab1d2e88b0a6bdaa87c080badac536f2753a))
+
 ## [1.4.4](https://github.com/St1ggy/cinetracker/compare/v1.4.3...v1.4.4) (2026-02-23)
 
 ### Bug Fixes
