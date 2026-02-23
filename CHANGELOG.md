@@ -1,3 +1,9 @@
+## [1.17.3](https://github.com/St1ggy/cinetracker/compare/v1.17.2...v1.17.3) (2026-02-23)
+
+### Bug Fixes
+
+* **ci:** remove [skip ci] from prod migrate, add P3089 recovery ([2a7c0d9](https://github.com/St1ggy/cinetracker/commit/2a7c0d90afc32a5362fdf968969c5974a489f9de))
+
 ## [1.17.2](https://github.com/St1ggy/cinetracker/compare/v1.17.1...v1.17.2) (2026-02-23)
 
 ### Bug Fixes
