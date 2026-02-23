@@ -14,6 +14,8 @@
   import type { MediaProvider } from '$shared/config/domain'
   import type { HomeSearchResult } from '../home.types'
 
+  type ListOption = { id: string; title: string }
+
   type Props = {
     listId: string
     listTitle: string
@@ -28,6 +30,24 @@
   let searchInput = $state('')
   let debouncedSearchInput = $state('')
   let chosenListId = $state(untrack(() => listId))
+
+  const listsQuery = createQuery(() => ({
+    queryKey: ['user-lists'],
+    queryFn: async () => {
+      const response = await fetch('/api/lists')
+
+      if (!response.ok) throw new Error('Failed to load lists')
+
+      return response.json() as Promise<{ ownedLists: ListOption[]; savedLists: ListOption[] }>
+    },
+  }))
+
+  const allLists = $derived<ListOption[]>([
+    ...(listsQuery.data?.ownedLists ?? []),
+    ...(listsQuery.data?.savedLists ?? []),
+  ])
+
+  const chosenListTitle = $derived(allLists.find((l) => l.id === chosenListId)?.title ?? listTitle)
 
   let searchTimeout: ReturnType<typeof setTimeout> | undefined
 
@@ -118,9 +138,11 @@
         oninput={(event_) => onSearchInput((event_.currentTarget as HTMLInputElement).value)}
       />
       <Select.Root type="single" value={chosenListId} onValueChange={(v) => (chosenListId = v)}>
-        <Select.Trigger class="h-9 text-sm">{listTitle}</Select.Trigger>
+        <Select.Trigger class="h-9 max-w-48 text-sm">{chosenListTitle}</Select.Trigger>
         <Select.Content>
-          <Select.Item value={listId} label={listTitle} />
+          {#each allLists as list (list.id)}
+            <Select.Item value={list.id} label={list.title} />
+          {/each}
         </Select.Content>
       </Select.Root>
     </div>
