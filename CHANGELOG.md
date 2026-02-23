@@ -1,3 +1,9 @@
+## [1.10.0](https://github.com/St1ggy/cinetracker/compare/v1.9.1...v1.10.0) (2026-02-23)
+
+### Features
+
+* **board:** show ghost card at drop position instead of blank dashed box ([bef5fda](https://github.com/St1ggy/cinetracker/commit/bef5fda5f633f9768ad3611d6c98fe12fee7eb56))
+
 ## [1.9.1](https://github.com/St1ggy/cinetracker/compare/v1.9.0...v1.9.1) (2026-02-23)
 
 ### Bug Fixes
