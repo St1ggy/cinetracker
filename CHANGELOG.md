@@ -1,3 +1,9 @@
+## [1.0.1](https://github.com/St1ggy/cinetracker/compare/v1.0.0...v1.0.1) (2026-02-23)
+
+### Bug Fixes
+
+* grant workflow token permission to publish statuses ([f79593b](https://github.com/St1ggy/cinetracker/commit/f79593b68b9ed1a35ae46ddbbdfdc9c91f5b9d26))
+
 ## 1.0.0 (2026-02-23)
 
 ### Features
