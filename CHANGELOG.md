@@ -1,3 +1,9 @@
+## [1.1.0](https://github.com/St1ggy/cinetracker/compare/v1.0.3...v1.1.0) (2026-02-23)
+
+### Features
+
+* bold UI refresh across all pages ([ef5039d](https://github.com/St1ggy/cinetracker/commit/ef5039d2499449cf5bbbc3f6a8cba7d3fa6e2d71))
+
 ## [1.0.3](https://github.com/St1ggy/cinetracker/compare/v1.0.2...v1.0.3) (2026-02-23)
 
 ### Bug Fixes
