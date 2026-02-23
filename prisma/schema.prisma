@@ -14,6 +14,13 @@ enum ListVisibility {
   @@map("list_visibility")
 }
 
+enum SharePermission {
+  VIEW_ONLY
+  VIEW_AND_ADD
+
+  @@map("share_permission")
+}
+
 enum MediaProvider {
   TMDB
   ANILIST
@@ -53,11 +60,13 @@ model User {
   image           String?
   handle          String?      @unique @db.VarChar(255)
   handleChangedAt DateTime?    @map("handle_changed_at") @db.Timestamptz(6)
+  defaultListId   String?      @map("default_list_id") @db.Uuid
   createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
   accounts        Account[]
   sessions        Session[]
   lists           List[]
+  defaultList     List?        @relation("UserDefaultList", fields: [defaultListId], references: [id], onDelete: SetNull)
   listItems       ListItem[]
   savedLists      SavedList[]
   apiKeys         UserApiKey[]
@@ -129,9 +138,11 @@ model List {
   visibility  ListVisibility @default(PRIVATE)
   isAnonymous Boolean        @default(false) @map("is_anonymous")
   shareToken  String?        @unique(map: "lists_share_token_unique") @map("share_token") @db.VarChar(255)
+  sharePermission SharePermission? @map("share_permission")
   createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
   owner       User           @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  defaultForUsers User[]      @relation("UserDefaultList")
   items       ListItem[]
   savedBy     SavedList[]
   tags        ListTag[]
