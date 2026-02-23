@@ -41,7 +41,7 @@
   "home_all_statuses": "すべてのステータス",
   "home_add_product": "作品を追加",
   "home_add_product_title": "作品を追加",
-  "home_add_product_description": "AniList と TMDB を検索し、メタデータを自動で取り込みます。",
+  "home_add_product_description": "すべてのアクティブなプロバイダーから検索します。メタデータは自動的に取り込まれます。",
   "home_add_product_placeholder": "タイトルを入力...",
   "home_no_description_yet": "説明はまだありません。",
   "home_close_modal_aria": "モーダルを閉じる",

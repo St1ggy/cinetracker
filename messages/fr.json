@@ -41,7 +41,7 @@
   "home_all_statuses": "Tous les statuts",
   "home_add_product": "Ajouter un média",
   "home_add_product_title": "Ajouter un média",
-  "home_add_product_description": "Recherchez dans AniList et TMDB. Les métadonnées sont importées automatiquement.",
+  "home_add_product_description": "Recherche parmi tous les fournisseurs actifs. Les métadonnées sont importées automatiquement.",
   "home_add_product_placeholder": "Saisir un titre...",
   "home_no_description_yet": "Pas encore de description.",
   "home_close_modal_aria": "Fermer la fenêtre modale",

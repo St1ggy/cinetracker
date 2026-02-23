@@ -41,7 +41,7 @@
   "home_all_statuses": "Все статусы",
   "home_add_product": "Добавить продукт",
   "home_add_product_title": "Добавить продукт",
-  "home_add_product_description": "Ищите в AniList и TMDB. Метаданные подтягиваются автоматически.",
+  "home_add_product_description": "Поиск по всем активным провайдерам. Метаданные подтягиваются автоматически.",
   "home_add_product_placeholder": "Введите название...",
   "home_no_description_yet": "Описание пока отсутствует.",
   "home_close_modal_aria": "Закрыть модальное окно",

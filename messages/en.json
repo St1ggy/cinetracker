@@ -41,7 +41,7 @@
   "home_all_statuses": "All statuses",
   "home_add_product": "Add Product",
   "home_add_product_title": "Add Product",
-  "home_add_product_description": "Search in AniList and TMDB. Metadata is imported automatically.",
+  "home_add_product_description": "Search across all active providers. Metadata is imported automatically.",
   "home_add_product_placeholder": "Type title...",
   "home_no_description_yet": "No description yet.",
   "home_close_modal_aria": "Close modal",

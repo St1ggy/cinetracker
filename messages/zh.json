@@ -41,7 +41,7 @@
   "home_all_statuses": "全部状态",
   "home_add_product": "添加条目",
   "home_add_product_title": "添加条目",
-  "home_add_product_description": "在 AniList 和 TMDB 中搜索，元数据将自动导入。",
+  "home_add_product_description": "在所有已激活的提供商中搜索，元数据将自动导入。",
   "home_add_product_placeholder": "输入标题...",
   "home_no_description_yet": "暂无描述。",
   "home_close_modal_aria": "关闭弹窗",
