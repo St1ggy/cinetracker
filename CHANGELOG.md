@@ -1,3 +1,9 @@
+## [1.1.1](https://github.com/St1ggy/cinetracker/compare/v1.1.0...v1.1.1) (2026-02-23)
+
+### Bug Fixes
+
+* move ignoreCommand to vercel.json with correct semicolons ([eeb2360](https://github.com/St1ggy/cinetracker/commit/eeb2360bed5c041fdf7b19eeadbe9c8c50f9bb85))
+
 ## [1.1.0](https://github.com/St1ggy/cinetracker/compare/v1.0.3...v1.1.0) (2026-02-23)
 
 ### Features
