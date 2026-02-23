@@ -32,12 +32,16 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Pull Vercel environment
-        if: ${{ secrets.VERCEL_TOKEN != '' && secrets.VERCEL_ORG_ID != '' && secrets.VERCEL_PROJECT_ID != '' }}
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: npx vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+        run: |
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VERCEL_PROJECT_ID" ]; then
+            npx vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          else
+            echo "Skipping vercel pull: VERCEL_TOKEN/VERCEL_ORG_ID/VERCEL_PROJECT_ID is not fully configured."
+          fi
 
       - name: Deploy migrations
         env:
