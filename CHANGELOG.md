@@ -1,3 +1,9 @@
+## [1.0.2](https://github.com/St1ggy/cinetracker/compare/v1.0.1...v1.0.2) (2026-02-23)
+
+### Bug Fixes
+
+* make migrate workflow resilient without vercel creds ([22d7373](https://github.com/St1ggy/cinetracker/commit/22d7373a33dd62144fcc84d984b731084bc69bdf))
+
 ## [1.0.1](https://github.com/St1ggy/cinetracker/compare/v1.0.0...v1.0.1) (2026-02-23)
 
 ### Bug Fixes
