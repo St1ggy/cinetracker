@@ -11,13 +11,55 @@ import {
 import { prisma } from '$lib/server/prisma'
 import { listsRepository, tagsRepository } from '$lib/server/repositories'
 
+import type { SharePermission } from '@prisma/client'
+
 const patchListSchema = z.object({
   title: z.string().trim().min(1).max(120).optional(),
   description: z.string().trim().max(400).optional().nullable(),
   visibility: z.enum(['PUBLIC', 'UNLISTED', 'PRIVATE']).optional(),
   isAnonymous: z.boolean().optional(),
   tags: z.array(z.string().trim().min(1).max(50)).max(10).optional(),
+  shareLinkEnabled: z.boolean().optional(),
+  sharePermission: z.enum(['VIEW_ONLY', 'VIEW_AND_ADD']).optional(),
 })
+
+function computeShareUpdates(
+  payload: z.infer<typeof patchListSchema>,
+  list: { shareToken: string | null; sharePermission: SharePermission | null },
+  visibility: string | undefined,
+): Partial<{ shareToken: string | null; sharePermission: SharePermission | null }> {
+  const clearToken = visibility === 'PUBLIC' || visibility === 'PRIVATE'
+
+  if (payload.shareLinkEnabled === false || clearToken) {
+    return { shareToken: null, sharePermission: null }
+  }
+
+  if (payload.shareLinkEnabled === true) {
+    return {
+      shareToken: list.shareToken ?? generateShareToken(),
+      sharePermission:
+        payload.sharePermission === 'VIEW_AND_ADD' || payload.sharePermission === 'VIEW_ONLY'
+          ? payload.sharePermission
+          : (list.sharePermission ?? 'VIEW_ONLY'),
+    }
+  }
+
+  const shouldRotateTokenToUnlisted = visibility === 'UNLISTED' && !list.shareToken
+
+  if (shouldRotateTokenToUnlisted) {
+    return {
+      shareToken: generateShareToken(),
+      sharePermission: payload.sharePermission === 'VIEW_AND_ADD' ? 'VIEW_AND_ADD' : 'VIEW_ONLY',
+    }
+  }
+
+  // Only change permission for existing share link
+  if (list.shareToken && (payload.sharePermission === 'VIEW_AND_ADD' || payload.sharePermission === 'VIEW_ONLY')) {
+    return { sharePermission: payload.sharePermission }
+  }
+
+  return {}
+}
 
 export const GET = async ({ locals, params, url }) => {
   const session = await locals.auth()
@@ -28,6 +70,15 @@ export const GET = async ({ locals, params, url }) => {
 
   if (!withMeta) {
     throw error(404, 'List not found')
+  }
+
+  const isOwner = session?.user?.id === list.ownerUserId
+
+  if (!isOwner) {
+    // eslint-disable-next-line sonarjs/no-unused-vars -- intentionally omit shareToken from response
+    const { shareToken: _omitToken, ...rest } = withMeta
+
+    return json({ ...rest, shareToken: undefined })
   }
 
   return json(withMeta)
@@ -52,23 +103,16 @@ export const PATCH = async ({ locals, params, request }) => {
     }
   }
 
-  const shouldRotateTokenToUnlisted = visibility === 'UNLISTED' && !list.shareToken
-  const clearToken = visibility === 'PUBLIC' || visibility === 'PRIVATE'
-  let shareTokenUpdate: string | null | undefined
-
-  if (shouldRotateTokenToUnlisted) {
-    shareTokenUpdate = generateShareToken()
-  } else if (clearToken) {
-    shareTokenUpdate = null
-  }
-
-  const updated = await listsRepository.update(list.id, {
+  const shareUpdates = computeShareUpdates(payload, list, visibility)
+  const updateData: Parameters<typeof listsRepository.update>[1] = {
     title: payload.title,
     description: payload.description,
     visibility,
     isAnonymous,
-    shareToken: shareTokenUpdate,
-  })
+    ...shareUpdates,
+  }
+
+  const updated = await listsRepository.update(list.id, updateData)
 
   if (payload.tags !== undefined) {
     const createdTags = await tagsRepository.findOrCreateByNames(payload.tags)

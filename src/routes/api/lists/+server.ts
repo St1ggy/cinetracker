@@ -52,6 +52,7 @@ export const POST = async ({ locals, request }) => {
     visibility,
     isAnonymous,
     shareToken: visibility === 'UNLISTED' ? crypto.randomUUID().replaceAll('-', '') : null,
+    sharePermission: visibility === 'UNLISTED' ? 'VIEW_ONLY' : null,
   })
 
   if (payload.tags && payload.tags.length > 0) {

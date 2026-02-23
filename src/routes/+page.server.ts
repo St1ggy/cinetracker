@@ -1,6 +1,6 @@
 import { type WatchStatus, WatchStatus as WatchStatusEnum } from '@prisma/client'
 
-import { withMainList } from '$lib/server/lists'
+import { getHomeList } from '$lib/server/lists'
 import { prisma } from '$lib/server/prisma'
 import { listsRepository } from '$lib/server/repositories'
 
@@ -15,11 +15,15 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     return {
       authenticated: false,
       list: null,
+      lists: [],
       items: [],
     }
   }
 
-  const list = await withMainList(session.user.id)
+  const [list, lists] = await Promise.all([
+    getHomeList(session.user.id),
+    listsRepository.findOwnedWithCounts(session.user.id),
+  ])
   const q = url.searchParams.get('q') ?? ''
   const yearFrom = Number.parseInt(url.searchParams.get('yearFrom') ?? '', 10)
   const yearTo = Number.parseInt(url.searchParams.get('yearTo') ?? '', 10)
@@ -46,6 +50,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   return {
     authenticated: true,
     list,
+    lists,
     items,
     genres: allGenres,
     filters: {

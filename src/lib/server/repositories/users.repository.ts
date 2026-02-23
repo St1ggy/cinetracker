@@ -1,6 +1,35 @@
 import { prisma } from '$lib/server/prisma'
 
 export const usersRepository = {
+  findByIdWithDefaultList: async (userId: string) =>
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        defaultListId: true,
+        defaultList: {
+          select: { id: true, title: true, ownerUserId: true },
+        },
+      },
+    }),
+
+  updateDefaultListId: async (userId: string, listId: string | null) => {
+    if (listId !== null) {
+      const list = await prisma.list.findFirst({
+        where: { id: listId, ownerUserId: userId },
+        select: { id: true },
+      })
+
+      if (!list) return null
+    }
+
+    return prisma.user.update({
+      where: { id: userId },
+      data: { defaultListId: listId },
+      select: { defaultListId: true },
+    })
+  },
+
   findPublicProfile: async (handle: string) => {
     const user = await prisma.user.findUnique({
       where: { handle },

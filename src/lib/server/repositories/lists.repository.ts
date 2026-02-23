@@ -1,5 +1,4 @@
-/* eslint-disable camelcase */
-import { type ListVisibility, type MediaType, Prisma, type WatchStatus } from '@prisma/client'
+import { type ListVisibility, type MediaType, Prisma, type SharePermission, type WatchStatus } from '@prisma/client'
 
 import { prisma } from '$lib/server/prisma'
 
@@ -38,9 +37,12 @@ const buildOrderBy = (sort?: string): Prisma.ListItemOrderByWithRelationInput[] 
 export const listsRepository = {
   findById: async (listId: string) => prisma.list.findUnique({ where: { id: listId } }),
 
+  findManyByIds: async (listIds: string[]) =>
+    listIds.length === 0 ? [] : prisma.list.findMany({ where: { id: { in: listIds } } }),
+
   findByShareToken: async (shareToken: string) =>
     prisma.list.findFirst({
-      where: { shareToken, visibility: 'UNLISTED' },
+      where: { shareToken },
     }),
 
   findWithMetaById: async (listId: string) => {
@@ -53,6 +55,11 @@ export const listsRepository = {
             name: true,
             handle: true,
             email: true,
+          },
+        },
+        tags: {
+          include: {
+            tag: true,
           },
         },
         _count: {
@@ -129,6 +136,7 @@ export const listsRepository = {
     visibility: ListVisibility
     isAnonymous?: boolean
     shareToken?: string | null
+    sharePermission?: SharePermission | null
   }) =>
     prisma.list.create({
       data: {
@@ -138,6 +146,7 @@ export const listsRepository = {
         visibility: payload.visibility,
         isAnonymous: payload.isAnonymous ?? false,
         shareToken: payload.shareToken ?? null,
+        sharePermission: payload.sharePermission ?? null,
       },
     }),
 
@@ -149,6 +158,7 @@ export const listsRepository = {
       visibility?: ListVisibility
       isAnonymous?: boolean
       shareToken?: string | null
+      sharePermission?: SharePermission | null
     },
   ) => {
     try {
@@ -172,6 +182,8 @@ export const listsRepository = {
   saveForeignList: async (userId: string, listId: string) => {
     await prisma.savedList.upsert({
       where: {
+        // Prisma composite key name
+        /* eslint-disable-next-line camelcase */
         userId_listId: {
           userId,
           listId,
@@ -191,6 +203,7 @@ export const listsRepository = {
   isSavedByUser: async (userId: string, listId: string) =>
     prisma.savedList.findUnique({
       where: {
+        /* eslint-disable-next-line camelcase */
         userId_listId: {
           userId,
           listId,
@@ -270,6 +283,28 @@ export const listsRepository = {
       orderBy: buildOrderBy(params.sort),
       ...(params.cursor ? { cursor: { id: params.cursor }, skip: 1 } : {}),
       take: params.limit,
+      include: {
+        media: {
+          include: {
+            genres: {
+              include: {
+                genre: true,
+              },
+            },
+          },
+        },
+      },
+    })
+  },
+
+  /** Items from multiple lists (for board). No filters, no deduplication. */
+  findItemsByListIds: async (listIds: string[], limit = 1000) => {
+    if (listIds.length === 0) return []
+
+    return prisma.listItem.findMany({
+      where: { listId: { in: listIds } },
+      orderBy: [{ createdAt: 'desc' }],
+      take: limit,
       include: {
         media: {
           include: {

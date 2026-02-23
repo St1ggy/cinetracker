@@ -22,10 +22,16 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 
   const saved = session?.user?.id ? await listsRepository.isSavedByUser(session.user.id, list.id) : null
 
+  const isOwner = session?.user?.id === list.ownerUserId
+  const canAdd = isOwner || (token != null && token === list.shareToken && list.sharePermission === 'VIEW_AND_ADD')
+
+  const listForClient = isOwner ? list : { ...list, shareToken: undefined }
+
   return {
-    list,
+    list: listForClient,
     items,
-    isOwner: session?.user?.id === list.ownerUserId,
+    isOwner,
+    canAdd,
     isSaved: Boolean(saved),
     token,
   }

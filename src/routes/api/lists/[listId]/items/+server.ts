@@ -3,7 +3,7 @@ import { z } from 'zod'
 
 import { decrypt } from '$lib/server/crypto'
 import { importExternalMedia } from '$lib/server/external'
-import { requireOwnerList, requireReadableList } from '$lib/server/lists'
+import { requireAddableList, requireReadableList } from '$lib/server/lists'
 import { prisma } from '$lib/server/prisma'
 import { listItemsRepository, listsRepository } from '$lib/server/repositories'
 import { MEDIA_PROVIDERS, WATCH_STATUSES } from '$shared/config/domain'
@@ -108,12 +108,17 @@ export const GET = async ({ locals, params, url }) => {
   })
 }
 
-export const POST = async ({ locals, params, request }) => {
+export const POST = async ({ locals, params, request, url }) => {
   const session = await locals.auth()
 
   if (!session?.user?.id) throw error(401, 'Authentication required')
 
-  await requireOwnerList(params.listId, session.user.id)
+  const token = url.searchParams.get('token')
+
+  await requireAddableList(params.listId, {
+    userId: session.user.id,
+    shareToken: token,
+  })
   const payload = addItemSchema.parse(await request.json())
 
   let mediaId = payload.mediaId

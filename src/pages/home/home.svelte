@@ -8,6 +8,7 @@
   import { toast } from 'svelte-sonner'
 
   import { L } from '$lib'
+  import * as Select from '$lib/components/ui/select'
   import { getStorageItem, setStorageItem } from '$shared/lib/storage'
 
   import AddMediaModal from './ui/add-media-modal.svelte'
@@ -23,6 +24,16 @@
 
   const data = $derived(page.data as PageData)
   const queryClient = useQueryClient()
+
+  // Session-only: which list is shown on home (can switch until reload).
+  let currentListId = $state(untrack(() => data.list?.id ?? ''))
+
+  $effect(() => {
+    if (data.list?.id && !currentListId) currentListId = data.list.id
+  })
+
+  const lists = $derived((data.lists ?? []) as { id: string; title: string; _count?: { items: number } }[])
+  const currentList = $derived(lists.find((l) => l.id === currentListId) ?? data.list ?? null)
 
   // Filter state initialized once from URL params.
   let query = $state(untrack(() => data.filters?.q ?? ''))
@@ -50,7 +61,7 @@
   const hasActiveFilters = $derived(!!(query || genre || status))
 
   const buildItemsUrl = () => {
-    if (!data.list?.id) return null
+    if (!currentListId) return null
 
     const parts: string[] = [`limit=60`]
 
@@ -62,12 +73,12 @@
 
     if (data.filters?.sort) parts.push(`sort=${data.filters.sort}`)
 
-    return `/api/lists/${data.list.id}/items?${parts.join('&')}`
+    return `/api/lists/${currentListId}/items?${parts.join('&')}`
   }
 
   const itemsQuery = createQuery(() => ({
-    queryKey: ['list-items', data.list?.id, data.filters],
-    enabled: !!data.list?.id,
+    queryKey: ['list-items', currentListId, data.filters],
+    enabled: !!currentListId,
     queryFn: async () => {
       const url = buildItemsUrl()
 
@@ -81,7 +92,7 @@
     },
     throwOnError: false,
     meta: { onError: () => toast.error(L.common_error_generic()) },
-    initialData: { items: untrack(() => data.items ?? []) },
+    initialData: currentListId === data.list?.id ? { items: untrack(() => data.items ?? []) } : undefined,
     staleTime: 0,
   }))
 
@@ -143,6 +154,21 @@
   </section>
 {:else}
   <section class="space-y-4">
+    {#if lists.length > 1}
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-sm font-medium text-muted-foreground">{L.home_list_label()}</span>
+        <Select.Root type="single" value={currentListId} onValueChange={(v) => v && (currentListId = v)}>
+          <Select.Trigger class="h-9 min-w-[140px] text-sm">
+            {currentList?.title ?? '—'}
+          </Select.Trigger>
+          <Select.Content>
+            {#each lists as list (list.id)}
+              <Select.Item value={list.id} label={list.title} />
+            {/each}
+          </Select.Content>
+        </Select.Root>
+      </div>
+    {/if}
     <MediaFilterBar
       {query}
       {genre}
@@ -213,8 +239,8 @@
 
 {#if showAddModal}
   <AddMediaModal
-    listId={data.list?.id ?? ''}
-    listTitle={data.list?.title ?? '—'}
+    listId={currentListId}
+    listTitle={currentList?.title ?? '—'}
     onclose={() => (showAddModal = false)}
     onAdded={() => queryClient.invalidateQueries({ queryKey: ['list-items'] })}
   />

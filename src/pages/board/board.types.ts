@@ -1,5 +1,6 @@
 export type KanbanItem = {
   id: string
+  mediaId: string
   status: string | null
   currentSeason?: number | null
   currentEpisode?: number | null

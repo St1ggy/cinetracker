@@ -1,6 +1,7 @@
 <script lang="ts">
   import { L } from '$lib'
   import * as Select from '$lib/components/ui/select'
+  import VisibilityIcon from '$lib/components/ui/visibility-icon.svelte'
   import { getVisibilityLabel } from '$shared/lib/labels'
   import HandleRequiredModal from '$shared/ui/handle-required-modal.svelte'
 
@@ -94,7 +95,10 @@
       </div>
 
       <Select.Root type="single" value={visibility} onValueChange={(v) => (visibility = v as ListVisibility)}>
-        <Select.Trigger class="h-9 min-w-[120px] text-sm">{visibilityLabel(visibility)}</Select.Trigger>
+        <Select.Trigger class="flex h-9 min-w-[120px] items-center gap-2 text-sm">
+          <VisibilityIcon {visibility} class="size-4" />
+          {visibilityLabel(visibility)}
+        </Select.Trigger>
         <Select.Content>
           <Select.Item value="PRIVATE" label={L.visibility_private()} />
           <Select.Item value="UNLISTED" label={L.visibility_unlisted()} />

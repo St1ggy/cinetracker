@@ -2,7 +2,7 @@
   import { page } from '$app/state'
   import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard'
   import { createQuery, useQueryClient } from '@tanstack/svelte-query'
-  import { tick, untrack } from 'svelte'
+  import { tick } from 'svelte'
   import { toast } from 'svelte-sonner'
 
   import { L } from '$lib'
@@ -19,19 +19,23 @@
   const data = $derived(page.data as PageData)
   const queryClient = useQueryClient()
 
+  let selectedListIds = $state<string[]>([])
+
+  // No lists selected = show from all owned lists (merged by media). Otherwise from selected only.
+  const effectiveListIds = $derived(selectedListIds.length > 0 ? selectedListIds : (data.lists ?? []).map((l) => l.id))
+
   const boardQuery = createQuery(() => ({
-    queryKey: ['board-items', data.list?.id],
-    enabled: !!data.list?.id,
+    queryKey: ['board-items', [...effectiveListIds].toSorted((a, b) => a.localeCompare(b)).join(',')],
+    enabled: effectiveListIds.length > 0,
     queryFn: async () => {
-      const response = await fetch(`/api/lists/${data.list.id}/items?limit=500`)
+      const response = await fetch(`/api/board/items?listIds=${encodeURIComponent(effectiveListIds.join(','))}`)
 
       if (!response.ok) throw new Error('Failed to fetch board items')
 
-      return response.json() as Promise<{ items: typeof data.items }>
+      return response.json() as Promise<{ items: KanbanItem[] }>
     },
     throwOnError: false,
     meta: { onError: () => toast.error(L.common_error_generic()) },
-    initialData: { items: untrack(() => data.items ?? []) },
     staleTime: 0,
   }))
 
@@ -98,6 +102,16 @@
     selectedGenreSlugs = []
   }
 
+  function toggleList(listId: string) {
+    const next = selectedListIds.includes(listId)
+      ? selectedListIds.filter((id) => id !== listId)
+      : [...selectedListIds, listId]
+
+    selectedListIds = next
+  }
+
+  const isListSelected = (listId: string) => selectedListIds.length > 0 && selectedListIds.includes(listId)
+
   // Columns are derived from filtered items.
   const columns = $derived<Record<WatchStatus, KanbanItem[]>>({
     PLAN_TO_WATCH: filteredItems.filter((index) => (index.status ?? 'PLAN_TO_WATCH') === 'PLAN_TO_WATCH'),
@@ -122,18 +136,18 @@
   const isEpisodic = (item: KanbanItem) => item.media.mediaType === 'TV' || item.media.mediaType === 'ANIME'
 
   const patchStatus = async (
-    itemId: string,
+    mediaId: string,
     status: WatchStatus,
     currentSeason?: number | null,
     currentEpisode?: number | null,
   ) => {
-    const body: Record<string, unknown> = { status }
+    const body: Record<string, unknown> = { mediaId, listIds: effectiveListIds, status }
 
     if (currentSeason !== undefined) body.currentSeason = currentSeason
 
     if (currentEpisode !== undefined) body.currentEpisode = currentEpisode
 
-    const response = await fetch(`/api/lists/${data.list.id}/items/${itemId}`, {
+    const response = await fetch('/api/board/items', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -147,7 +161,7 @@
   const handleStatusChange = async (itemId: string, newStatus: WatchStatus): Promise<void> => {
     const item = allItems.find((index) => index.id === itemId)
 
-    if (!item) return
+    if (!item?.mediaId) return
 
     if (newStatus === 'WATCHED' && isEpisodic(item)) {
       return new Promise<void>((resolve) => {
@@ -156,7 +170,7 @@
     }
 
     try {
-      await patchStatus(itemId, newStatus)
+      await patchStatus(item.mediaId, newStatus)
       toast.success(L.board_status_changed())
     } catch {
       toast.error(L.common_error_generic())
@@ -168,14 +182,14 @@
   const handleDialogConfirm = async (status: 'WATCHED' | 'IN_PROGRESS', season?: number, episode?: number) => {
     if (!pendingMove) return
 
-    const { itemId, resolve } = pendingMove
+    const { item, resolve } = pendingMove
 
     pendingMove = null
 
     try {
       await (status === 'WATCHED'
-        ? patchStatus(itemId, 'WATCHED', null, null)
-        : patchStatus(itemId, 'IN_PROGRESS', season ?? null, episode ?? null))
+        ? patchStatus(item.mediaId, 'WATCHED', null, null)
+        : patchStatus(item.mediaId, 'IN_PROGRESS', season ?? null, episode ?? null))
 
       toast.success(L.board_status_changed())
     } catch {
@@ -209,8 +223,26 @@
   </div>
 {:else}
   <div class="flex flex-col gap-3" style="height: calc(100vh - 7rem)">
-    <!-- Type and genre chips (AND logic: type in selected AND item has all selected genres) -->
+    <!-- Lists, type and genre filters -->
     <div class="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-2">
+      {#if (data.lists?.length ?? 0) > 0}
+        <span class="shrink-0 text-xs font-medium text-muted-foreground">{L.board_filter_lists()}</span>
+        {#each data.lists as list (list.id)}
+          <button
+            type="button"
+            class="rounded-full border px-2.5 py-1 text-xs font-medium transition-colors {isListSelected(list.id)
+              ? 'border-transparent bg-primary text-primary-foreground'
+              : 'border-border bg-background hover:bg-accent hover:text-accent-foreground'}"
+            onclick={() => toggleList(list.id)}
+          >
+            {list.title}
+            {#if list._count?.items != null}
+              <span class="opacity-70">({list._count.items})</span>
+            {/if}
+          </button>
+        {/each}
+        <span class="shrink-0 text-border">|</span>
+      {/if}
       <span class="shrink-0 text-xs font-medium text-muted-foreground">{L.board_filter_types()}</span>
       {#each MEDIA_TYPES as type (type)}
         {@const meta = getMediaTypeMeta(type)}

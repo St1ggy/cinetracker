@@ -1,13 +1,14 @@
 import { error } from '@sveltejs/kit'
 
-import { listsRepository } from './repositories'
+import { listsRepository, usersRepository } from './repositories'
 
-import type { ListVisibility } from '@prisma/client'
+import type { ListVisibility, SharePermission } from '@prisma/client'
 
 type ListAccessEntity = {
   visibility: ListVisibility
   ownerUserId: string
   shareToken: string | null
+  sharePermission: SharePermission | null
 }
 
 export const requireSessionUser = async (locals: App.Locals) => {
@@ -30,7 +31,7 @@ export const canReadList = (list: ListAccessEntity, userId?: string, shareToken?
   }
 
   if (list.visibility === 'PRIVATE') {
-    return list.ownerUserId === userId
+    return list.ownerUserId === userId || (shareToken != null && shareToken === list.shareToken)
   }
 
   return list.ownerUserId === userId || (shareToken != null && shareToken === list.shareToken)
@@ -56,6 +57,34 @@ export const requireReadableList = async (
   return list
 }
 
+export const canAddToList = (list: ListAccessEntity, userId?: string, shareToken?: string | null) => {
+  if (list.ownerUserId === userId) {
+    return true
+  }
+
+  return shareToken != null && shareToken === list.shareToken && list.sharePermission === 'VIEW_AND_ADD'
+}
+
+export const requireAddableList = async (
+  listId: string,
+  options?: {
+    userId?: string
+    shareToken?: string | null
+  },
+) => {
+  const list = await listsRepository.findById(listId)
+
+  if (!list) {
+    throw error(404, 'List not found')
+  }
+
+  if (!canAddToList(list, options?.userId, options?.shareToken)) {
+    throw error(403, 'Not enough permissions to add to this list')
+  }
+
+  return list
+}
+
 export const requireOwnerList = async (listId: string, ownerUserId: string) => {
   const list = await listsRepository.findById(listId)
 
@@ -71,6 +100,19 @@ export const requireOwnerList = async (listId: string, ownerUserId: string) => {
 }
 
 export const withMainList = async (ownerUserId: string) => listsRepository.findOrCreateMain(ownerUserId)
+
+/** List to show on home: user's default list if set and valid, else main list. */
+export const getHomeList = async (ownerUserId: string) => {
+  const user = await usersRepository.findByIdWithDefaultList(ownerUserId)
+
+  if (user?.defaultListId && user.defaultList?.ownerUserId === ownerUserId) {
+    const list = await listsRepository.findById(user.defaultListId)
+
+    if (list) return list
+  }
+
+  return withMainList(ownerUserId)
+}
 
 export const parseVisibility = (value: unknown): ListVisibility | undefined => {
   if (typeof value !== 'string') {

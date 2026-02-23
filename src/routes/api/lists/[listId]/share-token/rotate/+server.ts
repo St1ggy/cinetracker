@@ -10,17 +10,21 @@ export const POST = async ({ locals, params }) => {
     throw error(401, 'Authentication required')
   }
 
-  await requireOwnerList(params.listId, session.user.id)
-  const list = await listsRepository.update(params.listId, {
-    visibility: 'UNLISTED',
+  const list = await requireOwnerList(params.listId, session.user.id)
+
+  if (!list.shareToken) {
+    throw error(400, 'List has no share link to rotate')
+  }
+
+  const updated = await listsRepository.update(params.listId, {
     shareToken: generateShareToken(),
   })
 
-  if (!list) {
+  if (!updated) {
     throw error(404, 'List not found')
   }
 
   return json({
-    shareToken: list.shareToken,
+    shareToken: updated.shareToken,
   })
 }

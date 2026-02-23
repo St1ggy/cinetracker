@@ -12,12 +12,10 @@ export const load: PageServerLoad = async ({ locals }) => {
     redirect(302, '/signin')
   }
 
-  const list = await withMainList(session.user.id)
+  const [list, lists] = await Promise.all([
+    withMainList(session.user.id),
+    listsRepository.findOwnedWithCounts(session.user.id),
+  ])
 
-  const items = await listsRepository.findItemsByListWithFilters({
-    listId: list.id,
-    limit: 500,
-  })
-
-  return { list, items }
+  return { list, lists }
 }

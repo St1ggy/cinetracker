@@ -30,6 +30,9 @@ export const KEY_REQUIRED_PROVIDERS = [
 export const LIST_VISIBILITIES = ['PUBLIC', 'UNLISTED', 'PRIVATE'] as const
 export type ListVisibility = (typeof LIST_VISIBILITIES)[number]
 
+export const SHARE_PERMISSIONS = ['VIEW_ONLY', 'VIEW_AND_ADD'] as const
+export type SharePermission = (typeof SHARE_PERMISSIONS)[number]
+
 export const WATCH_STATUSES = ['WATCHED', 'IN_PROGRESS', 'PLAN_TO_WATCH'] as const
 export type WatchStatus = (typeof WATCH_STATUSES)[number]
 

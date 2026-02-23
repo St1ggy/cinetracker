@@ -20,11 +20,12 @@
   type Props = {
     listId: string
     listTitle: string
+    token?: string | null
     onclose: () => void
     onAdded: () => void
   }
 
-  const { listId, listTitle, onclose, onAdded }: Props = $props()
+  const { listId, listTitle, token = null, onclose, onAdded }: Props = $props()
 
   const queryClient = useQueryClient()
 
@@ -50,11 +51,13 @@
 
   const chosenListTitle = $derived(allLists.find((l) => l.id === chosenListId)?.title ?? listTitle)
 
+  const tokenParameter = $derived(token ? `?token=${encodeURIComponent(token)}` : '')
+
   const addedKeysQuery = createQuery(() => ({
-    queryKey: ['added-media-keys', chosenListId],
+    queryKey: ['added-media-keys', chosenListId, token ?? ''],
     enabled: !!chosenListId,
     queryFn: async () => {
-      const response = await fetch(`/api/lists/${chosenListId}/added-media-keys`)
+      const response = await fetch(`/api/lists/${chosenListId}/added-media-keys${tokenParameter}`)
 
       if (!response.ok) throw new Error('Failed to load added keys')
 
@@ -99,7 +102,7 @@
 
   const addMutation = createMutation(() => ({
     mutationFn: async (payload: { provider: MediaProvider; externalId: string }) => {
-      const response = await fetch(`/api/lists/${chosenListId}/items`, {
+      const response = await fetch(`/api/lists/${chosenListId}/items${tokenParameter}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

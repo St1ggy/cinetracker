@@ -2,11 +2,13 @@
   import { invalidateAll } from '$app/navigation'
   import { page } from '$app/state'
   import LibraryBigIcon from '@lucide/svelte/icons/library-big'
+  import PlusIcon from '@lucide/svelte/icons/plus'
   import { createMutation } from '@tanstack/svelte-query'
   import { toast } from 'svelte-sonner'
 
   import { L } from '$lib'
 
+  import AddMediaModal from '../home/ui/add-media-modal.svelte'
   import MediaCard from '../home/ui/media-card.svelte'
 
   import ListDetailHeader from './ui/list-detail-header.svelte'
@@ -14,6 +16,8 @@
   import type { PageData } from '../../routes/lists/[listId]/$types'
 
   const data = $derived(page.data as PageData)
+
+  let showAddModal = $state(false)
 
   const toggleSavedMutation = createMutation(() => ({
     mutationFn: async (variables: { method: 'DELETE' | 'POST'; tokenParameter: string }) => {
@@ -56,16 +60,50 @@
       </div>
       <div class="space-y-1">
         <p class="text-sm font-medium">{L.list_empty_items()}</p>
-        {#if data.isOwner}
+        {#if data.canAdd}
           <p class="text-xs text-muted-foreground">{L.list_empty_items_cta()}</p>
         {/if}
       </div>
+      {#if data.canAdd}
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-md border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          onclick={() => (showAddModal = true)}
+        >
+          <PlusIcon class="size-4" />
+          {L.home_add_product()}
+        </button>
+      {/if}
     </div>
   {:else}
+    {#if data.canAdd}
+      <div class="flex justify-end">
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+          onclick={() => (showAddModal = true)}
+        >
+          <PlusIcon class="size-4" />
+          {L.home_add_product()}
+        </button>
+      </div>
+    {/if}
     <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
       {#each data.items as item (item.id)}
         <MediaCard {item} showStatusLabel />
       {/each}
     </div>
+  {/if}
+
+  {#if showAddModal}
+    <AddMediaModal
+      listId={data.list.id}
+      listTitle={data.list.title}
+      token={data.token}
+      onclose={() => (showAddModal = false)}
+      onAdded={() => {
+        invalidateAll()
+      }}
+    />
   {/if}
 </section>

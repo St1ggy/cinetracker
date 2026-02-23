@@ -1,9 +1,11 @@
 <script lang="ts">
+  import { invalidateAll } from '$app/navigation'
   import { page } from '$app/state'
   import { createQuery } from '@tanstack/svelte-query'
   import { toast } from 'svelte-sonner'
 
   import { L } from '$lib'
+  import * as Select from '$lib/components/ui/select'
   import { FREE_PROVIDERS, KEY_REQUIRED_PROVIDERS, PROVIDER_META } from '$shared/config/domain'
 
   import DeleteAccountModal from './ui/delete-account-modal.svelte'
@@ -103,6 +105,35 @@
         .catch(() => {})
     }
   })
+
+  const defaultListLabel = $derived(
+    (() => {
+      const id = (page.data as PageData).defaultListId
+
+      if (!id) return L.profile_default_list_main()
+
+      return (page.data as PageData).lists?.find((l) => l.id === id)?.title ?? L.profile_default_list_main()
+    })(),
+  )
+
+  async function handleDefaultListChange(value: string) {
+    const defaultListId = value === '__none__' ? null : value
+
+    try {
+      const response = await fetch('/api/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ defaultListId }),
+      })
+
+      if (!response.ok) throw new Error('Failed to update')
+
+      await invalidateAll()
+      toast.success(L.profile_handle_saved())
+    } catch {
+      toast.error(L.common_error_generic())
+    }
+  }
 </script>
 
 <div class="space-y-6">
@@ -163,6 +194,24 @@
             currentHandle = h
           }}
         />
+      </div>
+    </section>
+
+    <section class="rounded-lg border bg-card p-6">
+      <h2 class="text-lg font-semibold">{L.profile_default_list_title()}</h2>
+      <p class="mt-1 text-sm text-muted-foreground">{L.profile_default_list_description()}</p>
+      <div class="mt-4">
+        <Select.Root type="single" value={data.defaultListId ?? '__none__'} onValueChange={handleDefaultListChange}>
+          <Select.Trigger class="h-9 min-w-[200px] text-sm">
+            {defaultListLabel}
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Item value="__none__" label={L.profile_default_list_main()} />
+            {#each data.lists ?? [] as list (list.id)}
+              <Select.Item value={list.id} label={list.title} />
+            {/each}
+          </Select.Content>
+        </Select.Root>
       </div>
     </section>
 

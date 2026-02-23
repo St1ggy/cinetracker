@@ -80,6 +80,11 @@
 
       for (const it of localItems) total += itemDurationMinutes(it, kind)
 
+      // Watched column header: include ghost items' watched time (already watched portion).
+      if (status === 'WATCHED' && ghostItems.length > 0) {
+        for (const it of ghostItems) total += itemDurationMinutes(it, 'watched')
+      }
+
       return total
     })(),
   )
@@ -137,18 +142,19 @@
       {/if}
     </div>
 
-    <h2 class="text-sm font-semibold">{watchStatusLabels[status]}</h2>
+    <h2 class="min-w-0 flex-1 text-sm font-semibold">
+      {watchStatusLabels[status]}
+      {#if totalDurationMinutes > 0}
+        <span class="font-normal text-muted-foreground">
+          ({L.board_total_duration({ hours, minutes })})
+        </span>
+      {/if}
+    </h2>
 
-    <span class="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+    <span class="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
       {L.board_items_count({ count: localItems.length })}
     </span>
   </div>
-
-  {#if totalDurationMinutes > 0}
-    <div class="border-b px-4 py-2 text-xs text-muted-foreground">
-      {L.board_total_duration({ hours, minutes })}
-    </div>
-  {/if}
 
   {#if ghostItems.length > 0}
     <div class="border-b px-2 py-2">

@@ -77,9 +77,12 @@
     })(),
   )
 
-  /** Display: WATCHED → watched time; IN_PROGRESS / PLAN_TO_WATCH → remaining time. */
+  // Display: WATCHED → watched time; IN_PROGRESS / PLAN_TO_WATCH → remaining time.
+  //  Ghost cards (IN_PROGRESS in Watched column) always show watched time.
   const displayDuration = $derived(
     (() => {
+      if (ghost) return formatDuration(watchedDurationMinutes)
+
       const s = item.status ?? 'PLAN_TO_WATCH'
 
       if (s === 'WATCHED') return formatDuration(watchedDurationMinutes)
