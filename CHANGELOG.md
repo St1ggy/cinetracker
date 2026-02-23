@@ -1,3 +1,15 @@
+## [1.13.0](https://github.com/St1ggy/cinetracker/compare/v1.12.0...v1.13.0) (2026-02-23)
+
+### Features
+
+* **profile:** validate API keys before saving ([febaffc](https://github.com/St1ggy/cinetracker/commit/febaffc76a77832bcbc31271754030f3aa28cd3a))
+
+### Bug Fixes
+
+* **board:** kanban column highlight, drop placeholder, card state after episodic dialog ([0b27bd5](https://github.com/St1ggy/cinetracker/commit/0b27bd55c385ffdea6b9a12ff1d294fcbe705998))
+* **explore:** full-width content layout ([3ee97de](https://github.com/St1ggy/cinetracker/commit/3ee97de263c81b03e3ed78aa4c6f0f0e8e1136cc))
+* **layout:** equal top and bottom padding for main content ([d9f260d](https://github.com/St1ggy/cinetracker/commit/d9f260dff04de5d2e44cdb6dd8b65b9c5a5c16f7))
+
 ## [1.12.0](https://github.com/St1ggy/cinetracker/compare/v1.11.0...v1.12.0) (2026-02-23)
 
 ### Features
