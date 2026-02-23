@@ -31,8 +31,30 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Pull Vercel environment (preview)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VERCEL_PROJECT_ID" ]; then
+            npx vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+          else
+            echo "Skipping vercel pull: VERCEL_TOKEN/VERCEL_ORG_ID/VERCEL_PROJECT_ID is not fully configured."
+          fi
+
       - name: Generate Prisma Client
-        run: npx prisma generate
+        env:
+          DIRECT_DEV_DATABASE_URL: ${{ secrets.DIRECT_DEV_DATABASE_URL }}
+          DEV_DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
+        run: |
+          if [ -f .vercel/.env.preview.local ]; then
+            set -a
+            . ./.vercel/.env.preview.local
+            set +a
+          fi
+          export DATABASE_URL="${DIRECT_DEV_DATABASE_URL:-${DEV_DATABASE_URL:-${DATABASE_URL:-postgresql://localhost:5432/dummy}}}"
+          npx prisma generate
 
       - name: Check
         run: npm run check
@@ -62,14 +84,31 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Pull Vercel environment (preview)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VERCEL_PROJECT_ID" ]; then
+            npx vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+          else
+            echo "Skipping vercel pull: VERCEL_TOKEN/VERCEL_ORG_ID/VERCEL_PROJECT_ID is not fully configured."
+          fi
+
       - name: Deploy migrations (dev)
         env:
           DEV_DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
           DIRECT_DEV_DATABASE_URL: ${{ secrets.DIRECT_DEV_DATABASE_URL }}
         run: |
+          if [ -f .vercel/.env.preview.local ]; then
+            set -a
+            . ./.vercel/.env.preview.local
+            set +a
+          fi
           export DATABASE_URL="${DIRECT_DEV_DATABASE_URL:-${DEV_DATABASE_URL:-}}"
           if [ -z "$DATABASE_URL" ]; then
-            echo "DEV_DATABASE_URL (or DIRECT_DEV_DATABASE_URL) is not set in GitHub secrets. Skipping migrations."
+            echo "DEV_DATABASE_URL (or DIRECT_DEV_DATABASE_URL) is not set in Vercel or GitHub secrets. Skipping migrations."
             exit 0
           fi
           set +e
