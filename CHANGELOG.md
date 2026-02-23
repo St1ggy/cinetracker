@@ -1,3 +1,12 @@
+## [1.14.0](https://github.com/St1ggy/cinetracker/compare/v1.13.0...v1.14.0) (2026-02-23)
+
+### Features
+
+* **lists:** add ExploreTabContent and basePath support in explore UI ([4234003](https://github.com/St1ggy/cinetracker/commit/42340030e58660c32d2db88bcc77089be892c231))
+* **lists:** add view tabs (All / My lists / Saved) with redirect when unauthenticated ([3ead9f7](https://github.com/St1ggy/cinetracker/commit/3ead9f7c33810bce09d78defc417eca5fae70b13))
+* **lists:** merge explore data into lists load (public + owned + saved) ([4f3bdfd](https://github.com/St1ggy/cinetracker/commit/4f3bdfdb8e55e4b3848122ea73a51e63e18b9a09))
+* **nav:** remove Explore from sidebar, redirect /explore to /lists?view=all ([2fee5e9](https://github.com/St1ggy/cinetracker/commit/2fee5e9e4e4360303852275d3a988fd3a23c9525))
+
 ## [1.13.0](https://github.com/St1ggy/cinetracker/compare/v1.12.0...v1.13.0) (2026-02-23)
 
 ### Features

@@ -1,6 +1,6 @@
 {
   "name": "cinetracker",
-  "version": "1.13.0",
+  "version": "1.14.0",
   "devDependencies": {
     "@eslint/compat": "^1.4.1",
     "@eslint/js": "^9.39.3",
