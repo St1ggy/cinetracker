@@ -15,6 +15,7 @@ const CREDENTIAL_SCHEMAS: Record<string, z.ZodTypeAny> = {
   OMDB: z.object({ apiKey: z.string().min(1) }),
   TVDB: z.object({ apiKey: z.string().min(1), pin: z.string().optional() }),
   TRAKT: z.object({ clientId: z.string().min(1) }),
+  SIMKL: z.object({ clientId: z.string().min(1) }),
 }
 
 const upsertSchema = z.object({
