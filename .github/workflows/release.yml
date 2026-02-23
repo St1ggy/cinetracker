@@ -1,3 +1,4 @@
+# Main: semantic release (version from conventional commits). Usually the version is already bumped by pre-push when merging dev→main.
 name: Release
 
 on:
