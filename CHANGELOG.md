@@ -1,3 +1,9 @@
+## [1.3.0](https://github.com/St1ggy/cinetracker/compare/v1.2.0...v1.3.0) (2026-02-23)
+
+### Features
+
+* add Apple and GitHub OAuth providers ([9f3c124](https://github.com/St1ggy/cinetracker/commit/9f3c1242311f1876a3cb9cccf3f601f8739ce144))
+
 ## [1.2.0](https://github.com/St1ggy/cinetracker/compare/v1.1.1...v1.2.0) (2026-02-23)
 
 ### Features
