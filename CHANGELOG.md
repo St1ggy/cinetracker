@@ -1,3 +1,9 @@
+## [1.7.1](https://github.com/St1ggy/cinetracker/compare/v1.7.0...v1.7.1) (2026-02-23)
+
+### Bug Fixes
+
+* **board:** fix drag-and-drop by moving items state into each column ([e2ce642](https://github.com/St1ggy/cinetracker/commit/e2ce6422c2d72f82f04222bee467e755e2e7780a))
+
 ## [1.7.0](https://github.com/St1ggy/cinetracker/compare/v1.6.0...v1.7.0) (2026-02-23)
 
 ### Features
