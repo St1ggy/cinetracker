@@ -14,8 +14,8 @@ jobs:
   migrate:
     name: Run Prisma Migrations (prod DB)
     runs-on: ubuntu-latest
-    # Run only on release commits (after version update), not on merge commits
-    if: ${{ startsWith(github.event.head_commit.message, 'chore(release):') }}
+    # Run on every push to main; release-commit push from GITHUB_TOKEN does not trigger a new run,
+    # so we must migrate on the merge/feat push. migrate deploy is idempotent.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
