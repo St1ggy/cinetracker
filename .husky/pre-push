@@ -1,5 +1,0 @@
-#!/bin/sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-# semantic-release runs in CI only (see .github/workflows/release.yml)
-exit 0
