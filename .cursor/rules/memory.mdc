@@ -154,6 +154,20 @@ npx prisma migrate status
 npx prisma migrate deploy
 ```
 
+### Mandatory reminder
+**Never skip migrations.** For every schema change: create the migration (applies to dev), commit the migration SQL, and ensure prod gets it (Vercel runs `prisma migrate deploy` on deploy). No schema change without a migration in both environments.
+
+---
+
+## 2026-02-23 — Migrations: never forget dev and prod
+
+### Rule
+При любом изменении схемы Prisma:
+1. **Dev:** создать миграцию и применить локально: `npm run prisma:migrate:dev -- --name <описание>`.
+2. **Prod:** закоммитить и запушить файлы миграции — на деплое Vercel сам выполнит `prisma migrate deploy`.
+
+Миграции обязательны и в dev, и в prod; без них прод падает с ошибками вида «column does not exist».
+
 ---
 
 ## Template for new entries
