@@ -1,3 +1,9 @@
+## [1.9.1](https://github.com/St1ggy/cinetracker/compare/v1.9.0...v1.9.1) (2026-02-23)
+
+### Bug Fixes
+
+* **board:** ghost items at top, optimistic status icon update on drop ([27625f5](https://github.com/St1ggy/cinetracker/commit/27625f5fe7d824ef650af5618e73cafb388f9b84))
+
 ## [1.9.0](https://github.com/St1ggy/cinetracker/compare/v1.8.0...v1.9.0) (2026-02-23)
 
 ### Features
