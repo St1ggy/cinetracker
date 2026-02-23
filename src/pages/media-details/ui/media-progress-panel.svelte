@@ -30,6 +30,7 @@
   const { mediaId, isEpisodic, userItems, seasons }: Props = $props()
 
   const watchStatusLabels = getWatchStatusLabels(L)
+  const orderedStatuses = WATCH_STATUSES.toReversed()
 
   type ProgressState = {
     status: WatchStatus
@@ -67,6 +68,8 @@
 
     state.saveState = 'saving'
 
+    const isInProgress = state.status === 'IN_PROGRESS'
+
     try {
       const response = await fetch(`/api/media/${mediaId}/progress`, {
         method: 'PATCH',
@@ -74,8 +77,8 @@
         body: JSON.stringify({
           itemId,
           status: state.status,
-          currentSeason: state.currentSeason === '' ? null : Number(state.currentSeason),
-          currentEpisode: state.currentEpisode === '' ? null : Number(state.currentEpisode),
+          currentSeason: isInProgress && state.currentSeason !== '' ? Number(state.currentSeason) : null,
+          currentEpisode: isInProgress && state.currentEpisode !== '' ? Number(state.currentEpisode) : null,
         }),
       })
 
@@ -111,26 +114,31 @@
               </p>
             {/if}
 
-            <div class="flex flex-wrap gap-3">
-              <div class="min-w-[160px] flex-1">
-                <p class="mb-1 text-xs font-medium text-muted-foreground">{L.media_progress_status()}</p>
-                <Select.Root
-                  type="single"
-                  value={state.status}
-                  onValueChange={(v) => (state.status = v as WatchStatus)}
-                >
-                  <Select.Trigger class="h-9 w-full text-sm">
-                    {watchStatusLabels[state.status]}
-                  </Select.Trigger>
-                  <Select.Content>
-                    {#each WATCH_STATUSES as st (st)}
-                      <Select.Item value={st} label={watchStatusLabels[st]} />
-                    {/each}
-                  </Select.Content>
-                </Select.Root>
-              </div>
+            <!-- Segmented status control -->
+            <div class="grid gap-1 rounded-lg border bg-muted/30 p-1" style="grid-template-columns: repeat(3, 1fr)">
+              {#each orderedStatuses as st (st)}
+                <button
+                  type="button"
+                  class="rounded-md py-1.5 text-center text-xs font-medium transition-all {state.status === st
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'}"
+                  onclick={() => {
+                    state.status = st
 
-              {#if isEpisodic}
+                    if (st !== 'IN_PROGRESS') {
+                      state.currentSeason = ''
+                      state.currentEpisode = ''
+                    }
+                  }}
+                >
+                  {watchStatusLabels[st]}
+                </button>
+              {/each}
+            </div>
+
+            <!-- Season + episode — only for episodic media while In Progress -->
+            {#if isEpisodic && state.status === 'IN_PROGRESS'}
+              <div class="flex flex-wrap gap-3">
                 {#if seasons.length > 0}
                   <div class="w-28">
                     <p class="mb-1 text-xs font-medium text-muted-foreground">{L.media_progress_season()}</p>
@@ -171,8 +179,8 @@
                     bind:value={state.currentEpisode}
                   />
                 </div>
-              {/if}
-            </div>
+              </div>
+            {/if}
 
             <button
               class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"

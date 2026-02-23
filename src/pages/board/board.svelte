@@ -60,8 +60,15 @@
 
   const isEpisodic = (item: KanbanItem) => item.media.mediaType === 'TV' || item.media.mediaType === 'ANIME'
 
-  const patchStatus = async (itemId: string, status: WatchStatus, currentEpisode?: number | null) => {
+  const patchStatus = async (
+    itemId: string,
+    status: WatchStatus,
+    currentSeason?: number | null,
+    currentEpisode?: number | null,
+  ) => {
     const body: Record<string, unknown> = { status }
+
+    if (currentSeason !== undefined) body.currentSeason = currentSeason
 
     if (currentEpisode !== undefined) body.currentEpisode = currentEpisode
 
@@ -97,7 +104,7 @@
     await queryClient.refetchQueries({ queryKey: ['board-items'] })
   }
 
-  const handleDialogConfirm = async (action: 'complete' | 'update-episode', episode?: number) => {
+  const handleDialogConfirm = async (status: 'WATCHED' | 'IN_PROGRESS', season?: number, episode?: number) => {
     if (!pendingMove) return
 
     const { itemId, resolve } = pendingMove
@@ -105,7 +112,10 @@
     pendingMove = null
 
     try {
-      await (action === 'complete' ? patchStatus(itemId, 'WATCHED', null) : patchStatus(itemId, 'IN_PROGRESS', episode))
+      await (status === 'WATCHED'
+        ? patchStatus(itemId, 'WATCHED', null, null)
+        : patchStatus(itemId, 'IN_PROGRESS', season ?? null, episode ?? null))
+
       toast.success(L.board_status_changed())
     } catch {
       toast.error(L.common_error_generic())
