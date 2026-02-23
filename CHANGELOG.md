@@ -1,3 +1,9 @@
+## [1.2.0](https://github.com/St1ggy/cinetracker/compare/v1.1.1...v1.2.0) (2026-02-23)
+
+### Features
+
+* add Shikimori, Simkl, Wikidata providers + TMDB watch providers ([f35fdf2](https://github.com/St1ggy/cinetracker/commit/f35fdf2e5c5c1874cd01da217ac6d8a09ae3be8a))
+
 ## [1.1.1](https://github.com/St1ggy/cinetracker/compare/v1.1.0...v1.1.1) (2026-02-23)
 
 ### Bug Fixes
