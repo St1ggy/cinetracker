@@ -52,6 +52,17 @@ alwaysApply: true
 
 ---
 
+## 2026-02-23 — Pull before changes
+
+### Rule
+**Before making any code changes**, run `git pull --rebase` to bring in the latest from the remote. This avoids working on stale state and prevents push rejections.
+
+### Where documented
+- `.cursor/rules/workflow.mdc` — section "Before ANY code change"
+- `.cursor/rules/context.mdc` — section 13 (Mandatory workflow)
+
+---
+
 ## 2026-02-22 — Mandatory checks after every code change
 
 ### What changed

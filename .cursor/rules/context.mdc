@@ -389,7 +389,11 @@ PRISMA_GENERATE_SKIP_AUTOINSTALL=true  # set in vercel.json
 
 ---
 
-## 13. Mandatory workflow after ANY code change
+## 13. Mandatory workflow
+
+**Before any code change:** run `git pull --rebase` to sync with remote.
+
+**After any code change:**
 
 ```bash
 # 1. Auto-fix ESLint (formatting, import order, etc.)
