@@ -1,3 +1,9 @@
+## [1.11.0](https://github.com/St1ggy/cinetracker/compare/v1.10.0...v1.11.0) (2026-02-23)
+
+### Features
+
+* **media:** segmented status control, episode fields only for In Progress ([5b79f1a](https://github.com/St1ggy/cinetracker/commit/5b79f1af3c48af31a59e0b698502265cb54e741a))
+
 ## [1.10.0](https://github.com/St1ggy/cinetracker/compare/v1.9.1...v1.10.0) (2026-02-23)
 
 ### Features
