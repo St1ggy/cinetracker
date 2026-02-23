@@ -2,7 +2,8 @@
   import CircleCheckIcon from '@lucide/svelte/icons/circle-check'
   import CirclePlayIcon from '@lucide/svelte/icons/circle-play'
   import ClockIcon from '@lucide/svelte/icons/clock'
-  import { dndzone } from 'svelte-dnd-action'
+  import { untrack } from 'svelte'
+  import { TRIGGERS, dndzone } from 'svelte-dnd-action'
 
   import { L } from '$lib'
   import { WATCH_STATUS_META } from '$shared/config/domain'
@@ -18,20 +19,33 @@
     status: WatchStatus
     items: KanbanItem[]
     ghostItems?: KanbanItem[]
-    onItemsChange: (items: KanbanItem[]) => void
-    onStatusChange: (itemId: string, newStatus: WatchStatus) => void
+    onStatusChange: (itemId: string, newStatus: WatchStatus) => Promise<void>
   }
 
-  const { status, items, ghostItems = [], onItemsChange, onStatusChange }: Props = $props()
+  const { status, items, ghostItems = [], onStatusChange }: Props = $props()
 
   const statusMeta = $derived(WATCH_STATUS_META[status])
   const watchStatusLabels = $derived(getWatchStatusLabels(L))
+
+  // Each column owns its local items state for dnd.
+  // The parent's `items` prop is the source of truth from the query.
+  let localItems = $state(untrack(() => [...items]))
+  let isDragging = $state(false)
+
+  // Sync from parent prop when not actively dragging.
+  // Always read `items` first so it's tracked as a dependency even when isDragging = true,
+  // ensuring the effect re-runs once the refetch completes and isDragging becomes false.
+  $effect(() => {
+    const incoming = items
+
+    if (!isDragging) localItems = [...incoming]
+  })
 
   const totalDurationMinutes = $derived(
     (() => {
       let total = 0
 
-      for (const item of items) {
+      for (const item of localItems) {
         const type = item.media.mediaType
 
         if (type === 'TV' || type === 'ANIME') {
@@ -53,18 +67,33 @@
   const hours = $derived(Math.floor(totalDurationMinutes / 60))
   const minutes = $derived(totalDurationMinutes % 60)
 
-  const handleConsider = (event_: CustomEvent<{ items: KanbanItem[] }>) => {
-    onItemsChange(event_.detail.items)
+  function handleConsider(event_: CustomEvent<{ items: KanbanItem[] }>) {
+    isDragging = true
+    localItems = event_.detail.items
   }
 
-  const handleFinalize = (event_: CustomEvent<{ items: KanbanItem[]; info: { id: string; source: string } }>) => {
-    const movedItem = items.find((index) => index.id === event_.detail.info.id)
+  async function handleFinalize(
+    event_: CustomEvent<{ items: KanbanItem[]; info: { id: string | number; trigger: string; source: string } }>,
+  ) {
+    localItems = event_.detail.items
 
-    onItemsChange(event_.detail.items)
+    const { trigger, id } = event_.detail.info
+    const movedId = String(id)
 
-    if (movedItem && movedItem.status !== status) {
-      onStatusChange(event_.detail.info.id, status)
+    // DROPPED_INTO_ZONE fires when item lands in this column — could be from another column or same.
+    // Check the item's original status to confirm it actually moved columns.
+    if (trigger === TRIGGERS.DROPPED_INTO_ZONE) {
+      const movedItem = localItems.find((item) => String(item.id) === movedId)
+      const crossColumn = movedItem && (movedItem.status ?? 'PLAN_TO_WATCH') !== status
+
+      if (crossColumn) {
+        // Await so isDragging stays true while PATCH + refetch complete.
+        // This prevents the $effect from syncing with stale parent data mid-flight.
+        await onStatusChange(movedId, status)
+      }
     }
+
+    isDragging = false
   }
 </script>
 
@@ -83,7 +112,7 @@
     <h2 class="text-sm font-semibold">{watchStatusLabels[status]}</h2>
 
     <span class="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-      {L.board_items_count({ count: items.length })}
+      {L.board_items_count({ count: localItems.length })}
     </span>
   </div>
 
@@ -97,17 +126,17 @@
     class="scroll-fade flex-1 overflow-y-auto p-2"
     style="min-height: 80px"
     use:scrollFade
-    use:dndzone={{ items, type: 'kanban', dropTargetStyle: {} }}
+    use:dndzone={{ items: localItems, type: 'kanban', dropTargetStyle: {} }}
     onconsider={handleConsider}
     onfinalize={handleFinalize}
   >
-    {#if items.length === 0}
+    {#if localItems.length === 0}
       <div class="flex items-center justify-center py-8 text-xs text-muted-foreground">
         {L.board_empty_column()}
       </div>
     {:else}
       <div class="space-y-2">
-        {#each items as item (item.id)}
+        {#each localItems as item (item.id)}
           <KanbanCard {item} />
         {/each}
       </div>

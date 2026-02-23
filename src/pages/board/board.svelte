@@ -36,29 +36,14 @@
 
   const allItems = $derived((boardQuery.data?.items ?? []) as KanbanItem[])
 
-  // Local mutable columns for dnd optimistic updates.
-  let columns = $state<Record<WatchStatus, KanbanItem[]>>({
-    PLAN_TO_WATCH: [],
-    IN_PROGRESS: [],
-    WATCHED: [],
+  // Columns are derived from query data; each KanbanColumn owns its own local
+  // drag state and syncs back from these props after each refetch.
+  const columns = $derived<Record<WatchStatus, KanbanItem[]>>({
+    PLAN_TO_WATCH: allItems.filter((index) => (index.status ?? 'PLAN_TO_WATCH') === 'PLAN_TO_WATCH'),
+    IN_PROGRESS: allItems.filter((index) => index.status === 'IN_PROGRESS'),
+    WATCHED: allItems.filter((index) => index.status === 'WATCHED'),
   })
 
-  // Sync from query data whenever it changes (but not during drag).
-  let isDragging = $state(false)
-
-  $effect(() => {
-    if (isDragging) return
-
-    const items = allItems
-
-    columns = {
-      PLAN_TO_WATCH: items.filter((index) => (index.status ?? 'PLAN_TO_WATCH') === 'PLAN_TO_WATCH'),
-      IN_PROGRESS: items.filter((index) => index.status === 'IN_PROGRESS'),
-      WATCHED: items.filter((index) => index.status === 'WATCHED'),
-    }
-  })
-
-  // Ghost cards: IN_PROGRESS items with episode progress shown in WATCHED column.
   const ghostItems = $derived(
     allItems.filter(
       (index) =>
@@ -68,8 +53,10 @@
     ),
   )
 
-  // Dialog state for episodic → WATCHED drop.
-  let pendingMove = $state<{ itemId: string; item: KanbanItem } | null>(null)
+  // Dialog: for episodic items dropped into WATCHED we ask the user what to do.
+  // A resolve function is stored so the awaiting column can be unblocked when the dialog closes.
+  type PendingMove = { itemId: string; item: KanbanItem; resolve: () => void }
+  let pendingMove = $state<PendingMove | null>(null)
 
   const isEpisodic = (item: KanbanItem) => item.media.mediaType === 'TV' || item.media.mediaType === 'ANIME'
 
@@ -87,52 +74,56 @@
     if (!response.ok) throw new Error('Failed to update status')
   }
 
-  const handleStatusChange = async (itemId: string, newStatus: WatchStatus) => {
+  // Returns a Promise that resolves only after the DB is updated and the query has refetched.
+  // The column awaits this before resetting its isDragging flag, preventing stale-data flickers.
+  const handleStatusChange = async (itemId: string, newStatus: WatchStatus): Promise<void> => {
     const item = allItems.find((index) => index.id === itemId)
 
     if (!item) return
 
     if (newStatus === 'WATCHED' && isEpisodic(item)) {
-      pendingMove = { itemId, item }
-
-      return
+      return new Promise<void>((resolve) => {
+        pendingMove = { itemId, item, resolve }
+      })
     }
 
     try {
       await patchStatus(itemId, newStatus)
       toast.success(L.board_status_changed())
-      await queryClient.invalidateQueries({ queryKey: ['board-items'] })
     } catch {
       toast.error(L.common_error_generic())
-      await queryClient.invalidateQueries({ queryKey: ['board-items'] })
-    } finally {
-      isDragging = false
     }
+
+    await queryClient.refetchQueries({ queryKey: ['board-items'] })
   }
 
   const handleDialogConfirm = async (action: 'complete' | 'update-episode', episode?: number) => {
     if (!pendingMove) return
 
-    const { itemId } = pendingMove
+    const { itemId, resolve } = pendingMove
 
     pendingMove = null
 
     try {
       await (action === 'complete' ? patchStatus(itemId, 'WATCHED', null) : patchStatus(itemId, 'IN_PROGRESS', episode))
       toast.success(L.board_status_changed())
-      await queryClient.invalidateQueries({ queryKey: ['board-items'] })
     } catch {
       toast.error(L.common_error_generic())
-      await queryClient.invalidateQueries({ queryKey: ['board-items'] })
-    } finally {
-      isDragging = false
     }
+
+    await queryClient.refetchQueries({ queryKey: ['board-items'] })
+    resolve()
   }
 
-  const handleDialogCancel = () => {
+  const handleDialogCancel = async () => {
+    if (!pendingMove) return
+
+    const { resolve } = pendingMove
+
     pendingMove = null
-    isDragging = false
-    queryClient.invalidateQueries({ queryKey: ['board-items'] })
+
+    await queryClient.refetchQueries({ queryKey: ['board-items'] })
+    resolve()
   }
 </script>
 
@@ -150,13 +141,7 @@
         {status}
         items={columns[status]}
         ghostItems={status === 'WATCHED' ? ghostItems : []}
-        onItemsChange={(updated) => {
-          isDragging = true
-          columns[status] = updated
-        }}
-        onStatusChange={(itemId, newStatus) => {
-          handleStatusChange(itemId, newStatus)
-        }}
+        onStatusChange={handleStatusChange}
       />
     {/each}
   </div>
