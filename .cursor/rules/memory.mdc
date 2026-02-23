@@ -194,6 +194,9 @@ For a **fresh** dev DB (empty): run `npx prisma migrate deploy` once; all 7 migr
 ### Baseline script
 `npm run prisma:migrate:baseline` marks all 7 migrations as applied on the current DB (for DBs that already have the full schema, e.g. after db push or restore). Use only when the DB schema already matches the migrations.
 
+### Prod / CI
+If prod already had the schema (from migrations 20260222…–20260224) before 20260220000000_initial was added, `migrate deploy` fails with “type \"list_visibility\" already exists”. The GitHub Actions workflow “Run Prisma Migrations” includes a recovery step: on that error it runs `prisma migrate resolve --applied 20260220000000_initial` and retries deploy. So the next run (or re-run) of the workflow should succeed.
+
 ---
 
 ## Template for new entries

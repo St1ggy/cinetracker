@@ -62,7 +62,20 @@ jobs:
             exit 1
           fi
 
-          npx prisma migrate deploy
+          set +e
+          OUT=$(npx prisma migrate deploy 2>&1)
+          CODE=$?
+          set -e
+          if [ $CODE -ne 0 ]; then
+            if echo "$OUT" | grep -qE "already exists|P3018"; then
+              echo "Recovery: marking 20260220000000_initial as applied (schema already present)."
+              npx prisma migrate resolve --applied 20260220000000_initial
+              npx prisma migrate deploy
+            else
+              echo "$OUT"
+              exit $CODE
+            fi
+          fi
 
       - name: 'notify vercel'
         uses: 'vercel/repository-dispatch/actions/status@v1'
