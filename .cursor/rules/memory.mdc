@@ -196,3 +196,103 @@ npx prisma migrate deploy
   }
 </script>
 ```
+
+---
+
+## 2026-02-23 — Kanban board (`/board`)
+
+### What was built
+- New page `src/routes/board/+page.svelte` + `+page.server.ts`
+- FSD slice: `src/pages/board/` with `board.svelte`, `board.types.ts`, `index.ts`
+- Sub-components: `ui/kanban-column.svelte`, `ui/kanban-card.svelte`, `ui/episodic-watched-dialog.svelte`
+- Sidebar link added to `app-sidebar.svelte`
+- i18n keys added to all 5 locale files (`board_*` prefix)
+
+### Architecture decisions
+
+**dndzone must have direct DOM children**
+`svelte-dnd-action` drags ALL direct children of the dndzone element. Any wrapping `<div>` inside makes the library treat the wrapper as the single draggable unit (all cards fly together). Fix: use `flex flex-col gap-2` on the dndzone itself, no inner wrappers.
+
+**Each column owns local drag state**
+`KanbanColumn` manages `let localItems = $state(untrack(() => [...items]))`. The dndzone works against `localItems`, never against the prop. A `$effect` syncs from prop when `!isDragging`.
+```svelte
+$effect(() => {
+  const incoming = items   // always read to track as dependency
+  if (!isDragging) localItems = [...incoming]
+})
+```
+
+**Cross-column status change detection**
+Use `TRIGGERS.DROPPED_INTO_ZONE` from `svelte-dnd-action` + check original item status:
+```typescript
+import { TRIGGERS } from 'svelte-dnd-action'
+if (trigger === TRIGGERS.DROPPED_INTO_ZONE) {
+  const movedItem = event_.detail.items.find(i => String(i.id) === movedId)
+  const crossColumn = movedItem && (movedItem.status ?? 'PLAN_TO_WATCH') !== status
+  if (crossColumn) await onStatusChange(movedId, status)
+}
+```
+
+**`onStatusChange` returns `Promise<void>`**
+The column `await`s it — `isDragging` stays `true` during PATCH + `refetchQueries`, preventing `$effect` from syncing with stale data. After the promise resolves `isDragging = false` and `$effect` syncs with fresh server data.
+
+**Episodic → Watched dialog**
+When episodic media (TV/ANIME) is dropped into Watched, board.svelte stores a `resolve` function:
+```typescript
+type PendingMove = { itemId: string; item: KanbanItem; resolve: () => void }
+// handleStatusChange returns new Promise<void>(resolve => { pendingMove = { ..., resolve } })
+// handleDialogConfirm/Cancel calls resolve() after PATCH + refetchQueries
+```
+
+**FLIP animation**
+`animate:flip` must be on a DOM element, not a component. Wrap each `{#each}` item:
+```svelte
+{#each localItems as item (item.id)}
+  <div animate:flip={{ duration: flipDurationMs }}>
+    ...card or shadow...
+  </div>
+{/each}
+```
+Pass matching `flipDurationMs` to `use:dndzone={{ ..., flipDurationMs }}`.
+
+**Shadow item rendering**
+Shadow items (drop-position indicator) are rendered as the actual card at `opacity-40 pointer-events-none`:
+```svelte
+{#if (item as Record<string, unknown>)[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
+  <div class="pointer-events-none select-none opacity-40">
+    <KanbanCard {item} />
+  </div>
+{:else}
+  <KanbanCard {item} />
+{/if}
+```
+
+**Ghost cards (IN_PROGRESS shown in Watched)**
+Episodic IN_PROGRESS items with episode progress appear at the **top** of the Watched column (above the dndzone) as `<KanbanCard ghost />`. They are `$derived` from `allItems` in `board.svelte`.
+
+**Optimistic status update on drop**
+When cross-column drop detected, immediately update the moved item's `status` in `localItems` before awaiting the server:
+```typescript
+localItems = event_.detail.items.map(item =>
+  String(item.id) === movedId ? { ...item, status } : item
+)
+```
+
+**`refetchQueries` vs `invalidateQueries`**
+Board uses `queryClient.refetchQueries(...)` (waits for refetch to complete) rather than `invalidateQueries` (fire-and-forget). This ensures `items` prop is fresh when `isDragging` resets.
+
+---
+
+## 2026-02-23 — Profile page additions
+
+### Auth provider display
+- `src/routes/profile/+page.server.ts` fetches `Account.provider` in parallel with API keys
+- `ProfileInfo` accepts `authProviders?: string[]` and renders them capitalized
+
+### Media cache reset
+- `DELETE /api/user/media-cache` — finds all unique `mediaId`s for user's lists, sets `enrichedAt = null`
+- Button in `profile.svelte` with states: `idle → resetting → done`
+- Shows count of reset entries on success
+
+### ESLint workaround
+`sonarjs/no-unused-collection` crashes when parsing Svelte files using `svelte-dnd-action`. Disabled for `**/*.svelte` in `eslint.config.js`.

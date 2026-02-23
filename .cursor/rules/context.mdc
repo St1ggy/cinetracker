@@ -91,9 +91,17 @@ pages/media-details/
 
 pages/profile/
   profile.svelte                 ~134 lines — composition only
-  ui/profile-info.svelte         ~31 lines  — user info + sign out
+  ui/profile-info.svelte         ~31 lines  — user info + sign out + auth provider display
   ui/provider-api-key-row.svelte ~187 lines — expandable API key row
   ui/delete-account-modal.svelte ~84 lines  — danger zone modal
+
+pages/board/
+  board.svelte                   ~110 lines — Kanban board composition
+  board.types.ts                             KanbanItem type
+  index.ts                                   barrel export
+  ui/kanban-column.svelte        ~170 lines — column with local dnd state + FLIP animation
+  ui/kanban-card.svelte          ~127 lines — compact media card (poster + meta + duration)
+  ui/episodic-watched-dialog.svelte ~80 lines — dialog when episodic media dropped into Watched
 
 pages/layout/
   layout.svelte                  ~93 lines  — app shell (header mobile, sidebar desktop)
@@ -408,3 +416,11 @@ Never skip these. The project uses strict ESLint (`unicorn`, `sonarjs`, `prettie
 | 2026-02-22 | `scrollFade` Svelte action + `.scroll-fade` CSS class for edge fade in scrollable containers |
 | 2026-02-22 | Pages decomposed into `ui/` sub-components — page roots are thin composers (<120 lines) |
 | 2026-02-22 | `MediaCard` shared between home grid and list-details grid via `showStatusLabel` prop |
+| 2026-02-23 | Kanban board page (`/board`) — three columns by `WatchStatus`, drag-and-drop via `svelte-dnd-action` |
+| 2026-02-23 | Each `KanbanColumn` owns its own `localItems = $state([...items])` — dndzone must work with local state, not props |
+| 2026-02-23 | dndzone direct-children rule — no wrapper divs inside dndzone; use `flex flex-col gap-2` on zone itself |
+| 2026-02-23 | `animate:flip` requires a DOM wrapper `<div animate:flip>` around each item (can't apply to components) |
+| 2026-02-23 | `handleStatusChange` returns `Promise<void>` awaited by the column to keep `isDragging=true` during PATCH+refetch |
+| 2026-02-23 | Ghost cards (IN_PROGRESS with progress in episodic media) shown at TOP of Watched column as `<KanbanCard ghost>` |
+| 2026-02-23 | Shadow items rendered as the actual card with `opacity-40 pointer-events-none` (not a blank dashed box) |
+| 2026-02-23 | Profile: auth provider displayed in `ProfileInfo`; media cache reset button (`DELETE /api/user/media-cache`) |
