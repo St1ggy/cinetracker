@@ -78,8 +78,8 @@ const plaintext = decrypt(encrypted, iv, authTag)
 After modifying `prisma/schema.prisma`:
 
 ```bash
-npx prisma db push          # sync schema (dev)
-npx prisma generate         # regenerate client
+bunx prisma db push          # sync schema (dev)
+bunx prisma generate         # regenerate client
 ```
 
 Config lives in `prisma.config.ts`, URL is read from `env('DATABASE_URL')`.

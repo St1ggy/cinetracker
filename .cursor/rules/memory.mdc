@@ -67,13 +67,13 @@ alwaysApply: true
 
 ### What changed
 - After **every** code change, run:
-  1. `npx eslint --fix <changed files>` — auto-fix and lint check
+  1. `bunx eslint --fix <changed files>` — auto-fix and lint check
   2. `npm run check` — TypeScript + svelte-check
 
 ### Commands
 
 ```bash
-npx eslint --fix src/path/to/file.svelte src/path/to/other.ts
+bunx eslint --fix src/path/to/file.svelte src/path/to/other.ts
 npm run check
 ```
 
@@ -148,10 +148,10 @@ After **any** change to `prisma/schema.prisma` — always:
 npm run prisma:migrate:dev -- --name add_my_field
 
 # check migration status (needs real DATABASE_URL)
-npx prisma migrate status
+bunx prisma migrate status
 
 # apply pending migrations on prod (done automatically by Vercel build)
-npx prisma migrate deploy
+bunx prisma migrate deploy
 ```
 
 ### Mandatory reminder
@@ -181,15 +181,15 @@ If `migrate dev` fails with P3006 / “media does not exist”, or the app fails
 
 1. Mark the initial migration as applied (so shadow DB applies migrations in the right order):
    ```bash
-   npx prisma migrate resolve --applied 20260220000000_initial
+   bunx prisma migrate resolve --applied 20260220000000_initial
    ```
 2. Apply any pending migrations (e.g. adds `default_list_id`, share_permission):
    ```bash
-   npx prisma migrate deploy
+   bunx prisma migrate deploy
    ```
 3. Restart the dev server (`run dev`).
 
-For a **fresh** dev DB (empty): run `npx prisma migrate deploy` once; all 7 migrations will apply in order.
+For a **fresh** dev DB (empty): run `bunx prisma migrate deploy` once; all 7 migrations will apply in order.
 
 ### Baseline script
 `npm run prisma:migrate:baseline` marks all 7 migrations as applied on the current DB (for DBs that already have the full schema, e.g. after db push or restore). Use only when the DB schema already matches the migrations.

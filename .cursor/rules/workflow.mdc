@@ -24,14 +24,14 @@ Execute **in this exact order**:
 ### 1. ESLint autofix
 
 ```bash
-npx eslint --fix <changed files>
+bunx eslint --fix <changed files>
 ```
 
 Run only on changed files (not the whole project — too slow):
 
 ```bash
 # Example
-npx eslint --fix src/pages/home/home.svelte src/lib/server/repositories/lists.repository.ts
+bunx eslint --fix src/pages/home/home.svelte src/lib/server/repositories/lists.repository.ts
 ```
 
 ### 2. Type-check
@@ -47,8 +47,8 @@ Catches TypeScript errors in `.svelte` files that `tsc` alone cannot see.
 
 | Error type | Action |
 |-----------|--------|
-| Prettier / formatting | `npx eslint --fix` will auto-fix |
-| Import order | `npx eslint --fix` will auto-fix |
+| Prettier / formatting | `bunx eslint --fix` will auto-fix |
+| Import order | `bunx eslint --fix` will auto-fix |
 | TypeScript type error | Fix manually, then re-run `npm run check` |
 | Svelte `{@const}` outside block | Move inside `{#each}` / `{#if}` |
 | Tailwind dynamic class purge | Replace with `style="..."` using a CSS variable |
@@ -61,6 +61,6 @@ npm run check        # svelte-check + tsc
 npm run lint         # eslint without fix
 npm run build        # production build
 
-npx prisma db push   # sync schema to DB
-npx prisma generate  # regenerate Prisma client
+bunx prisma db push   # sync schema to DB
+bunx prisma generate  # regenerate Prisma client
 ```

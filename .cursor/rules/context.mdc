@@ -397,7 +397,7 @@ PRISMA_GENERATE_SKIP_AUTOINSTALL=true  # set in vercel.json
 
 ```bash
 # 1. Auto-fix ESLint (formatting, import order, etc.)
-npx eslint --fix src/path/to/changed-file.svelte
+bunx eslint --fix src/path/to/changed-file.svelte
 
 # 2. Type check
 npm run check
