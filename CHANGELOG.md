@@ -1,3 +1,5 @@
+## [1.18.4](https://github.com/St1ggy/cinetracker/compare/v1.18.3...v1.18.4) (2026-04-25)
+
 ## [1.18.3](https://github.com/St1ggy/cinetracker/compare/v1.18.2...v1.18.3) (2026-04-25)
 
 ### Bug Fixes
