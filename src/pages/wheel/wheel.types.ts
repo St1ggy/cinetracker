@@ -1,0 +1,20 @@
+import type { MediaType, WatchStatus } from '$shared/config/domain'
+
+export type WheelItem = {
+  id: string
+  mediaId: string
+  status: WatchStatus | null
+  media: {
+    id: string
+    title: string
+    posterUrl: string | null
+    mediaType: MediaType
+    genres?: { genre: { id: string; slug: string; name: string } }[]
+  }
+}
+
+export type WheelGenre = {
+  id: string
+  slug: string
+  name: string
+}

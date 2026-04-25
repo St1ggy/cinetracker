@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state'
+  import Disc3Icon from '@lucide/svelte/icons/disc-3'
   import HomeIcon from '@lucide/svelte/icons/house'
   import InfoIcon from '@lucide/svelte/icons/info'
   import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard'
@@ -53,6 +54,14 @@
       >
         <ListIcon class="size-4" />
         <span>{L.nav_lists()}</span>
+      </a>
+      <a
+        href="/wheel"
+        class={`flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent ${isActive('/wheel') ? 'bg-accent font-medium' : ''}`}
+        onclick={() => onNavigate?.()}
+      >
+        <Disc3Icon class="size-4" />
+        <span>{L.nav_wheel()}</span>
       </a>
       <a
         href="/profile"
