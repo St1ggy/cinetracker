@@ -19,7 +19,7 @@ const names = entries
   .sort()
 
 for (const name of names) {
-  execSync(`npx prisma migrate resolve --applied ${name}`, {
+  execSync(`bunx prisma migrate resolve --applied ${name}`, {
     cwd: root,
     stdio: 'inherit',
   })

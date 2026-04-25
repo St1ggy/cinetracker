@@ -1,6 +1,5 @@
-# Package Managers
+# Package managers (lockfiles often machine-specific noise)
 package-lock.json
-pnpm-lock.yaml
 yarn.lock
 bun.lock
 bun.lockb

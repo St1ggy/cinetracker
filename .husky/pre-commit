@@ -1,2 +1,2 @@
-npx lint-staged
+bunx lint-staged
 npm run check
