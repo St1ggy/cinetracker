@@ -15,11 +15,11 @@ function run(command, options = {}) {
 }
 
 function assertCleanWorktree() {
-  try {
-    run('git diff --quiet')
-    run('git diff --cached --quiet')
-  } catch {
-    throw new Error('Working tree is not clean. Commit or stash your changes before running release:trigger.')
+  const status = run('git status --porcelain', { capture: true })
+  if (status.length > 0) {
+    throw new Error(
+      `Working tree is not clean. Commit or stash your changes before running release:trigger.\n\n${status}`,
+    )
   }
 }
 
