@@ -327,5 +327,15 @@
   "wheel_winner_label": "当選",
   "wheel_open_media": "メディアを開く",
   "wheel_candidates_count": "候補 {filtered} 件、ルーレット表示 {rendered} 件。",
-  "wheel_filters_active": "フィルターが有効です。"
+  "wheel_filters_active": "フィルターが有効です。",
+  "wheel_canvas_label": "メディアのセクターがあるルーレット",
+  "wheel_view_mode_wheel": "ルーレット",
+  "wheel_view_mode_strip": "ストリップ",
+  "wheel_view_mode_group_label": "表示モード",
+  "wheel_sectors_label": "ルーレットのセクター数: {n}",
+  "wheel_fairness_wheel_hint": "フィルター後のすべての作品が同じ確率です。ルーレットには一部のセクターだけを表示します。",
+  "wheel_fairness_strip_hint": "リストを繰り返して無限に流れる見た目にしつつ、フィルター後の各作品は同じ確率です。",
+  "wheel_candidates_strip": "候補 {filtered} 件。ストリップにすべて表示。抽選はフィルター後の全件から。",
+  "wheel_candidates_wheel": "候補 {filtered} 件。ルーレットのセクター {sectors}。抽選はフィルター後の全件から。",
+  "wheel_winner_live": "当選: {title}"
 }

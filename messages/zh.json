@@ -327,5 +327,15 @@
   "wheel_winner_label": "结果",
   "wheel_open_media": "打开媒体",
   "wheel_candidates_count": "候选 {filtered} 个，转盘显示 {rendered} 个。",
-  "wheel_filters_active": "筛选已启用。"
+  "wheel_filters_active": "筛选已启用。",
+  "wheel_canvas_label": "带媒体分区的幸运转盘",
+  "wheel_view_mode_wheel": "转盘",
+  "wheel_view_mode_strip": "横滑条",
+  "wheel_view_mode_group_label": "选择视图",
+  "wheel_sectors_label": "转盘分区数：{n}",
+  "wheel_fairness_wheel_hint": "每个筛选后的作品概率相同；转盘只显示部分分区。",
+  "wheel_fairness_strip_hint": "横滑条会重复列表以营造无限滚动感；每个筛选后的作品概率仍相同。",
+  "wheel_candidates_strip": "候选 {filtered} 个；横滑条展示全部。抽奖使用完整筛选结果。",
+  "wheel_candidates_wheel": "候选 {filtered} 个；转盘分区 {sectors}。抽奖使用完整筛选结果。",
+  "wheel_winner_live": "结果：{title}"
 }

@@ -3,22 +3,22 @@
   import EyeOffIcon from '@lucide/svelte/icons/eye-off'
   import Maximize2Icon from '@lucide/svelte/icons/maximize-2'
   import Minimize2Icon from '@lucide/svelte/icons/minimize-2'
-  import SparklesIcon from '@lucide/svelte/icons/sparkles'
 
   import { L } from '$lib'
 
-  type WheelEntry = {
-    id: string
-    mediaId: string
-    title: string
-    posterUrl: string | null
-  }
+  import type { WheelEntry } from '../wheel.types'
 
   type Props = {
     entries: WheelEntry[]
+    spinSerial: number
+    spinTargetSectorIndex: number
+    onSpinningChange?: (spinning: boolean) => void
+    onSpinComplete?: (winner: WheelEntry) => void
   }
 
-  const { entries }: Props = $props()
+  const { entries, spinSerial, spinTargetSectorIndex, onSpinningChange, onSpinComplete }: Props = $props()
+
+  const SPIN_MS = 5200
 
   const WHEEL_SIZE = 680
   const CENTER = WHEEL_SIZE / 2
@@ -26,14 +26,10 @@
   const LABEL_RADIUS = RADIUS - 22
 
   let wheelRotation = $state(0)
-  let spinning = $state(false)
-  let winnerId = $state<string | null>(null)
-  let previousSignature = $state('')
+  let lastProcessedSpinSerial = $state(0)
   let isFullscreen = $state(false)
   let showLabels = $state(true)
 
-  const winner = $derived(entries.find((entry) => entry.id === winnerId) ?? null)
-  const canSpin = $derived(entries.length > 1 && !spinning)
   const labelFontSize = $derived(entries.length > 10 ? 25 : 29)
   const LABEL_CHAR_WIDTH_FACTOR = 0.58
 
@@ -57,7 +53,6 @@
     return `M ${CENTER} ${CENTER} L ${p1.x} ${p1.y} A ${RADIUS} ${RADIUS} 0 ${largeArc} 1 ${p2.x} ${p2.y} Z`
   }
 
-  /** `clipPathUnits="objectBoundingBox"` (0…1) — required for `clip-path: url(#id)` on full-square HTML layers. */
   const slicePathOBB = (index: number, total: number) => {
     const c = 0.5
     const r = RADIUS / WHEEL_SIZE
@@ -109,7 +104,6 @@
     return false
   })
 
-  // Same as label arc / sector orientation (tangent: mid + 90°).
   const sectorRotationDeg = (index: number, total: number) => {
     const slice = 360 / total
     const mid = index * slice + slice / 2
@@ -129,41 +123,48 @@
     return bytes[0] % maxExclusive
   }
 
-  const spin = () => {
-    if (!canSpin) return
-
+  const runSpin = (winnerIndex: number) => {
     const total = entries.length
+
+    if (total < 2) return
+
     const angle = 360 / total
-    const winnerIndex = randomInt(total)
-    const rounds = 7 + randomInt(3)
-    // Pointer is at the top of the wheel (270deg in our coordinate system).
-    // Align selected slice center to that angle.
     const target = normalize(270 - (winnerIndex * angle + angle / 2))
     const current = normalize(wheelRotation)
     const delta = normalize(target - current)
+    const rounds = 7 + randomInt(3)
 
-    spinning = true
-    winnerId = null
+    onSpinningChange?.(true)
     wheelRotation += rounds * 360 + delta
 
-    setTimeout(() => {
-      winnerId = entries[winnerIndex]?.id ?? null
-      spinning = false
-    }, 5200)
+    globalThis.setTimeout(() => {
+      const winner = entries[winnerIndex]
+
+      if (winner) onSpinComplete?.(winner)
+
+      onSpinningChange?.(false)
+    }, SPIN_MS)
   }
+
+  $effect(() => {
+    const serial = spinSerial
+    const targetIndex = spinTargetSectorIndex
+    const list = entries
+
+    if (serial === 0 || serial === lastProcessedSpinSerial) return
+
+    if (list.length < 2) return
+
+    if (targetIndex < 0 || targetIndex >= list.length) return
+
+    lastProcessedSpinSerial = serial
+
+    runSpin(targetIndex)
+  })
 
   const toggleFullscreen = () => {
     isFullscreen = !isFullscreen
   }
-
-  $effect(() => {
-    const signature = entries.map((entry) => entry.id).join('|')
-
-    if (signature !== previousSignature) {
-      previousSignature = signature
-      winnerId = null
-    }
-  })
 </script>
 
 <section
@@ -200,15 +201,6 @@
           {L.wheel_fullscreen_enter()}
         {/if}
       </button>
-      <button
-        type="button"
-        class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-        onclick={spin}
-        disabled={!canSpin}
-      >
-        <SparklesIcon class="size-4" />
-        {spinning ? L.wheel_spinning() : L.wheel_spin_button()}
-      </button>
     </div>
   </div>
 
@@ -229,13 +221,8 @@
         </div>
         <div
           class="relative z-10 overflow-hidden rounded-full border-8 border-background shadow-md"
-          style="aspect-ratio: 1 / 1; transform: rotate({wheelRotation}deg); transition: transform 5200ms cubic-bezier(0.16, 1, 0.3, 1)"
+          style="aspect-ratio: 1 / 1; transform: rotate({wheelRotation}deg); transition: transform {SPIN_MS}ms cubic-bezier(0.16, 1, 0.3, 1)"
         >
-          <!--
-            Posters: plain HTML <img> in an overlay (same as home media cards). SVG
-            <foreignObject> / <image> is unreliable in WebKit with transforms + clip.
-            Stack: base SVG (slices) → HTML posters → top SVG (labels + hub).
-          -->
           <svg
             viewBox={`0 0 ${WHEEL_SIZE} ${WHEEL_SIZE}`}
             class="pointer-events-none block h-full w-full select-none"
@@ -354,35 +341,6 @@
           </svg>
         </div>
       </div>
-    </div>
-  {/if}
-
-  {#if winner}
-    <div class="flex items-center justify-between gap-3 rounded-lg border bg-background p-3">
-      <div class="flex min-w-0 items-center gap-3">
-        {#if winner.posterUrl}
-          <img
-            src={winner.posterUrl}
-            alt={winner.title}
-            class="h-14 w-10 shrink-0 rounded-md object-cover"
-            loading="lazy"
-          />
-        {:else}
-          <div class="flex h-14 w-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-            ?
-          </div>
-        {/if}
-        <div class="min-w-0">
-          <p class="text-xs text-muted-foreground">{L.wheel_winner_label()}</p>
-          <p class="truncate text-sm font-semibold">{winner.title}</p>
-        </div>
-      </div>
-      <a
-        href={`/media/${winner.mediaId}`}
-        class="shrink-0 rounded-md border px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
-      >
-        {L.wheel_open_media()}
-      </a>
     </div>
   {/if}
 </section>

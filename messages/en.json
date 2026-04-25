@@ -327,5 +327,15 @@
   "wheel_winner_label": "Winner",
   "wheel_open_media": "Open media",
   "wheel_candidates_count": "{filtered} candidates, {rendered} shown on wheel.",
-  "wheel_filters_active": "Filters are active."
+  "wheel_filters_active": "Filters are active.",
+  "wheel_canvas_label": "Roulette wheel with media sectors",
+  "wheel_view_mode_wheel": "Wheel",
+  "wheel_view_mode_strip": "Strip",
+  "wheel_view_mode_group_label": "Picker view",
+  "wheel_sectors_label": "Sectors on wheel: {n}",
+  "wheel_fairness_wheel_hint": "Every filtered title has an equal chance. Only a sample of sectors is drawn on the wheel.",
+  "wheel_fairness_strip_hint": "The strip repeats your list so the scroll feels endless; every filtered title still has an equal chance.",
+  "wheel_candidates_strip": "{filtered} candidates; all are shown in the strip. Draw uses the full filtered pool.",
+  "wheel_candidates_wheel": "{filtered} candidates; {sectors} sectors on the wheel. Draw uses the full filtered pool.",
+  "wheel_winner_live": "Winner: {title}"
 }

@@ -327,5 +327,15 @@
   "wheel_winner_label": "Gagnant",
   "wheel_open_media": "Ouvrir le média",
   "wheel_candidates_count": "{filtered} candidats, {rendered} affichés sur la roue.",
-  "wheel_filters_active": "Des filtres sont actifs."
+  "wheel_filters_active": "Des filtres sont actifs.",
+  "wheel_canvas_label": "Roulette avec secteurs médias",
+  "wheel_view_mode_wheel": "Roue",
+  "wheel_view_mode_strip": "Bandeau",
+  "wheel_view_mode_group_label": "Mode de tirage",
+  "wheel_sectors_label": "Secteurs sur la roue : {n}",
+  "wheel_fairness_wheel_hint": "Chaque titre filtré a la même chance. Seuls quelques secteurs sont affichés sur la roue.",
+  "wheel_fairness_strip_hint": "Le bandeau répète la liste pour un défilement sans fin visuel ; chaque titre filtré a toujours la même chance.",
+  "wheel_candidates_strip": "{filtered} candidats ; tous sont affichés dans le bandeau. Tirage sur l’ensemble filtré.",
+  "wheel_candidates_wheel": "{filtered} candidats ; {sectors} secteurs sur la roue. Tirage sur l’ensemble filtré.",
+  "wheel_winner_live": "Gagnant : {title}"
 }

@@ -327,5 +327,15 @@
   "wheel_winner_label": "Победитель",
   "wheel_open_media": "Открыть медиа",
   "wheel_candidates_count": "Кандидатов: {filtered}, на колесе показано: {rendered}.",
-  "wheel_filters_active": "Фильтры активны."
+  "wheel_filters_active": "Фильтры активны.",
+  "wheel_canvas_label": "Колесо с секторами медиа",
+  "wheel_view_mode_wheel": "Колесо",
+  "wheel_view_mode_strip": "Лента",
+  "wheel_view_mode_group_label": "Режим выбора",
+  "wheel_sectors_label": "Секторов на колесе: {n}",
+  "wheel_fairness_wheel_hint": "У каждого отфильтрованного тайтла равная вероятность. На колесе отображается только выборка секторов.",
+  "wheel_fairness_strip_hint": "Лента повторяет список для эффекта бесконечной прокрутки; у каждого отфильтрованного тайтла по-прежнему равная вероятность.",
+  "wheel_candidates_strip": "Кандидатов: {filtered}; в ленте показаны все. Розыгрыш по полному отфильтрованному списку.",
+  "wheel_candidates_wheel": "Кандидатов: {filtered}; секторов на колесе: {sectors}. Розыгрыш по полному отфильтрованному списку.",
+  "wheel_winner_live": "Победитель: {title}"
 }
