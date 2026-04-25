@@ -86,18 +86,13 @@ async function validateTrakt(credentials: ProviderCredentials): Promise<void> {
 
   if (!clientId?.trim()) throw new Error('Client ID is required')
 
-  const response = await fetch('https://api.trakt.tv/users/settings', {
-    headers: {
-      'Content-Type': 'application/json',
-      'trakt-api-key': clientId,
-      'trakt-api-version': '2',
-    },
-  })
+  // Trakt may intermittently reject validation probes (401/403) even for
+  // recently created or newly approved apps. We only validate the shape here
+  // and rely on real provider requests to determine key usability.
+  const normalizedClientId = clientId.trim()
 
-  if (!response.ok) {
-    throw new Error(
-      response.status === 401 || response.status === 403 ? 'Invalid Trakt client ID' : 'Trakt request failed',
-    )
+  if (normalizedClientId.length < 16) {
+    throw new Error('Invalid Trakt client ID')
   }
 }
 

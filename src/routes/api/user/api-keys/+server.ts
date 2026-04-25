@@ -24,6 +24,9 @@ const upsertSchema = z.object({
   credentials: z.record(z.string(), z.string()),
 })
 
+const normalizeCredentials = (credentials: Record<string, string>): Record<string, string> =>
+  Object.fromEntries(Object.entries(credentials).map(([key, value]) => [key, value.trim()]))
+
 const requireAuth = async (locals: App.Locals) => {
   const session = await locals.auth()
 
@@ -50,7 +53,8 @@ export const PUT = async ({ locals, request }) => {
 
   if (!credentialSchema) throw error(400, `No credential schema for provider: ${body.provider}`)
 
-  const validatedCredentials = credentialSchema.parse(body.credentials) as Record<string, string>
+  const normalizedCredentials = normalizeCredentials(body.credentials)
+  const validatedCredentials = credentialSchema.parse(normalizedCredentials) as Record<string, string>
 
   try {
     await validateProviderCredentials(body.provider as MediaProvider, validatedCredentials)
