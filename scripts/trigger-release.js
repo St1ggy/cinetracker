@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const dryRun = process.argv.includes('--dry-run')
-const releaseMessage = 'fix(release): trigger release [DO_RELEASE]'
+const releaseMessage = 'release: trigger release [DO_RELEASE]'
 
 function run(command, options = {}) {
   if (options.capture) {
