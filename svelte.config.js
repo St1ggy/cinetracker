@@ -6,10 +6,10 @@ import { mdsvex } from 'mdsvex'
 const config = {
   // Consult https://svelte.dev/docs/kit/integrations
   // for more information about preprocessors
-  // @ts-expect-error: mdsvex is not typed
   preprocess: [vitePreprocess(), mdsvex()],
   kit: {
-    adapter: adapter(),
+    // Pin serverless Node so `bun run build` works when local Node is not 20/22/24 (e.g. v25).
+    adapter: adapter({ runtime: 'nodejs24.x' }),
     alias: {
       $pages: 'src/pages',
       $widgets: 'src/widgets',
