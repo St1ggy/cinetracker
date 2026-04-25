@@ -12,9 +12,20 @@ export default {
     'scss/at-rule-no-unknown': [
       true,
       {
-        ignoreAtRules: ['tailwind', 'apply', 'layer', 'screen', 'variants', 'responsive', 'plugin'],
+        ignoreAtRules: [
+          'tailwind',
+          'apply',
+          'layer',
+          'screen',
+          'variants',
+          'responsive',
+          'plugin',
+          'custom-variant',
+          'theme',
+        ],
       },
     ],
     'max-nesting-depth': null,
+    'plugin/no-unsupported-browser-features': null,
   },
 }

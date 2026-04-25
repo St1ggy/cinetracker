@@ -7,3 +7,6 @@ bun.lockb
 
 # Miscellaneous
 /static/
+# Paraglide output (regenerated; avoid churn)
+src/lib/paraglide
+src/paraglide
