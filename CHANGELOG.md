@@ -1,3 +1,10 @@
+## [1.20.0](https://github.com/St1ggy/cinetracker/compare/v1.19.0...v1.20.0) (2026-04-25)
+
+### Features
+
+* **media:** localize titles and normalize board durations ([a6d7eea](https://github.com/St1ggy/cinetracker/commit/a6d7eeacbc133376034649b45c2afbae09e38c38))
+* **wheel:** switch labels to radial mode on overflow ([6d49c90](https://github.com/St1ggy/cinetracker/commit/6d49c900d8b4b08e36bc4ab1459060df6f2f64a4))
+
 ## [1.19.0](https://github.com/St1ggy/cinetracker/compare/v1.18.4...v1.19.0) (2026-04-25)
 
 ### Features
