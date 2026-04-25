@@ -1,3 +1,14 @@
+## [1.22.0](https://github.com/St1ggy/cinetracker/compare/v1.21.0...v1.22.0) (2026-04-25)
+
+### Features
+
+* **wheel:** strip picker, Embla spin, and fairness copy ([5d49e65](https://github.com/St1ggy/cinetracker/commit/5d49e65dc995de58fc993bf1480f242bb502f87a))
+
+### Bug Fixes
+
+* **about:** inline GitHub icon for Lucide v1 ([1c846e7](https://github.com/St1ggy/cinetracker/commit/1c846e7ec947bb59af8c99953a65d705b8556e37))
+* **lint:** enable projectService for plain .ts files ([f3662ff](https://github.com/St1ggy/cinetracker/commit/f3662ff58f233e328f8adf3b2236d54de02d17f5))
+
 ## [1.21.0](https://github.com/St1ggy/cinetracker/compare/v1.20.0...v1.21.0) (2026-04-25)
 
 ### Features
