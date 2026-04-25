@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { requireSessionUser } from '$lib/server/lists'
 import { prisma } from '$lib/server/prisma'
 import { listItemsRepository, listsRepository } from '$lib/server/repositories'
+import { assertEpisodicProgressPayload } from '$lib/server/validate-episodic-payload'
 import { WATCH_STATUSES } from '$shared/config/domain'
 
 import type { WatchStatus } from '@prisma/client'
@@ -104,6 +105,8 @@ export const GET = async ({ locals, url }) => {
     status: item.status,
     currentSeason: item.currentSeason,
     currentEpisode: item.currentEpisode,
+    userSeasonBreakdown: item.userSeasonBreakdown,
+    seasonStructureSource: item.seasonStructureSource,
     media: item.media,
   }))
 
@@ -138,6 +141,18 @@ export const PATCH = async ({ locals, request }) => {
     },
     select: { id: true },
   })
+
+  if (body.status != null) {
+    for (const { id } of itemsToUpdate) {
+      await assertEpisodicProgressPayload(
+        id,
+        body.mediaId,
+        body.status,
+        body.currentSeason ?? null,
+        body.currentEpisode ?? null,
+      )
+    }
+  }
 
   for (const { id } of itemsToUpdate) {
     await listItemsRepository.updateById(id, {

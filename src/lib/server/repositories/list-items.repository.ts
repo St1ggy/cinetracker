@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client'
 
 import { prisma } from '$lib/server/prisma'
 
-import type { WatchStatus } from '@prisma/client'
+import type { SeasonStructureSource, WatchStatus } from '@prisma/client'
 
 export const listItemsRepository = {
   upsertByListAndMedia: async (payload: {
@@ -68,8 +68,22 @@ export const listItemsRepository = {
       status?: WatchStatus | null
       currentSeason?: number | null
       currentEpisode?: number | null
+      userSeasonBreakdown?: Prisma.InputJsonValue | null
+      seasonStructureSource?: SeasonStructureSource | null
     },
   ) => {
+    let userBreakdownData
+
+    if (payload.userSeasonBreakdown === undefined) {
+      userBreakdownData = undefined
+    } else if (payload.userSeasonBreakdown === null) {
+      userBreakdownData = Prisma.DbNull
+    } else {
+      userBreakdownData = payload.userSeasonBreakdown
+    }
+
+    const seasonSourceData = payload.seasonStructureSource
+
     try {
       return await prisma.listItem.update({
         where: { id: itemId },
@@ -79,6 +93,8 @@ export const listItemsRepository = {
           status: payload.status ?? null,
           currentSeason: payload.currentSeason ?? null,
           currentEpisode: payload.currentEpisode ?? null,
+          ...(userBreakdownData === undefined ? {} : { userSeasonBreakdown: userBreakdownData }),
+          ...(seasonSourceData === undefined ? {} : { seasonStructureSource: seasonSourceData }),
         },
       })
     } catch (caughtError) {
