@@ -35,6 +35,7 @@
   const winner = $derived(entries.find((entry) => entry.id === winnerId) ?? null)
   const canSpin = $derived(entries.length > 1 && !spinning)
   const labelFontSize = $derived(entries.length > 10 ? 25 : 29)
+  const LABEL_CHAR_WIDTH_FACTOR = 0.58
 
   const toPolar = (angleDeg: number, radius: number) => {
     const angle = (angleDeg * Math.PI) / 180
@@ -82,6 +83,31 @@
 
     return `M ${p1.x} ${p1.y} A ${LABEL_RADIUS} ${LABEL_RADIUS} 0 0 1 ${p2.x} ${p2.y}`
   }
+
+  const radialLabelPath = (index: number, total: number) => {
+    const angle = 360 / total
+    const middle = index * angle + angle / 2
+    const outer = toPolar(middle, RADIUS - 10)
+    const inner = toPolar(middle, 72)
+
+    return `M ${outer.x} ${outer.y} L ${inner.x} ${inner.y}`
+  }
+
+  const labelsOverflowArc = $derived.by(() => {
+    if (entries.length === 0) return false
+
+    const angle = 360 / entries.length
+    const sectorArcLength = (2 * Math.PI * LABEL_RADIUS * angle) / 360
+    const usableArcLength = Math.max(0, sectorArcLength - 18)
+
+    for (const entry of entries) {
+      const estimatedWidth = entry.title.length * labelFontSize * LABEL_CHAR_WIDTH_FACTOR
+
+      if (estimatedWidth > usableArcLength) return true
+    }
+
+    return false
+  })
 
   // Same as label arc / sector orientation (tangent: mid + 90°).
   const sectorRotationDeg = (index: number, total: number) => {
@@ -281,9 +307,19 @@
 
           <svg viewBox={`0 0 ${WHEEL_SIZE} ${WHEEL_SIZE}`} class="absolute inset-0 z-2 h-full w-full">
             <defs>
-              {#each entries as entry, index (`def-label-${entry.id}-${index}`)}
-                <path id={`label-arc-${entry.id}-${index}`} d={textArcPath(index, entries.length)} fill="none" />
-              {/each}
+              {#if labelsOverflowArc}
+                {#each entries as entry, index (`def-label-radial-${entry.id}-${index}`)}
+                  <path
+                    id={`label-radial-${entry.id}-${index}`}
+                    d={radialLabelPath(index, entries.length)}
+                    fill="none"
+                  />
+                {/each}
+              {:else}
+                {#each entries as entry, index (`def-label-arc-${entry.id}-${index}`)}
+                  <path id={`label-arc-${entry.id}-${index}`} d={textArcPath(index, entries.length)} fill="none" />
+                {/each}
+              {/if}
             </defs>
             {#if showLabels}
               {#each entries as entry, index (`label-${entry.id}-${index}`)}
@@ -293,9 +329,15 @@
                   font-weight="800"
                   style="paint-order: stroke; stroke: rgba(0,0,0,0.78); stroke-width: 4.5px; stroke-linejoin: round"
                 >
-                  <textPath href={`#label-arc-${entry.id}-${index}`} startOffset="50%" text-anchor="middle">
-                    {entry.title}
-                  </textPath>
+                  {#if labelsOverflowArc}
+                    <textPath href={`#label-radial-${entry.id}-${index}`} startOffset="0%" text-anchor="start">
+                      {entry.title}
+                    </textPath>
+                  {:else}
+                    <textPath href={`#label-arc-${entry.id}-${index}`} startOffset="50%" text-anchor="middle">
+                      {entry.title}
+                    </textPath>
+                  {/if}
                 </text>
               {/each}
             {/if}
