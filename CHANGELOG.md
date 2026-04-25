@@ -1,3 +1,10 @@
+## [1.19.0](https://github.com/St1ggy/cinetracker/compare/v1.18.4...v1.19.0) (2026-04-25)
+
+### Features
+
+* **wheel:** add route entrypoint and navigation link ([ce97a71](https://github.com/St1ggy/cinetracker/commit/ce97a71de8db54d49d88821644b7562fd170f81f))
+* **wheel:** implement interactive wheel UI and adaptive filters ([1ec1f42](https://github.com/St1ggy/cinetracker/commit/1ec1f424bde1c0685bf570bf68c6fc84eb79de34))
+
 ## [1.18.4](https://github.com/St1ggy/cinetracker/compare/v1.18.3...v1.18.4) (2026-04-25)
 
 ## [1.18.3](https://github.com/St1ggy/cinetracker/compare/v1.18.2...v1.18.3) (2026-04-25)
