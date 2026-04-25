@@ -19,11 +19,7 @@
   const label = $derived(getVisibilityLabel(L, visibility))
 </script>
 
-<span
-  class={cn('inline-flex shrink-0 items-center text-muted-foreground', className)}
-  title={label}
-  aria-label={label}
->
+<span class={cn('inline-flex shrink-0 items-center text-muted-foreground', className)} title={label} aria-label={label}>
   {#if visibility === 'PRIVATE'}
     <LockIcon class="size-[1em]" />
   {:else if visibility === 'UNLISTED'}
