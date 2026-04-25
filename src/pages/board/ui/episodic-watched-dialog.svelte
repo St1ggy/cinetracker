@@ -3,6 +3,7 @@
 
   import { L } from '$lib'
   import { getWatchStatusLabels } from '$shared/lib/labels'
+  import { getMediaTitlePair } from '$shared/lib/media-title'
 
   import type { KanbanItem } from '../board.types'
 
@@ -18,6 +19,9 @@
 
   const watchStatusLabels = getWatchStatusLabels(L)
   const statuses: Status[] = ['WATCHED', 'IN_PROGRESS']
+  const displayTitle = $derived(
+    getMediaTitlePair({ title: item.media.title, originalTitle: item.media.originalTitle }).primary,
+  )
 
   let selectedStatus = $state<Status>('WATCHED')
   let seasonInput = $state<number | ''>(untrack(() => item.currentSeason ?? ''))
@@ -51,7 +55,7 @@
     <h3 id="watched-dialog-title" class="text-base font-semibold">
       {L.board_watched_dialog_title()}
     </h3>
-    <p class="mt-1 text-sm font-medium">{item.media.title}</p>
+    <p class="mt-1 text-sm font-medium">{displayTitle}</p>
 
     <!-- Segmented control: Watched / In Progress -->
     <div class="mt-4 grid grid-cols-2 gap-1 rounded-lg border bg-muted/30 p-1">

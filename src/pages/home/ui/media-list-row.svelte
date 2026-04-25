@@ -1,14 +1,15 @@
 <script lang="ts">
+  import { page } from '$app/state'
   import CircleCheckIcon from '@lucide/svelte/icons/circle-check'
   import CirclePlayIcon from '@lucide/svelte/icons/circle-play'
   import ClockIcon from '@lucide/svelte/icons/clock'
   import Trash2Icon from '@lucide/svelte/icons/trash-2'
   import { useQueryClient } from '@tanstack/svelte-query'
-  import { page } from '$app/state'
 
   import { L } from '$lib'
   import { WATCH_STATUS_META } from '$shared/config/domain'
   import { getMediaTypeMeta, getWatchStatusLabels } from '$shared/lib/labels'
+  import { getMediaTitlePair } from '$shared/lib/media-title'
 
   import type { PageData } from '../../../routes/$types'
 
@@ -17,13 +18,12 @@
     status: string | null
     currentSeason?: number | null
     currentEpisode?: number | null
-    rating?: number | null
     media: {
       id: string
       title: string
+      originalTitle?: string | null
       year: number | null
       posterUrl: string | null
-      overview: string | null
       mediaType: string
     }
   }
@@ -38,6 +38,9 @@
   const statusMeta = $derived(WATCH_STATUS_META[(item.status as keyof typeof WATCH_STATUS_META) ?? 'PLAN_TO_WATCH'])
   const typeMeta = $derived(getMediaTypeMeta(item.media.mediaType))
   const isEpisodic = $derived(item.media.mediaType === 'TV' || item.media.mediaType === 'ANIME')
+  const displayTitle = $derived(
+    getMediaTitlePair({ title: item.media.title, originalTitle: item.media.originalTitle }).primary,
+  )
 
   let isDeleting = $state(false)
 
@@ -63,21 +66,16 @@
 
 <a
   href={`/media/${item.media.id}`}
-  class="group flex items-center gap-3 rounded-lg border bg-card p-2.5 hover:bg-accent/40 transition-colors"
+  class="group flex items-center gap-3 rounded-lg border bg-card p-2.5 transition-colors hover:bg-accent/40"
 >
   {#if item.media.posterUrl}
-    <img
-      src={item.media.posterUrl}
-      alt={item.media.title}
-      class="h-16 w-11 shrink-0 rounded object-cover"
-      loading="lazy"
-    />
+    <img src={item.media.posterUrl} alt={displayTitle} class="h-16 w-11 shrink-0 rounded object-cover" loading="lazy" />
   {:else}
     <div class="h-16 w-11 shrink-0 rounded bg-muted"></div>
   {/if}
 
   <div class="min-w-0 flex-1">
-    <p class="line-clamp-1 text-sm font-medium">{item.media.title}</p>
+    <p class="line-clamp-1 text-sm font-medium">{displayTitle}</p>
     <div class="mt-0.5 flex flex-wrap items-center gap-1.5">
       {#if item.media.year}
         <span class="text-xs text-muted-foreground">{item.media.year}</span>

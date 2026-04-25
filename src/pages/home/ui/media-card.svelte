@@ -10,6 +10,7 @@
   import { WATCH_STATUS_META } from '$shared/config/domain'
   import { stripHtml } from '$shared/lib/html'
   import { getMediaTypeMeta, getWatchStatusLabels } from '$shared/lib/labels'
+  import { getMediaTitlePair } from '$shared/lib/media-title'
 
   import type { PageData } from '../../../routes/$types'
 
@@ -21,6 +22,7 @@
     media: {
       id: string
       title: string
+      originalTitle?: string | null
       year: number | null
       posterUrl: string | null
       overview: string | null
@@ -42,6 +44,9 @@
   const watchStatusLabels = getWatchStatusLabels(L)
   const statusMeta = $derived(WATCH_STATUS_META[(item.status as keyof typeof WATCH_STATUS_META) ?? 'PLAN_TO_WATCH'])
   const typeMeta = $derived(getMediaTypeMeta(item.media.mediaType))
+  const displayTitle = $derived(
+    getMediaTitlePair({ title: item.media.title, originalTitle: item.media.originalTitle }).primary,
+  )
 
   const isEpisodic = $derived(item.media.mediaType === 'TV' || item.media.mediaType === 'ANIME')
   const hasProgress = $derived(!!item.currentSeason || !!item.currentEpisode)
@@ -75,7 +80,7 @@
   {#if item.media.posterUrl}
     <img
       src={item.media.posterUrl}
-      alt={item.media.title}
+      alt={displayTitle}
       class="aspect-2/3 w-full object-cover transition-transform duration-300 {compact
         ? 'group-hover:scale-[1.03]'
         : 'group-hover:scale-105'}"
@@ -120,7 +125,7 @@
   <div
     class="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/90 via-black/70 to-transparent p-3 pt-8 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100"
   >
-    <h2 class="line-clamp-1 text-sm font-semibold">{item.media.title}</h2>
+    <h2 class="line-clamp-1 text-sm font-semibold">{displayTitle}</h2>
     <div class="mt-1 flex flex-wrap items-center gap-1.5">
       {#if item.media.year}
         <span class="text-xs text-white/70">{item.media.year}</span>
@@ -144,7 +149,7 @@
 
   {#if !compact}
     <div class="p-3 transition-opacity duration-200 group-hover:opacity-0">
-      <h2 class="line-clamp-1 text-sm font-medium">{item.media.title}</h2>
+      <h2 class="line-clamp-1 text-sm font-medium">{displayTitle}</h2>
       <div class="mt-1 flex flex-wrap items-center gap-1.5">
         {#if item.media.year}
           <span class="text-xs text-muted-foreground">{item.media.year}</span>

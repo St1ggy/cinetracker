@@ -12,6 +12,7 @@
   import { L } from '$lib'
   import { sanitizeHtml } from '$shared/lib/html'
   import { formatCountry, getMediaTypeMeta } from '$shared/lib/labels'
+  import { getMediaTitlePair } from '$shared/lib/media-title'
 
   type Rating = {
     provider: string
@@ -85,12 +86,13 @@
 
   const runtime = $derived(formatRuntime(media.runtimeMinutes))
   const episodeDuration = $derived(formatEpisodeDuration(media.episodeRuntimeMin, media.episodeRuntimeMax))
+  const titlePair = $derived(getMediaTitlePair({ title: media.title, originalTitle: media.originalTitle }))
 </script>
 
 <div class="overflow-hidden rounded-xl border bg-card">
   {#if media.backdropUrl}
     <div class="relative h-48 overflow-hidden md:h-72">
-      <img src={media.backdropUrl} alt={media.title} class="h-full w-full object-cover" />
+      <img src={media.backdropUrl} alt={titlePair.primary} class="h-full w-full object-cover" />
       <div class="absolute inset-0 bg-linear-to-t from-card/90 to-transparent"></div>
     </div>
   {/if}
@@ -98,15 +100,19 @@
   <div class="flex flex-col gap-6 p-5 md:flex-row">
     {#if media.posterUrl}
       <div class="shrink-0">
-        <img src={media.posterUrl} alt={media.title} class="w-36 rounded-lg border object-cover shadow-md md:w-44" />
+        <img
+          src={media.posterUrl}
+          alt={titlePair.primary}
+          class="w-36 rounded-lg border object-cover shadow-md md:w-44"
+        />
       </div>
     {/if}
 
     <div class="min-w-0 flex-1 space-y-3">
       <div>
-        <h1 class="text-2xl leading-tight font-bold">{media.title}</h1>
-        {#if media.originalTitle && media.originalTitle !== media.title}
-          <p class="text-sm text-muted-foreground">{media.originalTitle}</p>
+        <h1 class="text-2xl leading-tight font-bold">{titlePair.primary}</h1>
+        {#if titlePair.secondary}
+          <p class="text-sm text-muted-foreground">{titlePair.secondary}</p>
         {/if}
         {#if media.tagline}
           <p class="mt-1 text-sm text-muted-foreground italic">{media.tagline}</p>

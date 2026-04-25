@@ -8,6 +8,7 @@ export type KanbanItem = {
   media: {
     id: string
     title: string
+    originalTitle?: string | null
     year: number | null
     posterUrl: string | null
     mediaType: string

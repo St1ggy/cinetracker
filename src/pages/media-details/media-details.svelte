@@ -3,6 +3,7 @@
   import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left'
 
   import { L } from '$lib'
+  import { getMediaTitlePair } from '$shared/lib/media-title'
 
   import MediaHero from './ui/media-hero.svelte'
   import MediaProgressPanel from './ui/media-progress-panel.svelte'
@@ -35,6 +36,7 @@
   })
 
   const media = $derived(enrichedMedia ?? data.media)
+  const displayTitle = $derived(getMediaTitlePair({ title: media.title, originalTitle: media.originalTitle }).primary)
   const userItems = $derived(data.userItems)
   const isEpisodic = $derived(media.mediaType === 'TV' || media.mediaType === 'ANIME')
 
@@ -80,7 +82,7 @@
 </script>
 
 <svelte:head>
-  <title>{media.title} — CineTracker</title>
+  <title>{displayTitle} — CineTracker</title>
 </svelte:head>
 
 <article class="space-y-6">

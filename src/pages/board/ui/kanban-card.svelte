@@ -6,6 +6,7 @@
   import { L } from '$lib'
   import { WATCH_STATUS_META } from '$shared/config/domain'
   import { getMediaTypeMeta } from '$shared/lib/labels'
+  import { getMediaTitlePair } from '$shared/lib/media-title'
 
   import type { KanbanItem } from '../board.types'
 
@@ -20,6 +21,16 @@
   const typeMeta = $derived(getMediaTypeMeta(item.media.mediaType))
   const isEpisodic = $derived(item.media.mediaType === 'TV' || item.media.mediaType === 'ANIME')
   const hasProgress = $derived(!!item.currentSeason || !!item.currentEpisode)
+  const displayTitle = $derived(
+    getMediaTitlePair({ title: item.media.title, originalTitle: item.media.originalTitle }).primary,
+  )
+  const fallbackDurationMinutes = $derived.by<number>(() => {
+    if (item.media.mediaType === 'ANIME') return 24
+
+    if (item.media.mediaType === 'TV') return 50
+
+    return 90
+  })
 
   const formatDuration = (totalMinutes: number): string => {
     if (totalMinutes <= 0) return ''
@@ -42,7 +53,7 @@
         return Math.round((media.episodeRuntimeMin + media.episodeRuntimeMax) / 2)
       }
 
-      return media.episodeRuntimeMin ?? media.episodeRuntimeMax ?? 0
+      return media.episodeRuntimeMin ?? media.episodeRuntimeMax ?? fallbackDurationMinutes
     })(),
   )
 
@@ -52,12 +63,18 @@
       const { media, currentEpisode } = item
 
       if (isEpisodic) {
+        if (item.status === 'WATCHED') {
+          const totalEpisodes = media.episodesCount ?? Math.max(currentEpisode ?? 0, 1)
+
+          return totalEpisodes * avgEpisodeRuntime
+        }
+
         const watched = currentEpisode ?? 0
 
         return watched * avgEpisodeRuntime
       }
 
-      return media.runtimeMinutes ?? 0
+      return media.runtimeMinutes ?? fallbackDurationMinutes
     })(),
   )
 
@@ -68,12 +85,12 @@
 
       if (isEpisodic) {
         const watched = currentEpisode ?? 0
-        const remaining = Math.max(0, (media.episodesCount ?? 0) - watched)
+        const remainingEpisodes = media.episodesCount == null ? 1 : Math.max(0, media.episodesCount - watched)
 
-        return remaining * avgEpisodeRuntime
+        return remainingEpisodes * avgEpisodeRuntime
       }
 
-      return media.runtimeMinutes ?? 0
+      return media.runtimeMinutes ?? fallbackDurationMinutes
     })(),
   )
 
@@ -87,7 +104,7 @@
 
       if (s === 'WATCHED') return formatDuration(watchedDurationMinutes)
 
-      return formatDuration(remainingDurationMinutes)
+      return formatDuration(remainingDurationMinutes) || formatDuration(fallbackDurationMinutes)
     })(),
   )
 </script>
@@ -101,7 +118,7 @@
 >
   <div class="shrink-0">
     {#if item.media.posterUrl}
-      <img src={item.media.posterUrl} alt={item.media.title} class="h-16 w-11 rounded object-cover" loading="lazy" />
+      <img src={item.media.posterUrl} alt={displayTitle} class="h-16 w-11 rounded object-cover" loading="lazy" />
     {:else}
       <div class="flex h-16 w-11 items-center justify-center rounded bg-muted">
         <span class="text-lg text-muted-foreground/30">?</span>
@@ -111,7 +128,7 @@
 
   <div class="min-w-0 flex-1">
     <div class="flex items-start justify-between gap-1">
-      <h3 class="line-clamp-2 text-sm leading-snug font-medium">{item.media.title}</h3>
+      <h3 class="line-clamp-2 text-sm leading-snug font-medium">{displayTitle}</h3>
       {#if ghost}
         <span
           class="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-white"
@@ -154,11 +171,9 @@
       </p>
     {/if}
 
-    {#if displayDuration}
-      <p class="mt-1 flex items-center gap-1 text-xs text-muted-foreground/80">
-        <ClockIcon class="size-3 shrink-0" />
-        {displayDuration}
-      </p>
-    {/if}
+    <p class="mt-1 flex items-center gap-1 text-xs text-muted-foreground/80">
+      <ClockIcon class="size-3 shrink-0" />
+      {displayDuration}
+    </p>
   </div>
 </a>

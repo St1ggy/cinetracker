@@ -7,6 +7,7 @@ export type WheelItem = {
   media: {
     id: string
     title: string
+    originalTitle?: string | null
     posterUrl: string | null
     mediaType: MediaType
     genres?: { genre: { id: string; slug: string; name: string } }[]

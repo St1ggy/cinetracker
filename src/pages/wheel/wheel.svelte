@@ -5,6 +5,7 @@
   import { toast } from 'svelte-sonner'
 
   import { L } from '$lib'
+  import { getMediaTitlePair } from '$shared/lib/media-title'
 
   import WheelCanvas from './ui/wheel-canvas.svelte'
   import WheelFilters from './ui/wheel-filters.svelte'
@@ -127,7 +128,7 @@
     sampledItems.map((item) => ({
       id: item.id,
       mediaId: item.mediaId,
-      title: item.media.title,
+      title: getMediaTitlePair({ title: item.media.title, originalTitle: item.media.originalTitle }).primary,
       posterUrl: item.media.posterUrl,
     })),
   )
