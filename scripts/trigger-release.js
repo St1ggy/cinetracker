@@ -7,11 +7,19 @@ const dryRun = process.argv.includes('--dry-run')
 const releaseMessage = 'fix(release): trigger release [DO_RELEASE]'
 
 function run(command, options = {}) {
-  return execSync(command, {
+  if (options.capture) {
+    return execSync(command, {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: 'pipe',
+    }).trim()
+  }
+
+  execSync(command, {
     cwd: root,
-    encoding: 'utf8',
-    stdio: options.capture ? 'pipe' : 'inherit',
-  }).trim()
+    stdio: 'inherit',
+  })
+  return ''
 }
 
 function assertCleanWorktree() {
