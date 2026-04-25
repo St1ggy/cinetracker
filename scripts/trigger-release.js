@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const dryRun = process.argv.includes('--dry-run')
-const releaseMessage = 'release: trigger release [DO_RELEASE]'
+const releaseMessage = 'release: trigger release'
 
 function run(command, options = {}) {
   if (options.capture) {
@@ -45,14 +45,18 @@ try {
 
   if (dryRun) {
     console.log('[dry-run] Checks passed.')
+    console.log('[dry-run] Would run: git pull --rebase origin main')
     console.log(`[dry-run] Would run: git commit --allow-empty -m "${releaseMessage}"`)
-    console.log('[dry-run] Would run: git push origin main')
+    console.log('[dry-run] Would run: npx semantic-release --no-ci')
+    console.log('[dry-run] Would run: git push --follow-tags origin main')
     process.exit(0)
   }
 
+  run('git pull --rebase origin main')
   run(`git commit --allow-empty -m "${releaseMessage}"`)
-  run('git push origin main')
-  console.log('Release trigger commit pushed to origin/main.')
+  run('npx semantic-release --no-ci')
+  run('git push --follow-tags origin main')
+  console.log('Release trigger, semantic-release, and push completed.')
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error)
   console.error(`release:trigger failed: ${message}`)
