@@ -36,8 +36,10 @@ A personal media tracker for movies, TV shows and anime — with public lists, c
 
 ## Getting started
 
+Install [Bun](https://bun.sh), then:
+
 ```bash
-npm install
+bun install
 ```
 
 Copy `.env.example` to `.env` and fill in the required variables:
@@ -51,23 +53,23 @@ AUTH_GOOGLE_SECRET=...
 
 ```bash
 # Apply DB migrations
-npx prisma migrate deploy
+bunx prisma migrate deploy
 
 # Start dev server
-npm run dev
+bun run dev
 ```
 
 ## Scripts
 
 | Command | Description |
 |---|---|
-| `npm run dev` | Start development server |
-| `npm run build` | Production build |
-| `npm run preview` | Preview production build |
-| `npm run check` | Svelte type-check |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier |
-| `npm run prisma:migrate:dev` | Create & apply a new migration |
+| `bun run dev` | Start development server |
+| `bun run build` | Production build |
+| `bun run preview` | Preview production build |
+| `bun run check` | Svelte type-check |
+| `bun run lint` | ESLint |
+| `bun run format` | Prettier |
+| `bun run prisma:migrate:dev` | Create & apply a new migration |
 
 ## Versioning
 
