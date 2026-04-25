@@ -1,3 +1,12 @@
+## [1.18.3](https://github.com/St1ggy/cinetracker/compare/v1.18.2...v1.18.3) (2026-04-25)
+
+### Bug Fixes
+
+* **release:** handle inherit execSync output safely ([a016825](https://github.com/St1ggy/cinetracker/commit/a0168257476e87708d8174e6f62b0383a694263f))
+* **release:** trigger release [DO_RELEASE] ([5d96c15](https://github.com/St1ggy/cinetracker/commit/5d96c15fb274e04298da187ad3bfc5c24ddddd99))
+* **release:** trigger release [DO_RELEASE] ([368222b](https://github.com/St1ggy/cinetracker/commit/368222bf4a0f22864158364532c5426c8794b520))
+* **release:** use porcelain status in trigger script ([ddde4e3](https://github.com/St1ggy/cinetracker/commit/ddde4e39c2aeec3e2d3d81a683e2aa37f5541f76))
+
 ## [1.18.2](https://github.com/St1ggy/cinetracker/compare/v1.18.1...v1.18.2) (2026-04-25)
 
 ### Bug Fixes
