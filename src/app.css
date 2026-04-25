@@ -1,6 +1,6 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
-@import "tw-animate-css";
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -122,15 +122,15 @@
 
   /* Smooth transitions for all interactive elements */
   button,
-  [role="button"],
-  input[type="button"],
-  input[type="submit"],
-  input[type="reset"] {
+  [role='button'],
+  [type='button'],
+  [type='submit'],
+  [type='reset'] {
     @apply cursor-pointer transition-all duration-150 ease-in-out;
   }
 
   button:not([disabled]):active,
-  [role="button"]:not([disabled]):active {
+  [role='button']:not([disabled]):active {
     @apply scale-[0.97];
   }
 
@@ -138,16 +138,17 @@
     @apply transition-colors duration-150 ease-in-out;
   }
 
-  input:not([type="button"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]),
+  input:not([type='button']):not([type='submit']):not([type='checkbox']):not([type='radio']),
   textarea {
     @apply transition-[box-shadow,border-color] duration-150 ease-in-out;
   }
 
   /* Focus ring for plain <input> elements not using shadcn Input component */
-  input:not([type="button"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]):focus-visible,
+  input:not([type='button']):not([type='submit']):not([type='checkbox']):not([type='radio']):focus-visible,
   textarea:focus-visible {
-    outline: none;
     border-color: var(--ring);
+
+    outline: none;
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent);
   }
 }
@@ -155,49 +156,60 @@
 /* Navigation progress bar */
 .nav-progress {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
   z-index: 9999;
-  background: var(--primary);
+  top: 0;
+  right: 0;
+  left: 0;
   transform-origin: left;
+
+  height: 2px;
+
+  background: var(--primary);
+
   animation: nav-progress 1.8s ease-in-out infinite;
 }
 
 @keyframes nav-progress {
   0% {
     transform: scaleX(0);
+
     opacity: 1;
   }
+
   70% {
     transform: scaleX(0.85);
+
     opacity: 1;
   }
+
   100% {
     transform: scaleX(1);
+
     opacity: 0;
   }
 }
 
 @keyframes page-fade-in {
   from {
-    opacity: 0;
     transform: translateY(6px);
+
+    opacity: 0;
   }
 }
 
 @keyframes page-fade-out {
   to {
-    opacity: 0;
     transform: translateY(-6px);
+
+    opacity: 0;
   }
 }
 
 /* Kanban: keep item wrapper and card border/radius stable during drag; drop slot always visible */
 .kanban-dnd-item {
-  border: none !important;
+  border: 0 !important;
   border-radius: var(--radius-lg) !important;
+
   outline: none !important;
   box-shadow: none !important;
 }
@@ -208,16 +220,17 @@
 
 .board-drop-slot {
   min-height: 5rem;
-  border-radius: var(--radius-lg) !important;
   border: 2px dashed hsl(var(--primary) / 0.6) !important;
+  border-radius: var(--radius-lg) !important;
+
   background: hsl(var(--primary) / 0.1) !important;
 }
 
 /* Column drop target: highlight the scroll container so outline isn't clipped by overflow */
 .scroll-fade:has(.board-column-drop-target) {
+  background-color: color-mix(in oklch, var(--color-primary) 12%, transparent);
   outline: 2px dashed var(--color-primary);
   outline-offset: 4px;
-  background-color: color-mix(in oklch, var(--color-primary) 12%, transparent);
 }
 /* Use JS scroll events to update --scroll-fade-top / --scroll-fade-bottom (0 or 1). */
 .scroll-fade {
@@ -225,8 +238,8 @@
   --sf-bottom: 1;
   --sf-size: 28px;
   mask-image:
-    linear-gradient(to bottom, transparent, black calc(var(--sf-top, 0) * var(--sf-size, 28px))),
-    linear-gradient(to top, transparent, black calc(var(--sf-bottom, 1) * var(--sf-size, 28px)));
+    linear-gradient(to bottom, transparent, #000 calc(var(--sf-top, 0) * var(--sf-size, 28px))),
+    linear-gradient(to top, transparent, #000 calc(var(--sf-bottom, 1) * var(--sf-size, 28px)));
   mask-composite: intersect;
 }
 
