@@ -1,3 +1,9 @@
+## [1.18.2](https://github.com/St1ggy/cinetracker/compare/v1.18.1...v1.18.2) (2026-04-25)
+
+### Bug Fixes
+
+* **release:** trigger release ([bd7a952](https://github.com/St1ggy/cinetracker/commit/bd7a952a6b352d897c735234aa334ffe8484f1c5))
+
 ## [1.18.1](https://github.com/St1ggy/cinetracker/compare/v1.18.0...v1.18.1) (2026-02-23)
 
 ### Bug Fixes
