@@ -42,6 +42,17 @@ export default defineConfig(
   },
   ...svelte.configs['flat/prettier'],
   ...cleanedSt1ggyConfig,
+  // Plain `.ts` (not `.svelte.ts`) needs type-aware parser options for @typescript-eslint rules.
+  {
+    files: ['**/*.ts', '**/*.mts', '**/*.cts'],
+    ignores: ['**/*.svelte.ts'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        projectService: true,
+      },
+    },
+  },
   {
     rules: {
       'svelte/no-navigation-without-resolve': 'off',
