@@ -1,3 +1,23 @@
+## [1.21.0](https://github.com/St1ggy/cinetracker/compare/v1.20.0...v1.21.0) (2026-04-25)
+
+### Features
+
+* **db:** per-list season breakdown and structure source ([8498a2b](https://github.com/St1ggy/cinetracker/commit/8498a2ba10577cec9a6deb437501fce5c9e6fcc0))
+* **episodic:** API validation and list-item season fields ([29758a0](https://github.com/St1ggy/cinetracker/commit/29758a06b0e438993bfa0b53f556c3b8f0457aec))
+* **episodic:** season grid helpers and validation tests ([df9d545](https://github.com/St1ggy/cinetracker/commit/df9d545d1238bb6399f5ce0d3ada32026e063e04))
+* **episodic:** title page and kanban use per-list season grid ([ed537a6](https://github.com/St1ggy/cinetracker/commit/ed537a6bc2be5ff636e7ef7b39bfa219ec342f06))
+* **i18n:** episodic progress and season structure strings ([02fe4e1](https://github.com/St1ggy/cinetracker/commit/02fe4e144788527b086ad5d57de91a55eba32819))
+* **providers:** normalize TV season and episode metadata ([789fd3d](https://github.com/St1ggy/cinetracker/commit/789fd3d65e087be462e00cff84618a1ca16145a1))
+* **ui:** episodic progress form and season structure panel ([fed634e](https://github.com/St1ggy/cinetracker/commit/fed634ee6b1f4d097bc7129396c45fe5e8e10b60))
+
+### Bug Fixes
+
+* **api:** trim creds, relax Trakt key validation ([fbb5fe9](https://github.com/St1ggy/cinetracker/commit/fbb5fe92222766412530ba166e16a5b8c2402080))
+
+### Code Refactoring
+
+* **theme:** align global and design-token CSS ([07f4c89](https://github.com/St1ggy/cinetracker/commit/07f4c89b0f913c3740f1e1facffd114c5af3966c))
+
 ## [1.20.0](https://github.com/St1ggy/cinetracker/compare/v1.19.0...v1.20.0) (2026-04-25)
 
 ### Features
