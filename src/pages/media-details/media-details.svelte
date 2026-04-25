@@ -3,6 +3,7 @@
   import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left'
 
   import { L } from '$lib'
+  import { displaySeasonGrid, effectiveEpisodicCounts, parseSeasonBreakdown } from '$shared/lib/episodic-progress'
   import { getMediaTitlePair } from '$shared/lib/media-title'
 
   import MediaHero from './ui/media-hero.svelte'
@@ -59,7 +60,26 @@
       .filter((entry): entry is { seasonNumber: number; episodes: number } => entry !== null)
   }
 
-  const seasons = $derived(seasonBreakdown())
+  const catalogSeasons = $derived(seasonBreakdown())
+  type ListItemForSeasons = { userSeasonBreakdown: unknown; seasonStructureSource: 'CATALOG' | 'USER' | null }
+  const it0 = $derived((userItems?.[0] as ListItemForSeasons | undefined) ?? null)
+  const displaySeasons = $derived(
+    displaySeasonGrid(
+      catalogSeasons.length > 0 ? catalogSeasons : null,
+      it0 === null ? null : (parseSeasonBreakdown(it0.userSeasonBreakdown) ?? null),
+      it0 !== null && it0.seasonStructureSource != null ? it0.seasonStructureSource : 'AUTO',
+    ),
+  )
+  const heroEpisodicCounts = $derived(
+    effectiveEpisodicCounts(
+      media.seasonBreakdown,
+      it0 === null ? null : it0.userSeasonBreakdown,
+      it0?.seasonStructureSource,
+      media.seasonsCount,
+      media.episodesCount,
+    ),
+  )
+
   const cast = $derived(
     media.cast.map((mc: { person: { name: string }; role: string | null; profileUrl?: string | null }) => ({
       name: mc.person.name,
@@ -95,7 +115,7 @@
     {L.common_back()}
   </button>
 
-  <MediaHero {media} {isEnriching} />
+  <MediaHero {media} {isEnriching} episodicCounts={heroEpisodicCounts} />
 
   {#if watchProviders && (watchProviders.stream.length > 0 || watchProviders.rent.length > 0 || watchProviders.buy.length > 0)}
     <section class="rounded-xl border bg-card p-4">
@@ -163,7 +183,7 @@
   {/if}
 
   {#if userItems != null}
-    <MediaProgressPanel mediaId={media.id} {isEpisodic} {userItems} {seasons} />
+    <MediaProgressPanel mediaId={media.id} {isEpisodic} {userItems} {catalogSeasons} />
   {/if}
 
   <div class="grid gap-4 md:grid-cols-2">
@@ -210,11 +230,11 @@
       </section>
     {/if}
 
-    {#if isEpisodic && seasons.length > 0}
+    {#if isEpisodic && displaySeasons.length > 0}
       <section class="rounded-lg border bg-card p-5">
         <h2 class="mb-4 text-base font-semibold">{L.media_seasons()}</h2>
         <ul class="space-y-2">
-          {#each seasons as season (season.seasonNumber)}
+          {#each displaySeasons as season (season.seasonNumber)}
             <li class="flex items-center justify-between rounded-md px-2 py-1.5 text-sm odd:bg-muted/30">
               <span class="text-muted-foreground">{L.media_season_number({ n: season.seasonNumber })}</span>
               <span class="font-medium">{L.list_episodes_count({ count: season.episodes })}</span>

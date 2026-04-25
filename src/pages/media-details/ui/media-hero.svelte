@@ -48,8 +48,13 @@
     sources: Source[]
   }
 
-  type Props = { media: Media; isEnriching?: boolean }
-  const { media, isEnriching = false }: Props = $props()
+  type Props = {
+    media: Media
+    isEnriching?: boolean
+    /** When the user saved a custom season grid on a list item, overrides `media` season/episode counts. */
+    episodicCounts?: { seasonsCount: number | null; episodesCount: number | null } | null
+  }
+  const { media, isEnriching = false, episodicCounts = null }: Props = $props()
 
   const isEpisodic = $derived(media.mediaType === 'TV' || media.mediaType === 'ANIME')
   const typeMeta = $derived(getMediaTypeMeta(media.mediaType))
@@ -87,6 +92,9 @@
   const runtime = $derived(formatRuntime(media.runtimeMinutes))
   const episodeDuration = $derived(formatEpisodeDuration(media.episodeRuntimeMin, media.episodeRuntimeMax))
   const titlePair = $derived(getMediaTitlePair({ title: media.title, originalTitle: media.originalTitle }))
+
+  const seasonsCountDisplay = $derived(episodicCounts?.seasonsCount ?? media.seasonsCount)
+  const episodesCountDisplay = $derived(episodicCounts?.episodesCount ?? media.episodesCount)
 </script>
 
 <div class="overflow-hidden rounded-xl border bg-card">
@@ -152,12 +160,12 @@
             {/each}
           </span>
         {/if}
-        {#if isEpisodic && (media.seasonsCount || media.episodesCount)}
+        {#if isEpisodic && (seasonsCountDisplay || episodesCountDisplay)}
           <span class="inline-flex items-center gap-1">
             <LayersIcon class="size-3.5" />
-            {#if media.seasonsCount}{L.list_seasons_count({ count: media.seasonsCount })}{/if}
-            {#if media.seasonsCount && media.episodesCount}·{/if}
-            {#if media.episodesCount}{L.list_episodes_count({ count: media.episodesCount })}{/if}
+            {#if seasonsCountDisplay}{L.list_seasons_count({ count: seasonsCountDisplay })}{/if}
+            {#if seasonsCountDisplay && episodesCountDisplay}·{/if}
+            {#if episodesCountDisplay}{L.list_episodes_count({ count: episodesCountDisplay })}{/if}
           </span>
         {/if}
         {#if isEpisodic && episodeDuration}

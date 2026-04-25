@@ -1,10 +1,13 @@
 <script lang="ts">
-  import { untrack } from 'svelte'
-
   import { L } from '$lib'
+  import EpisodicProgressForm from '$lib/components/media/episodic-progress-form.svelte'
+  import EpisodicResponsivePanel from '$lib/components/media/episodic-responsive-panel.svelte'
+  import * as Sheet from '$lib/components/ui/sheet'
+  import { displaySeasonGrid, parseSeasonBreakdown } from '$shared/lib/episodic-progress'
   import { getWatchStatusLabels } from '$shared/lib/labels'
   import { getMediaTitlePair } from '$shared/lib/media-title'
 
+  import type { WatchStatus } from '$shared/config/domain'
   import type { KanbanItem } from '../board.types'
 
   type Status = 'WATCHED' | 'IN_PROGRESS'
@@ -18,107 +21,55 @@
   const { item, onConfirm, onCancel }: Props = $props()
 
   const watchStatusLabels = getWatchStatusLabels(L)
-  const statuses: Status[] = ['WATCHED', 'IN_PROGRESS']
   const displayTitle = $derived(
     getMediaTitlePair({ title: item.media.title, originalTitle: item.media.originalTitle }).primary,
   )
 
-  let selectedStatus = $state<Status>('WATCHED')
-  let seasonInput = $state<number | ''>(untrack(() => item.currentSeason ?? ''))
-  let episodeInput = $state<number | ''>(untrack(() => item.currentEpisode ?? ''))
+  const catalogRows = $derived(parseSeasonBreakdown(item.media.seasonBreakdown) ?? null)
+  const userRows = $derived(parseSeasonBreakdown(item.userSeasonBreakdown) ?? null)
+  const seasonGridSource = $derived(item.seasonStructureSource == null ? 'AUTO' : item.seasonStructureSource)
+  const seasons = $derived(displaySeasonGrid(catalogRows, userRows, seasonGridSource))
 
-  const isEpisodic = $derived(item.media.mediaType === 'TV' || item.media.mediaType === 'ANIME')
+  const structureLength = $derived(seasons.length)
 
-  const handleConfirm = () => {
-    if (selectedStatus === 'WATCHED') {
+  const onForm = (data: { status: WatchStatus; currentSeason: number | null; currentEpisode: number | null }) => {
+    if (data.status === 'WATCHED') {
       onConfirm('WATCHED')
     } else {
       onConfirm(
         'IN_PROGRESS',
-        seasonInput === '' ? undefined : Number(seasonInput),
-        episodeInput === '' ? undefined : Number(episodeInput),
+        data.currentSeason === null ? undefined : data.currentSeason,
+        data.currentEpisode === null ? undefined : data.currentEpisode,
       )
     }
   }
+
+  const initialWatchStatus = $derived((item.status === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'WATCHED') satisfies WatchStatus)
 </script>
 
-<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-  <button type="button" class="absolute inset-0 bg-black/60" aria-label={L.board_watched_cancel()} onclick={onCancel}
-  ></button>
-
-  <div
-    class="relative w-full max-w-sm rounded-lg border bg-card p-6 shadow-lg"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="watched-dialog-title"
-  >
-    <h3 id="watched-dialog-title" class="text-base font-semibold">
-      {L.board_watched_dialog_title()}
-    </h3>
-    <p class="mt-1 text-sm font-medium">{displayTitle}</p>
-
-    <!-- Segmented control: Watched / In Progress -->
-    <div class="mt-4 grid grid-cols-2 gap-1 rounded-lg border bg-muted/30 p-1">
-      {#each statuses as st (st)}
-        <button
-          type="button"
-          class="rounded-md py-2 text-center text-sm font-medium transition-all {selectedStatus === st
-            ? 'bg-card text-foreground shadow-sm'
-            : 'text-muted-foreground hover:text-foreground'}"
-          onclick={() => {
-            selectedStatus = st
-          }}
-        >
-          {watchStatusLabels[st]}
-        </button>
-      {/each}
-    </div>
-
-    <!-- Season + episode — only when In Progress and episodic -->
-    {#if selectedStatus === 'IN_PROGRESS' && isEpisodic}
-      <div class="mt-4 flex gap-3">
-        <div class="flex-1">
-          <label for="dialog-season" class="mb-1 block text-xs font-medium text-muted-foreground">
-            {L.media_progress_season()}
-          </label>
-          <input
-            id="dialog-season"
-            type="number"
-            min="1"
-            class="w-full rounded-md border bg-background px-3 py-2 text-sm"
-            bind:value={seasonInput}
-          />
-        </div>
-        <div class="flex-1">
-          <label for="dialog-episode" class="mb-1 block text-xs font-medium text-muted-foreground">
-            {L.media_progress_episode()}
-          </label>
-          <input
-            id="dialog-episode"
-            type="number"
-            min="1"
-            class="w-full rounded-md border bg-background px-3 py-2 text-sm"
-            bind:value={episodeInput}
-          />
-        </div>
-      </div>
-    {/if}
-
-    <div class="mt-5 flex justify-end gap-2">
-      <button
-        type="button"
-        class="rounded-md border px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
-        onclick={onCancel}
-      >
-        {L.board_watched_cancel()}
-      </button>
-      <button
-        type="button"
-        class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        onclick={handleConfirm}
-      >
-        {L.common_apply()}
-      </button>
-    </div>
+<EpisodicResponsivePanel
+  onOpenChange={(o) => {
+    if (!o) onCancel()
+  }}
+>
+  <Sheet.Header class="space-y-1 px-4 pe-4 pt-1 text-left md:pe-12 md:pt-3">
+    <Sheet.Title class="text-lg">{L.board_watched_dialog_title()}</Sheet.Title>
+    <p class="text-sm font-medium">{displayTitle}</p>
+  </Sheet.Header>
+  <div class="px-4 pt-1 pb-6">
+    {#key item.id + String(item.currentSeason) + String(item.currentEpisode) + String(structureLength)}
+      <EpisodicProgressForm
+        mode="kanban-watched"
+        {seasons}
+        initialStatus={initialWatchStatus}
+        initialSeason={item.currentSeason ?? null}
+        initialEpisode={item.currentEpisode ?? null}
+        watchedColumnLabel={watchStatusLabels.WATCHED}
+        inProgressColumnLabel={watchStatusLabels.IN_PROGRESS}
+        onSubmit={onForm}
+        isSubmitting={false}
+        idPrefix="kanban-{item.id}"
+      />
+    {/key}
   </div>
-</div>
+</EpisodicResponsivePanel>

@@ -8,6 +8,7 @@
 
   import { L } from '$lib'
   import { WATCH_STATUS_META } from '$shared/config/domain'
+  import { effectiveEpisodicCounts } from '$shared/lib/episodic-progress'
   import { getWatchStatusLabels } from '$shared/lib/labels'
   import { scrollFade } from '$shared/lib/scroll-fade'
 
@@ -50,6 +51,14 @@
         : (it.media.episodeRuntimeMin ?? it.media.episodeRuntimeMax ?? 0)
 
     if (type === 'TV' || type === 'ANIME') {
+      const { episodesCount: totalEp } = effectiveEpisodicCounts(
+        it.media.seasonBreakdown,
+        it.userSeasonBreakdown,
+        it.seasonStructureSource,
+        it.media.seasonsCount,
+        it.media.episodesCount,
+      )
+
       if (kind === 'watched') {
         const watched = it.currentEpisode ?? 0
 
@@ -58,12 +67,12 @@
 
       if (kind === 'remaining') {
         const watched = it.currentEpisode ?? 0
-        const remaining = Math.max(0, (it.media.episodesCount ?? 0) - watched)
+        const remaining = Math.max(0, (totalEp ?? 0) - watched)
 
         return remaining * avgRuntime
       }
 
-      return (it.media.episodesCount ?? 0) * avgRuntime
+      return (totalEp ?? 0) * avgRuntime
     }
 
     return it.media.runtimeMinutes ?? 0

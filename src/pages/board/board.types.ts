@@ -4,6 +4,9 @@ export type KanbanItem = {
   status: string | null
   currentSeason?: number | null
   currentEpisode?: number | null
+  /** Per–list-item season grid; drives effective episode total when set. */
+  userSeasonBreakdown?: unknown
+  seasonStructureSource?: 'CATALOG' | 'USER' | null
   ghost?: boolean
   media: {
     id: string
@@ -15,7 +18,9 @@ export type KanbanItem = {
     runtimeMinutes: number | null
     episodeRuntimeMin: number | null
     episodeRuntimeMax: number | null
+    seasonsCount: number | null
     episodesCount: number | null
+    seasonBreakdown?: unknown
     genres?: { genre: { id: string; slug: string; name: string } }[]
   }
 }

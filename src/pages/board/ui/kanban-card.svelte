@@ -5,6 +5,7 @@
 
   import { L } from '$lib'
   import { WATCH_STATUS_META } from '$shared/config/domain'
+  import { effectiveEpisodicCounts } from '$shared/lib/episodic-progress'
   import { getMediaTypeMeta } from '$shared/lib/labels'
   import { getMediaTitlePair } from '$shared/lib/media-title'
 
@@ -24,6 +25,16 @@
   const displayTitle = $derived(
     getMediaTitlePair({ title: item.media.title, originalTitle: item.media.originalTitle }).primary,
   )
+  const episodicDisplay = $derived(
+    effectiveEpisodicCounts(
+      item.media.seasonBreakdown,
+      item.userSeasonBreakdown,
+      item.seasonStructureSource,
+      item.media.seasonsCount,
+      item.media.episodesCount,
+    ),
+  )
+  const totalEpisodesCount = $derived(episodicDisplay.episodesCount)
   const fallbackDurationMinutes = $derived.by<number>(() => {
     if (item.media.mediaType === 'ANIME') return 24
 
@@ -64,7 +75,7 @@
 
       if (isEpisodic) {
         if (item.status === 'WATCHED') {
-          const totalEpisodes = media.episodesCount ?? Math.max(currentEpisode ?? 0, 1)
+          const totalEpisodes = totalEpisodesCount ?? Math.max(currentEpisode ?? 0, 1)
 
           return totalEpisodes * avgEpisodeRuntime
         }
@@ -85,7 +96,8 @@
 
       if (isEpisodic) {
         const watched = currentEpisode ?? 0
-        const remainingEpisodes = media.episodesCount == null ? 1 : Math.max(0, media.episodesCount - watched)
+        const total = totalEpisodesCount
+        const remainingEpisodes = total == null ? 1 : Math.max(0, total - watched)
 
         return remainingEpisodes * avgEpisodeRuntime
       }
