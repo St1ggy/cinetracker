@@ -51,6 +51,61 @@ const toMediaType = (type: string | undefined): MediaType => {
   return 'OTHER'
 }
 
+const buildTvdbSeasonBreakdown = (raw: Record<string, unknown>) => {
+  if (!Array.isArray(raw.seasons)) return []
+
+  return (raw.seasons as Record<string, unknown>[])
+    .filter((s) => Number(s.type_id ?? s.seasonType) === 1 && Number(s.number) > 0)
+    .map((s) => ({ seasonNumber: Number(s.number), episodes: Number(s.episodes_count ?? 0) }))
+    .filter((s) => s.episodes > 0)
+}
+
+const toCanonicalFromTvdbSeries = (raw: Record<string, unknown>, id: number, externalId: string): CanonicalMedia => {
+  const seasons = buildTvdbSeasonBreakdown(raw)
+  const slug = raw.slug as string | undefined
+
+  return {
+    provider: 'TVDB',
+    externalId,
+    externalUrl: slug ? `https://thetvdb.com/series/${slug}` : null,
+    title: (raw.name as string | undefined) ?? 'Untitled',
+    year: raw.firstAired ? Number.parseInt(String(raw.firstAired).slice(0, 4), 10) : null,
+    mediaType: 'TV',
+    overview: (raw.overview as string | undefined) ?? null,
+    posterUrl: (raw.image as string | undefined) ?? null,
+    tvdbId: id,
+    genres: Array.isArray(raw.genres)
+      ? (raw.genres as Record<string, unknown>[]).map((g) => String(g.name ?? '')).filter(Boolean)
+      : [],
+    countries: [],
+    seasonsCount: seasons.length > 0 ? seasons.length : null,
+    episodesCount: seasons.reduce((sum, s) => sum + s.episodes, 0) || null,
+    seasonBreakdown: seasons.length > 0 ? seasons : null,
+    isAdult: false,
+    raw,
+  }
+}
+
+const toCanonicalFromTvdbMovie = (raw: Record<string, unknown>, id: number, externalId: string): CanonicalMedia => {
+  const slug = raw.slug as string | undefined
+
+  return {
+    provider: 'TVDB',
+    externalId,
+    externalUrl: slug ? `https://thetvdb.com/movies/${slug}` : null,
+    title: (raw.name as string | undefined) ?? 'Untitled',
+    year: raw.year ? Number.parseInt(String(raw.year), 10) : null,
+    mediaType: 'MOVIE',
+    overview: (raw.overview as string | undefined) ?? null,
+    posterUrl: (raw.image as string | undefined) ?? null,
+    tvdbId: id,
+    genres: [],
+    countries: [],
+    isAdult: false,
+    raw,
+  }
+}
+
 export const tvdbAdapter: ProviderAdapter = {
   provider: 'TVDB',
   requiresKey: true,
@@ -99,36 +154,8 @@ export const tvdbAdapter: ProviderAdapter = {
     if (seriesResponse.ok) {
       const payload = (await seriesResponse.json()) as { data?: Record<string, unknown> }
       const raw = payload.data ?? {}
-      const seasons = Array.isArray(raw.seasons)
-        ? (raw.seasons as Record<string, unknown>[])
-            .filter((s) => Number(s.type_id ?? s.seasonType) === 1 && Number(s.number) > 0)
-            .map((s) => ({ seasonNumber: Number(s.number), episodes: Number(s.episodes_count ?? 0) }))
-            .filter((s) => s.episodes > 0)
-        : []
-      const slug = raw.slug as string | undefined
 
-      const normalized: CanonicalMedia = {
-        provider: 'TVDB',
-        externalId,
-        externalUrl: slug ? `https://thetvdb.com/series/${slug}` : null,
-        title: (raw.name as string | undefined) ?? 'Untitled',
-        year: raw.firstAired ? Number.parseInt(String(raw.firstAired).slice(0, 4), 10) : null,
-        mediaType: 'TV',
-        overview: (raw.overview as string | undefined) ?? null,
-        posterUrl: (raw.image as string | undefined) ?? null,
-        tvdbId: id,
-        genres: Array.isArray(raw.genres)
-          ? (raw.genres as Record<string, unknown>[]).map((g) => String(g.name ?? '')).filter(Boolean)
-          : [],
-        countries: [],
-        seasonsCount: seasons.length > 0 ? seasons.length : null,
-        episodesCount: seasons.reduce((sum, s) => sum + s.episodes, 0) || null,
-        seasonBreakdown: seasons.length > 0 ? seasons : null,
-        isAdult: false,
-        raw,
-      }
-
-      return normalized
+      return toCanonicalFromTvdbSeries(raw, id, externalId)
     }
 
     const movieResponse = await fetch(`${BASE_URL}/movies/${id}/extended`, { headers: authHeaders(token) })
@@ -137,22 +164,7 @@ export const tvdbAdapter: ProviderAdapter = {
 
     const payload = (await movieResponse.json()) as { data?: Record<string, unknown> }
     const raw = payload.data ?? {}
-    const slug = raw.slug as string | undefined
 
-    return {
-      provider: 'TVDB',
-      externalId,
-      externalUrl: slug ? `https://thetvdb.com/movies/${slug}` : null,
-      title: (raw.name as string | undefined) ?? 'Untitled',
-      year: raw.year ? Number.parseInt(String(raw.year), 10) : null,
-      mediaType: 'MOVIE',
-      overview: (raw.overview as string | undefined) ?? null,
-      posterUrl: (raw.image as string | undefined) ?? null,
-      tvdbId: id,
-      genres: [],
-      countries: [],
-      isAdult: false,
-      raw,
-    }
+    return toCanonicalFromTvdbMovie(raw, id, externalId)
   },
 }

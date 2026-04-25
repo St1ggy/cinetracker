@@ -32,9 +32,9 @@ const toMediaType = (type: string | undefined): MediaType => {
   return 'OTHER'
 }
 
-const extractTraktRating = (obj: Record<string, unknown>): CanonicalRating[] => {
-  const rating = obj.rating as number | undefined
-  const votes = obj.votes as number | undefined
+const extractTraktRating = (object: Record<string, unknown>): CanonicalRating[] => {
+  const rating = object.rating as number | undefined
+  const votes = object.votes as number | undefined
 
   if (!rating || rating === 0) return []
 

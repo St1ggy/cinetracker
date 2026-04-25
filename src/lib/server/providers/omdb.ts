@@ -27,47 +27,74 @@ const toMediaType = (type: string | undefined): MediaType => {
   return 'OTHER'
 }
 
+const tryPushImdbRating = (raw: Record<string, unknown>, valueString: string, into: CanonicalRating[]) => {
+  const parts = valueString.split('/')
+
+  if (parts.length !== 2) return
+
+  const value = Number.parseFloat(parts[0])
+  const max = Number.parseFloat(parts[1])
+
+  if (Number.isNaN(value) || Number.isNaN(max)) return
+
+  const imdbVotes = raw.imdbVotes ? Number(String(raw.imdbVotes).replaceAll(',', '')) : undefined
+
+  into.push({
+    source: 'IMDb',
+    value,
+    maxValue: max,
+    votes: imdbVotes !== undefined && !Number.isNaN(imdbVotes) ? imdbVotes : undefined,
+  })
+}
+
+const tryPushRottenTomatoes = (valueString: string, into: CanonicalRating[]) => {
+  const value = Number.parseFloat(valueString.replace('%', ''))
+
+  if (Number.isNaN(value)) return
+
+  into.push({ source: 'Rotten Tomatoes', value, maxValue: 100 })
+}
+
+const tryPushMetacritic = (valueString: string, into: CanonicalRating[]) => {
+  const parts = valueString.split('/')
+
+  if (parts.length !== 2) return
+
+  const value = Number.parseFloat(parts[0])
+  const max = Number.parseFloat(parts[1])
+
+  if (Number.isNaN(value) || Number.isNaN(max)) return
+
+  into.push({ source: 'Metacritic', value, maxValue: max })
+}
+
 const parseOmdbRatings = (raw: Record<string, unknown>): CanonicalRating[] => {
   const ratings: CanonicalRating[] = []
   const rawRatings = raw.Ratings
 
-  if (Array.isArray(rawRatings)) {
-    for (const r of rawRatings as Record<string, string>[]) {
-      const source = r.Source ?? ''
-      const valueStr = r.Value ?? ''
+  if (!Array.isArray(rawRatings)) return ratings
 
-      if (source === 'Internet Movie Database') {
-        const parts = valueStr.split('/')
+  for (const r of rawRatings as Record<string, string>[]) {
+    const source = r.Source ?? ''
+    const valueString = r.Value ?? ''
 
-        if (parts.length === 2) {
-          const value = Number.parseFloat(parts[0])
-          const max = Number.parseFloat(parts[1])
+    switch (source) {
+      case 'Internet Movie Database': {
+        tryPushImdbRating(raw, valueString, ratings)
 
-          if (!Number.isNaN(value) && !Number.isNaN(max)) {
-            const imdbVotes = raw.imdbVotes ? Number(String(raw.imdbVotes).replaceAll(',', '')) : undefined
-
-            ratings.push({ source: 'IMDb', value, maxValue: max, votes: Number.isNaN(imdbVotes) ? undefined : imdbVotes })
-          }
-        }
-      } else if (source === 'Rotten Tomatoes') {
-        const pctStr = valueStr.replace('%', '')
-        const value = Number.parseFloat(pctStr)
-
-        if (!Number.isNaN(value)) {
-          ratings.push({ source: 'Rotten Tomatoes', value, maxValue: 100 })
-        }
-      } else if (source === 'Metacritic') {
-        const parts = valueStr.split('/')
-
-        if (parts.length === 2) {
-          const value = Number.parseFloat(parts[0])
-          const max = Number.parseFloat(parts[1])
-
-          if (!Number.isNaN(value) && !Number.isNaN(max)) {
-            ratings.push({ source: 'Metacritic', value, maxValue: max })
-          }
-        }
+        break
       }
+
+      case 'Rotten Tomatoes': {
+        tryPushRottenTomatoes(valueString, ratings)
+
+        break
+      }
+
+      case 'Metacritic': {
+        tryPushMetacritic(valueString, ratings)
+      }
+      // No default
     }
   }
 
@@ -75,13 +102,13 @@ const parseOmdbRatings = (raw: Record<string, unknown>): CanonicalRating[] => {
 }
 
 const parseOmdbCast = (raw: Record<string, unknown>): CanonicalCastMember[] => {
-  const actorsStr = raw.Actors as string | undefined
+  const actorsString = raw.Actors as string | undefined
 
-  if (!actorsStr || actorsStr === 'N/A') return []
+  if (!actorsString || actorsString === 'N/A') return []
 
-  return actorsStr
+  return actorsString
     .split(',')
-    .map((name, idx) => ({ name: name.trim(), order: idx }))
+    .map((name, index) => ({ name: name.trim(), order: index }))
     .filter((m) => m.name.length > 0)
 }
 

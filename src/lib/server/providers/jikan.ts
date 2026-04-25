@@ -65,10 +65,10 @@ const extractJikanCast = (raw: Record<string, unknown>): CanonicalCastMember[] =
 
   if (!Array.isArray(characters)) return []
 
-  return characters.slice(0, 15).map((c, idx) => ({
+  return characters.slice(0, 15).map((c, index) => ({
     name: c.character?.name ?? '',
     role: c.role ?? null,
-    order: idx,
+    order: index,
   }))
 }
 
