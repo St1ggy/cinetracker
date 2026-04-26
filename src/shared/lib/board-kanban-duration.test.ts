@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { type BoardItemForDuration, boardItemDurationMinutes, cumulativeWatchedEpisodes } from './board-kanban-duration'
+import {
+  type BoardItemForDuration,
+  boardItemDurationMinutes,
+  boardItemEpisodicWatchedBar,
+  cumulativeWatchedEpisodes,
+} from './board-kanban-duration'
 
 const baseMedia = (over: Partial<BoardItemForDuration['media']> = {}): BoardItemForDuration['media'] => ({
   mediaType: 'TV',
@@ -173,5 +178,42 @@ describe('boardItemDurationMinutes', () => {
     expect(cumulativeWatchedEpisodes(it_)).toBe(33)
     expect(remainingEps).toBe(25)
     expect(boardItemDurationMinutes(it_, 'remaining')).toBe(remainingEps * 50)
+  })
+})
+
+describe('boardItemEpisodicWatchedBar', () => {
+  it('null when not IN_PROGRESS or not episodic or zero total', () => {
+    expect(
+      boardItemEpisodicWatchedBar(
+        item({ status: 'WATCHED', media: baseMedia({ mediaType: 'TV', episodesCount: 10 }) }),
+      ),
+    ).toBeNull()
+    expect(
+      boardItemEpisodicWatchedBar(
+        item({
+          status: 'IN_PROGRESS',
+          media: baseMedia({ mediaType: 'TV', episodesCount: null, seasonBreakdown: null }),
+        }),
+      ),
+    ).toBeNull()
+  })
+
+  it('ratio matches watched / total for grid+progress', () => {
+    const seasonBreakdown = [
+      { seasonNumber: 1, episodes: 10 },
+      { seasonNumber: 2, episodes: 10 },
+    ]
+    const it_ = item({
+      status: 'IN_PROGRESS',
+      currentSeason: 2,
+      currentEpisode: 3,
+      media: baseMedia({ mediaType: 'TV', episodesCount: null, seasonBreakdown }),
+    })
+    const bar = boardItemEpisodicWatchedBar(it_)
+
+    expect(bar).not.toBeNull()
+    expect(bar!.total).toBe(20)
+    expect(bar!.watched).toBe(12)
+    expect(bar!.ratio).toBe(0.6)
   })
 })

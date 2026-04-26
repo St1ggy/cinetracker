@@ -139,6 +139,25 @@ const episodicByKind = (
   return episodicTotalMinutes(totalEp, avg)
 }
 
+/** In-progress bar on kanban: watched episodes / known total. Returns null if total unknown. */
+export const boardItemEpisodicWatchedBar = (
+  item: BoardItemForDuration,
+): { ratio: number; watched: number; total: number } | null => {
+  if (!isEpisodic(item.media.mediaType) || item.status !== 'IN_PROGRESS') {
+    return null
+  }
+
+  const totalEp = totalEpisodesResolved(item)
+
+  if (totalEp == null || totalEp <= 0) {
+    return null
+  }
+
+  const watched = Math.min(cumulativeWatchedEpisodes(item), totalEp)
+
+  return { ratio: watched / totalEp, watched, total: totalEp }
+}
+
 // kind: watched = accumulated; remaining = left; total = full work length
 export const boardItemDurationMinutes = (
   item: BoardItemForDuration,
