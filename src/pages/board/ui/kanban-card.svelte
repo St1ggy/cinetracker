@@ -5,7 +5,7 @@
 
   import { L } from '$lib'
   import { WATCH_STATUS_META } from '$shared/config/domain'
-  import { effectiveEpisodicCounts } from '$shared/lib/episodic-progress'
+  import { boardItemDurationMinutes } from '$shared/lib/board-kanban-duration'
   import { getMediaTypeMeta } from '$shared/lib/labels'
   import { getMediaTitlePair } from '$shared/lib/media-title'
 
@@ -13,10 +13,14 @@
 
   type Props = {
     item: KanbanItem
+    /** Mirror of the board column: watched / remaining / total. */
+    columnKind: 'watched' | 'remaining' | 'total'
+    // Episodic IN_PROGRESS with progress, shown in Watched column: always
+    // already-watched time, not the column’s default.
     ghost?: boolean
   }
 
-  const { item, ghost = false }: Props = $props()
+  const { item, columnKind, ghost = false }: Props = $props()
 
   const statusMeta = $derived(WATCH_STATUS_META[(item.status as keyof typeof WATCH_STATUS_META) ?? 'PLAN_TO_WATCH'])
   const typeMeta = $derived(getMediaTypeMeta(item.media.mediaType))
@@ -25,16 +29,6 @@
   const displayTitle = $derived(
     getMediaTitlePair({ title: item.media.title, originalTitle: item.media.originalTitle }).primary,
   )
-  const episodicDisplay = $derived(
-    effectiveEpisodicCounts(
-      item.media.seasonBreakdown,
-      item.userSeasonBreakdown,
-      item.seasonStructureSource,
-      item.media.seasonsCount,
-      item.media.episodesCount,
-    ),
-  )
-  const totalEpisodesCount = $derived(episodicDisplay.episodesCount)
   const fallbackDurationMinutes = $derived.by<number>(() => {
     if (item.media.mediaType === 'ANIME') return 24
 
@@ -56,69 +50,13 @@
     return `${h}h ${m}m`
   }
 
-  const avgEpisodeRuntime = $derived(
-    (() => {
-      const { media } = item
+  const displayDuration = $derived.by(() => {
+    // Ghost: просмотрено; дубль в «В процессе»: остаток (задаёт columnKind).
+    const kind: 'watched' | 'remaining' | 'total' = ghost ? 'watched' : columnKind
+    const minutes = boardItemDurationMinutes(item, kind)
 
-      if (media.episodeRuntimeMin != null && media.episodeRuntimeMax != null) {
-        return Math.round((media.episodeRuntimeMin + media.episodeRuntimeMax) / 2)
-      }
-
-      return media.episodeRuntimeMin ?? media.episodeRuntimeMax ?? fallbackDurationMinutes
-    })(),
-  )
-
-  /** Watched time: for episodic = episodes watched × avg runtime, for movie = full runtime. */
-  const watchedDurationMinutes = $derived(
-    (() => {
-      const { media, currentEpisode } = item
-
-      if (isEpisodic) {
-        if (item.status === 'WATCHED') {
-          const totalEpisodes = totalEpisodesCount ?? Math.max(currentEpisode ?? 0, 1)
-
-          return totalEpisodes * avgEpisodeRuntime
-        }
-
-        const watched = currentEpisode ?? 0
-
-        return watched * avgEpisodeRuntime
-      }
-
-      return media.runtimeMinutes ?? fallbackDurationMinutes
-    })(),
-  )
-
-  /** Remaining time: for episodic = (total − watched) × avg runtime, for movie = full runtime. */
-  const remainingDurationMinutes = $derived(
-    (() => {
-      const { media, currentEpisode } = item
-
-      if (isEpisodic) {
-        const watched = currentEpisode ?? 0
-        const total = totalEpisodesCount
-        const remainingEpisodes = total == null ? 1 : Math.max(0, total - watched)
-
-        return remainingEpisodes * avgEpisodeRuntime
-      }
-
-      return media.runtimeMinutes ?? fallbackDurationMinutes
-    })(),
-  )
-
-  // Display: WATCHED → watched time; IN_PROGRESS / PLAN_TO_WATCH → remaining time.
-  //  Ghost cards (IN_PROGRESS in Watched column) always show watched time.
-  const displayDuration = $derived(
-    (() => {
-      if (ghost) return formatDuration(watchedDurationMinutes)
-
-      const s = item.status ?? 'PLAN_TO_WATCH'
-
-      if (s === 'WATCHED') return formatDuration(watchedDurationMinutes)
-
-      return formatDuration(remainingDurationMinutes) || formatDuration(fallbackDurationMinutes)
-    })(),
-  )
+    return formatDuration(minutes) || formatDuration(fallbackDurationMinutes)
+  })
 </script>
 
 <a

@@ -2,13 +2,15 @@
   import CircleCheckIcon from '@lucide/svelte/icons/circle-check'
   import CirclePlayIcon from '@lucide/svelte/icons/circle-play'
   import ClockIcon from '@lucide/svelte/icons/clock'
+  /* eslint-disable import-x/no-duplicates -- `svelte` and `svelte/animate` are distinct; resolver maps both to the same d.ts. */
   import { untrack } from 'svelte'
   import { flip } from 'svelte/animate'
+  /* eslint-enable import-x/no-duplicates */
   import { SHADOW_ITEM_MARKER_PROPERTY_NAME, TRIGGERS, dndzone } from 'svelte-dnd-action'
 
   import { L } from '$lib'
   import { WATCH_STATUS_META } from '$shared/config/domain'
-  import { effectiveEpisodicCounts } from '$shared/lib/episodic-progress'
+  import { boardItemDurationMinutes } from '$shared/lib/board-kanban-duration'
   import { getWatchStatusLabels } from '$shared/lib/labels'
   import { scrollFade } from '$shared/lib/scroll-fade'
 
@@ -29,6 +31,15 @@
   const statusMeta = $derived(WATCH_STATUS_META[status])
   const watchStatusLabels = $derived(getWatchStatusLabels(L))
 
+  /** Drives per-card time label; same basis as the column header sum. */
+  const cardColumnKind = $derived.by((): 'watched' | 'remaining' | 'total' => {
+    if (status === 'WATCHED') return 'watched'
+
+    if (status === 'IN_PROGRESS') return 'remaining'
+
+    return 'total'
+  })
+
   // Each column owns its local items state for dnd.
   // The parent's `items` prop is the source of truth from the query.
   let localItems = $state(untrack(() => [...items]))
@@ -43,41 +54,6 @@
     if (!isDragging) localItems = [...incoming]
   })
 
-  function itemDurationMinutes(it: KanbanItem, kind: 'watched' | 'remaining' | 'total'): number {
-    const type = it.media.mediaType
-    const avgRuntime =
-      it.media.episodeRuntimeMin != null && it.media.episodeRuntimeMax != null
-        ? Math.round((it.media.episodeRuntimeMin + it.media.episodeRuntimeMax) / 2)
-        : (it.media.episodeRuntimeMin ?? it.media.episodeRuntimeMax ?? 0)
-
-    if (type === 'TV' || type === 'ANIME') {
-      const { episodesCount: totalEp } = effectiveEpisodicCounts(
-        it.media.seasonBreakdown,
-        it.userSeasonBreakdown,
-        it.seasonStructureSource,
-        it.media.seasonsCount,
-        it.media.episodesCount,
-      )
-
-      if (kind === 'watched') {
-        const watched = it.currentEpisode ?? 0
-
-        return watched * avgRuntime
-      }
-
-      if (kind === 'remaining') {
-        const watched = it.currentEpisode ?? 0
-        const remaining = Math.max(0, (totalEp ?? 0) - watched)
-
-        return remaining * avgRuntime
-      }
-
-      return (totalEp ?? 0) * avgRuntime
-    }
-
-    return it.media.runtimeMinutes ?? 0
-  }
-
   const totalDurationMinutes = $derived(
     (() => {
       let kind: 'watched' | 'remaining' | 'total' = 'total'
@@ -87,11 +63,11 @@
 
       let total = 0
 
-      for (const it of localItems) total += itemDurationMinutes(it, kind)
+      for (const it of localItems) total += boardItemDurationMinutes(it, kind)
 
       // Watched column header: include ghost items' watched time (already watched portion).
       if (status === 'WATCHED' && ghostItems.length > 0) {
-        for (const it of ghostItems) total += itemDurationMinutes(it, 'watched')
+        for (const it of ghostItems) total += boardItemDurationMinutes(it, 'watched')
       }
 
       return total
@@ -169,7 +145,7 @@
     <div class="border-b px-2 py-2">
       <div class="flex flex-col gap-2">
         {#each ghostItems as item (item.id)}
-          <KanbanCard {item} ghost />
+          <KanbanCard {item} columnKind={cardColumnKind} ghost />
         {/each}
       </div>
     </div>
@@ -203,7 +179,7 @@
               {L.board_drop_placeholder()}
             </div>
           {:else}
-            <KanbanCard {item} />
+            <KanbanCard {item} columnKind={cardColumnKind} />
           {/if}
         </div>
       {/each}
