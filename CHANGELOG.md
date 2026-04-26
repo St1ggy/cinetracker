@@ -1,3 +1,9 @@
+## [1.23.0](https://github.com/St1ggy/cinetracker/compare/v1.22.0...v1.23.0) (2026-04-26)
+
+### Features
+
+* **board:** season-cumulative time on kanban ([1f3588d](https://github.com/St1ggy/cinetracker/commit/1f3588da9b69ffa7cb9dd323c12312e293632bea))
+
 ## [1.22.0](https://github.com/St1ggy/cinetracker/compare/v1.21.0...v1.22.0) (2026-04-25)
 
 ### Features
