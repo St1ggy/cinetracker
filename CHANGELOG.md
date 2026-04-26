@@ -1,3 +1,10 @@
+## [1.26.0](https://github.com/St1ggy/cinetracker/compare/v1.25.0...v1.26.0) (2026-04-26)
+
+### Features
+
+* **i18n:** add i18n tables, migration, and server ([80bde5c](https://github.com/St1ggy/cinetracker/commit/80bde5c9cacde48aaa49ceb561f2ee3571a5e70e))
+* **i18n:** localized board, lists, media, wheel ([f0dbe2a](https://github.com/St1ggy/cinetracker/commit/f0dbe2aec8f91f961e40860ef519e76348a5e617))
+
 ## [1.25.0](https://github.com/St1ggy/cinetracker/compare/v1.24.0...v1.25.0) (2026-04-26)
 
 ### Features

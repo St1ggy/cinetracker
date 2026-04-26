@@ -1,6 +1,6 @@
 {
   "name": "cinetracker",
-  "version": "1.25.0",
+  "version": "1.26.0",
   "packageManager": "bun@1.2.12",
   "devDependencies": {
     "@eslint/compat": "^2.0.5",
