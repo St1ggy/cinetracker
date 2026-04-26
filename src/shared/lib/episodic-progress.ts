@@ -1,6 +1,8 @@
 // Client + server: episodic S/E validation and quick input parsing.
 // When structure is unknown (no seasonBreakdown in catalog), only enforce integers ≥ 1.
 
+import type { WatchStatus } from '$shared/config/domain'
+
 export type SeasonBreakdownEntry = { seasonNumber: number; episodes: number }
 
 export const parseSeasonBreakdown = (raw: unknown): SeasonBreakdownEntry[] | null => {
@@ -249,4 +251,96 @@ export const effectiveEpisodicCounts = (
     seasonsCount: grid.length,
     episodesCount: grid.reduce((sum, r) => sum + r.episodes, 0),
   }
+}
+
+export type SeasonProgressHighlight = 'none' | 'done' | 'in_progress'
+
+export type SeasonProgressRow = {
+  seasonNumber: number
+  episodes: number
+  highlight: SeasonProgressHighlight
+  /** Completed episodes in this season (next episode to watch is this + 1, except done rows). */
+  watchedInSeason: number
+  fillRatio: number
+}
+
+/** One row per `grid` season: highlights match `cumulativeWatchedEpisodes` / kanban rules. */
+export const seasonProgressRowsForGrid = (
+  grid: SeasonBreakdownEntry[],
+  status: WatchStatus,
+  currentSeason: number | null,
+  currentEpisode: number | null,
+): SeasonProgressRow[] => {
+  if (grid.length === 0) {
+    return []
+  }
+
+  const base = (row: SeasonBreakdownEntry): SeasonProgressRow => ({
+    seasonNumber: row.seasonNumber,
+    episodes: row.episodes,
+    highlight: 'none',
+    watchedInSeason: 0,
+    fillRatio: 0,
+  })
+
+  if (status === 'WATCHED') {
+    return sortSeasonBreakdown([...grid]).map((row) => ({
+      seasonNumber: row.seasonNumber,
+      episodes: row.episodes,
+      highlight: 'done' as const,
+      watchedInSeason: row.episodes,
+      fillRatio: 1,
+    }))
+  }
+
+  if (status === 'PLAN_TO_WATCH') {
+    return sortSeasonBreakdown([...grid]).map((row) => base(row))
+  }
+
+  if (status !== 'IN_PROGRESS') {
+    return sortSeasonBreakdown([...grid]).map((row) => base(row))
+  }
+
+  const ordered = sortSeasonBreakdown([...grid])
+  const nextSeason = currentSeason ?? 1
+  const ce = currentEpisode
+  const cap = episodesInSeason(ordered, nextSeason)
+  const fromEpisode = ce != null && ce >= 1 ? ce - 1 : 0
+  const inSeasonWatched = cap == null ? Math.max(0, fromEpisode) : Math.min(Math.max(0, fromEpisode), cap)
+
+  return ordered.map((row) => {
+    if (row.seasonNumber < nextSeason) {
+      return {
+        seasonNumber: row.seasonNumber,
+        episodes: row.episodes,
+        highlight: 'done' as const,
+        watchedInSeason: row.episodes,
+        fillRatio: 1,
+      }
+    }
+
+    if (row.seasonNumber > nextSeason) {
+      return base(row)
+    }
+
+    const seasonCap = row.episodes
+
+    if (inSeasonWatched >= seasonCap) {
+      return {
+        seasonNumber: row.seasonNumber,
+        episodes: row.episodes,
+        highlight: 'done' as const,
+        watchedInSeason: seasonCap,
+        fillRatio: 1,
+      }
+    }
+
+    return {
+      seasonNumber: row.seasonNumber,
+      episodes: row.episodes,
+      highlight: 'in_progress' as const,
+      watchedInSeason: inSeasonWatched,
+      fillRatio: seasonCap > 0 ? inSeasonWatched / seasonCap : 0,
+    }
+  })
 }
