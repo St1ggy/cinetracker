@@ -19,29 +19,37 @@ Run this at the start of a session or before editing files. Avoids conflicts and
 
 ## After EVERY code change
 
-Execute **in this exact order**:
+**Skip this entire section** if the **only** files you modified are **`.mdc`** (Cursor rules / memory) — no ESLint, `check`, or stylelint required for that work alone. If you changed both rules and code, run the checks for the code.
 
-### 1. ESLint autofix
+Otherwise execute **in this order**:
+
+### 1. ESLint (full project)
+
+```bash
+bun run lint
+```
+
+For a quick pass on **changed files only** (optional shortcut when iterating):
 
 ```bash
 bunx eslint --fix <changed files>
 ```
 
-Run only on changed files (not the whole project — too slow):
-
-```bash
-# Example
-bunx eslint --fix src/pages/home/home.svelte src/lib/server/repositories/lists.repository.ts
-```
-
 ### 2. Type-check
 
 ```bash
-npm run check
-# Equivalent: svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+bun run check
 ```
 
 Catches TypeScript errors in `.svelte` files that `tsc` alone cannot see.
+
+### 3. Stylelint (when you touched CSS/SCSS)
+
+```bash
+bunx stylelint "**/*.{css,scss}" --fix
+```
+
+Adjust the glob to the files you actually changed if needed.
 
 ## Fixing found errors
 

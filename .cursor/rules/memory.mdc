@@ -63,18 +63,33 @@ alwaysApply: true
 
 ---
 
+## 2026-04-26 — Linter run scope (mdc exception)
+
+### Rule
+- After **any** code change, run the **full project linter suite** (at minimum `bun run lint` and `bun run check`).
+- If CSS/SCSS in scope changed, run `stylelint` on those paths (project has `stylelint.config.js`).
+- **Exception:** if the **only** files you changed are **`.mdc`**, you **do not** need to run ESLint, `check`, or stylelint for that work — rules/docs-only edits.
+- If `.mdc` and code files were changed in the same session, run linters on the code side as normal.
+
+### Why
+- Keeps verification consistent while avoiding unnecessary runs for rule/memory-only updates.
+
+---
+
 ## 2026-02-22 — Mandatory checks after every code change
 
 ### What changed
-- After **every** code change, run:
-  1. `bunx eslint --fix <changed files>` — auto-fix and lint check
-  2. `npm run check` — TypeScript + svelte-check
+- After **every** code change (unless [mdc-only exception](#2026-04-26--linter-run-scope-mdc-exception) above), run:
+  1. `bun run lint` — full ESLint (`eslint .`); for small edits, `bunx eslint --fix <changed files>` is also fine
+  2. `bun run check` — Paraglide compile + svelte-check + types
 
 ### Commands
 
 ```bash
-bunx eslint --fix src/path/to/file.svelte src/path/to/other.ts
-npm run check
+bun run lint
+bun run check
+# optional when styles touched:
+# bunx stylelint "**/*.{css,scss}" --fix
 ```
 
 ### Why
