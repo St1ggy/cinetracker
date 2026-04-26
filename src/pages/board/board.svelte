@@ -222,7 +222,7 @@
     <p class="text-sm font-medium">{L.board_no_list()}</p>
   </div>
 {:else}
-  <div class="flex min-h-0 flex-col gap-3" style="height: calc(100vh - 7rem)">
+  <div class="flex min-h-0 flex-1 flex-col gap-3">
     <!-- Lists, type and genre filters -->
     <div class="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-2">
       {#if (data.lists?.length ?? 0) > 0}

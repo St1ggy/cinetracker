@@ -5,7 +5,7 @@
 
   import { L } from '$lib'
   import { WATCH_STATUS_META } from '$shared/config/domain'
-  import { boardItemDurationMinutes } from '$shared/lib/board-kanban-duration'
+  import { boardItemDurationMinutes, boardItemEpisodicWatchedBar } from '$shared/lib/board-kanban-duration'
   import { formatProgressSeLabel, getMediaTypeMeta } from '$shared/lib/labels'
   import { getMediaTitlePair } from '$shared/lib/media-title'
 
@@ -57,16 +57,43 @@
 
     return formatDuration(minutes) || formatDuration(fallbackDurationMinutes)
   })
+
+  const episodicWatchedFill = $derived(
+    !ghost && isEpisodic && item.status === 'IN_PROGRESS' ? boardItemEpisodicWatchedBar(item) : null,
+  )
 </script>
 
 <a
   href={`/media/${item.media.id}`}
-  class={`flex gap-3 rounded-lg border bg-card p-2 shadow-sm transition-shadow hover:shadow-md ${ghost ? 'border-dashed opacity-60' : ''}`}
+  class={`relative flex flex-col overflow-hidden rounded-lg border shadow-sm transition-shadow hover:shadow-md ${
+    episodicWatchedFill == null ? 'bg-card' : 'bg-transparent'
+  } ${ghost ? 'shrink-0 border-dashed opacity-60' : ''}`}
+  title={episodicWatchedFill
+    ? L.board_kanban_card_watched_aria({
+        w: String(episodicWatchedFill.watched),
+        t: String(episodicWatchedFill.total),
+      })
+    : undefined}
   draggable={ghost ? 'false' : undefined}
   onclick={ghost ? (event_) => event_.preventDefault() : undefined}
   tabindex={ghost ? -1 : 0}
 >
-  <div class="shrink-0">
+  {#if episodicWatchedFill}
+    <div
+      class="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] bg-card"
+      aria-hidden="true"
+    >
+      <div
+        class="absolute inset-y-0 start-0 min-w-0 max-w-full bg-primary/10 transition-[width] motion-reduce:transition-none"
+        style:width="{Math.round(episodicWatchedFill.ratio * 1000) / 10}%"
+      ></div>
+    </div>
+  {/if}
+  <div
+    class="relative z-10 flex min-h-0 min-w-0 gap-3 p-2"
+    class:shrink-0={ghost}
+  >
+    <div class="shrink-0">
     {#if item.media.posterUrl}
       <img src={item.media.posterUrl} alt={displayTitle} class="h-16 w-11 rounded object-cover" loading="lazy" />
     {:else}
@@ -74,9 +101,9 @@
         <span class="text-lg text-muted-foreground/30">?</span>
       </div>
     {/if}
-  </div>
+    </div>
 
-  <div class="min-w-0 flex-1">
+    <div class="min-w-0 flex-1">
     <div class="flex items-start justify-between gap-1">
       <h3 class="line-clamp-2 text-sm leading-snug font-medium">{displayTitle}</h3>
       {#if ghost}
@@ -121,5 +148,6 @@
       <ClockIcon class="size-3 shrink-0" />
       {displayDuration}
     </p>
+    </div>
   </div>
 </a>

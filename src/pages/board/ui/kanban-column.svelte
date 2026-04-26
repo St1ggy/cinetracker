@@ -143,10 +143,15 @@
 
   {#if ghostItems.length > 0}
     <div class="shrink-0 border-b px-2 py-2">
-      <div class="scroll-fade max-h-44 flex min-h-0 flex-col gap-2 overflow-y-auto" use:scrollFade>
-        {#each ghostItems as item (item.id)}
-          <KanbanCard {item} columnKind={cardColumnKind} ghost />
-        {/each}
+      <div
+        class="scroll-fade max-h-60 min-h-0 overflow-y-auto [scrollbar-gutter:stable]"
+        use:scrollFade
+      >
+        <div class="flex flex-col gap-2 py-7 px-0.5">
+          {#each ghostItems as item (item.id)}
+            <KanbanCard {item} columnKind={cardColumnKind} ghost />
+          {/each}
+        </div>
       </div>
     </div>
   {/if}
