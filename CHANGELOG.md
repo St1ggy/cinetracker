@@ -1,3 +1,17 @@
+## [1.25.0](https://github.com/St1ggy/cinetracker/compare/v1.24.0...v1.25.0) (2026-04-26)
+
+### Features
+
+* **board:** add episodic watched bar ratio ([e05865e](https://github.com/St1ggy/cinetracker/commit/e05865e842f70033430da630e4a6f8652c5e206e))
+* **enrich:** pass locale; add POST force-enrich ([eba8c87](https://github.com/St1ggy/cinetracker/commit/eba8c872c8a24408fe73971a1bcabecdbc9628e0))
+* **episodic:** add season progress rows for grid ([47ff03a](https://github.com/St1ggy/cinetracker/commit/47ff03a53b5a314d844c2d5154bd9066feb0d500))
+* **layout:** centralize document title, fix flex min-h-0 ([645b94e](https://github.com/St1ggy/cinetracker/commit/645b94ef09b636af2bd8aa87c7d1540807eb063a))
+* **media:** season progress grid, force-refresh from UI ([3cd6daa](https://github.com/St1ggy/cinetracker/commit/3cd6daaf2faf07a64eca038d7412e9935af86f1a))
+
+### Bug Fixes
+
+* **board:** fill main height, ghost scroll fade, lighter bar ([6bbe16c](https://github.com/St1ggy/cinetracker/commit/6bbe16ceb77d883d5c3ff9aa4673e85bba6f4a68))
+
 ## [1.24.0](https://github.com/St1ggy/cinetracker/compare/v1.23.0...v1.24.0) (2026-04-26)
 
 ### Features
