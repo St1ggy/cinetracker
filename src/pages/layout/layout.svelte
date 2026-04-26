@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser } from '$app/environment'
   import { afterNavigate, beforeNavigate, onNavigate } from '$app/navigation'
   import { page } from '$app/state'
   import MenuIcon from '@lucide/svelte/icons/menu'
@@ -20,6 +21,7 @@
 
   import { L } from '$lib'
   import favicon from '$lib/assets/favicon.svg'
+  import { getDocumentTitle } from '$lib/document-title'
   import AppSidebar from '$widgets/app-sidebar'
 
   import '../../app.css'
@@ -31,16 +33,30 @@
   let mobileSidebarOpen = $state(false)
   let isNavigating = $state(false)
 
+  const documentTitle = $derived(
+    getDocumentTitle({ pathname: page.url.pathname, data: page.data, params: page.params as Record<string, string> }),
+  )
+
   beforeNavigate(() => {
     isNavigating = true
   })
   afterNavigate(() => {
     isNavigating = false
+
+    if (browser) {
+      // View transitions: keep tab title in sync with route (svelte:head can lag).
+      document.title = getDocumentTitle({
+        pathname: page.url.pathname,
+        data: page.data,
+        params: page.params as Record<string, string>,
+      })
+    }
   })
 </script>
 
 <svelte:head>
   <link rel="icon" href={favicon} />
+  <title>{documentTitle}</title>
 </svelte:head>
 
 {#if isNavigating}
@@ -68,7 +84,7 @@
         </aside>
       {/if}
 
-      <main class="flex min-w-0 flex-1 flex-col">
+      <main class="flex min-h-0 min-w-0 flex-1 flex-col">
         <header class="m-4 flex items-center justify-between gap-4 rounded-lg border bg-card p-3 md:hidden">
           <button
             class="inline-flex size-9 items-center justify-center rounded-md border hover:bg-accent"
@@ -86,7 +102,7 @@
           {/if}
         </header>
 
-        <div class="flex flex-1 flex-col gap-4 p-4">
+        <div class="flex min-h-0 flex-1 flex-col gap-4 p-4">
           {@render children()}
         </div>
       </main>
