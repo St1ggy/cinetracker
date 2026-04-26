@@ -1,6 +1,8 @@
 import { error, json } from '@sveltejs/kit'
 import { z } from 'zod'
 
+import { coalesceSeason1WhenEpisodeSet } from '$lib/server/coalesce-episodic-season'
+import { prisma } from '$lib/server/prisma'
 import { listItemsRepository } from '$lib/server/repositories'
 import { assertEpisodicProgressPayload } from '$lib/server/validate-episodic-payload'
 import { WATCH_STATUSES } from '$shared/config/domain'
@@ -58,6 +60,17 @@ export const PATCH = async ({ locals, params, request }) => {
     return body.seasonStructureSource
   })()
 
+  const media = await prisma.media.findUnique({
+    where: { id: params.mediaId },
+    select: { mediaType: true },
+  })
+
+  const coalescedSeason = coalesceSeason1WhenEpisodeSet(
+    media?.mediaType ?? 'OTHER',
+    body.currentSeason ?? null,
+    body.currentEpisode ?? null,
+  )
+
   let databaseSource: 'CATALOG' | 'USER' | null | undefined
 
   if (body.seasonStructureSource === undefined) {
@@ -72,7 +85,7 @@ export const PATCH = async ({ locals, params, request }) => {
     body.itemId,
     params.mediaId,
     body.status,
-    body.currentSeason ?? null,
+    coalescedSeason ?? null,
     body.currentEpisode ?? null,
     coercedUserBreakdown,
     sourceForAssert,
@@ -80,7 +93,7 @@ export const PATCH = async ({ locals, params, request }) => {
 
   const updated = await listItemsRepository.updateById(body.itemId, {
     status: body.status,
-    currentSeason: body.currentSeason ?? null,
+    currentSeason: coalescedSeason ?? null,
     currentEpisode: body.currentEpisode ?? null,
     ...(coercedUserBreakdown === undefined ? {} : { userSeasonBreakdown: coercedUserBreakdown }),
     ...(databaseSource === undefined ? {} : { seasonStructureSource: databaseSource }),

@@ -73,10 +73,16 @@ export const cumulativeWatchedEpisodes = (item: BoardItemForDuration): number =>
   const { currentSeason, currentEpisode } = item
   const grid = seasonGridForItem(item)
 
-  if (grid.length > 0 && currentSeason != null && currentSeason >= 1 && currentEpisode != null && currentEpisode >= 1) {
-    const prior = grid.filter((row) => row.seasonNumber < currentSeason).reduce((sum, row) => sum + row.episodes, 0)
+  if (grid.length > 0 && currentEpisode != null && currentEpisode >= 1) {
+    // When a season grid exists but the user only set the episode, treat as season 1
+    // (aligns with API normalisation: cannot store episode without season in grid mode).
+    const season = currentSeason ?? 1
 
-    const cap = episodesInSeason(grid, currentSeason)
+    if (season < 1) return currentEpisode ?? 0
+
+    const prior = grid.filter((row) => row.seasonNumber < season).reduce((sum, row) => sum + row.episodes, 0)
+
+    const cap = episodesInSeason(grid, season)
     // Stored pair is the **next** episode to watch: S5E14 ⇒ 4 prior seasons + 13 done in S5.
     const inSeasonWatched =
       cap == null ? Math.max(0, currentEpisode - 1) : Math.min(Math.max(0, currentEpisode - 1), cap)

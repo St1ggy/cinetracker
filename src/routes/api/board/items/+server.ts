@@ -1,6 +1,7 @@
 import { error, json } from '@sveltejs/kit'
 import { z } from 'zod'
 
+import { coalesceSeason1WhenEpisodeSet } from '$lib/server/coalesce-episodic-season'
 import { requireSessionUser } from '$lib/server/lists'
 import { prisma } from '$lib/server/prisma'
 import { listItemsRepository, listsRepository } from '$lib/server/repositories'
@@ -134,6 +135,17 @@ export const PATCH = async ({ locals, request }) => {
     throw error(403, 'Only own lists can be updated')
   }
 
+  const media = await prisma.media.findUnique({
+    where: { id: body.mediaId },
+    select: { mediaType: true },
+  })
+
+  const coalescedSeason = coalesceSeason1WhenEpisodeSet(
+    media?.mediaType ?? 'OTHER',
+    body.currentSeason ?? null,
+    body.currentEpisode ?? null,
+  )
+
   const itemsToUpdate = await prisma.listItem.findMany({
     where: {
       listId: { in: body.listIds },
@@ -148,7 +160,7 @@ export const PATCH = async ({ locals, request }) => {
         id,
         body.mediaId,
         body.status,
-        body.currentSeason ?? null,
+        coalescedSeason ?? null,
         body.currentEpisode ?? null,
       )
     }
@@ -157,7 +169,7 @@ export const PATCH = async ({ locals, request }) => {
   for (const { id } of itemsToUpdate) {
     await listItemsRepository.updateById(id, {
       status: body.status ?? undefined,
-      currentSeason: body.currentSeason ?? undefined,
+      currentSeason: coalescedSeason ?? body.currentSeason ?? undefined,
       currentEpisode: body.currentEpisode ?? undefined,
     })
   }

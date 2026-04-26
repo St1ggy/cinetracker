@@ -222,14 +222,15 @@
       return false
     }
 
-    if (season === '' || episode === '') {
+    if (episode === '') {
       messageKey = 'invalid'
       fieldError = 'episode'
 
       return false
     }
 
-    const s = Number(season)
+    // Unspecified season with episode: treat as 1 (matches API / board-kanban-duration)
+    const s = season === '' ? 1 : Number(season)
     const epNumber = Number(episode)
 
     const m = validateEpisodicProgress({
@@ -287,9 +288,19 @@
     )
     const userOverridePayload = sameAsCatalog ? null : userStructureDraft
 
+    const seasonValue: number | null = (() => {
+      if (season === '') {
+        if (episode !== '') return 1
+
+        return null
+      }
+
+      return Number(season)
+    })()
+
     onSubmit({
       status: 'IN_PROGRESS',
-      currentSeason: season === '' ? null : Number(season),
+      currentSeason: seasonValue,
       currentEpisode: episode === '' ? null : Number(episode),
       ...(mode === 'title' ? { userSeasonBreakdown: userOverridePayload, seasonStructureSource: structSource } : {}),
     })

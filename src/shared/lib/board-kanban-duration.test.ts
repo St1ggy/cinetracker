@@ -117,6 +117,36 @@ describe('boardItemDurationMinutes', () => {
     expect(boardItemDurationMinutes(it_, 'total')).toBe(6 * 50)
   })
 
+  it('grid + episode but currentSeason null: same cumulative as currentSeason: 1', () => {
+    const seasonBreakdown = [
+      { seasonNumber: 1, episodes: 10 },
+      { seasonNumber: 2, episodes: 8 },
+    ]
+    const withNull = item({
+      currentSeason: null,
+      currentEpisode: 3,
+      media: baseMedia({ mediaType: 'TV', episodesCount: null, seasonBreakdown }),
+    })
+    const withS1 = item({
+      currentSeason: 1,
+      currentEpisode: 3,
+      media: baseMedia({ mediaType: 'TV', episodesCount: null, seasonBreakdown }),
+    })
+
+    expect(cumulativeWatchedEpisodes(withNull)).toBe(cumulativeWatchedEpisodes(withS1))
+    expect(cumulativeWatchedEpisodes(withNull)).toBe(2)
+  })
+
+  it('no season grid: currentSeason null + currentEpisode 5 is flat 5, not S1 in-grid math', () => {
+    const flat = item({
+      currentSeason: null,
+      currentEpisode: 5,
+      media: baseMedia({ mediaType: 'TV', seasonBreakdown: null, episodesCount: 12 }),
+    })
+
+    expect(cumulativeWatchedEpisodes(flat)).toBe(5)
+  })
+
   it('multi-season: S5E14 = 4 full prior seasons + 13 in S5; remaining = rest of S5 + S6 + S7', () => {
     const seasonBreakdown = [
       { seasonNumber: 1, episodes: 5 },
