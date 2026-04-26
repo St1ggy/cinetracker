@@ -1,3 +1,12 @@
+## [1.27.0](https://github.com/St1ggy/cinetracker/compare/v1.26.0...v1.27.0) (2026-04-26)
+
+### Features
+
+* **db:** add app_settings for genre alias config ([a199fe9](https://github.com/St1ggy/cinetracker/commit/a199fe95b3e2a5ba80b11daa8f91ffd8cf6655d1))
+* **server:** genre alias from settings; advanced list/board filters ([0932137](https://github.com/St1ggy/cinetracker/commit/09321375bd5f92411a321bbc8fe0b7e6216a6042))
+* **shared:** genre alias rules and media filter state/URL ([e4e79fd](https://github.com/St1ggy/cinetracker/commit/e4e79fd67d11ec5a93c321e9aabb782e621afd25))
+* **ui:** shared media filter bar, genre alias editor, i18n ([63b95e6](https://github.com/St1ggy/cinetracker/commit/63b95e6251283a7bc28b631aede114ba403b78f4))
+
 ## [1.26.0](https://github.com/St1ggy/cinetracker/compare/v1.25.0...v1.26.0) (2026-04-26)
 
 ### Features
