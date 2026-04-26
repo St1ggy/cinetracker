@@ -7,16 +7,24 @@
   import { untrack } from 'svelte'
   import { toast } from 'svelte-sonner'
 
+  import { MediaFiltersBar } from '$features/media-filters'
   import { L } from '$lib'
+  import { type MediaFiltersState, emptyMediaFiltersState, mediaFiltersHasAny } from '$shared/lib/media-filters'
+  import {
+    buildResetMediaFiltersState,
+    mediaFilterDefaultSortForSurface,
+    mergeNavigateMediaFilters,
+    parseFiltersForSurface,
+  } from '$shared/lib/media-filters-surface'
+  import { buildListItemsApiUrl, writeMediaFiltersToSearchParams } from '$shared/lib/media-filters-url'
   import { getStorageItem, setStorageItem } from '$shared/lib/storage'
+
 
   import AddMediaModal from './ui/add-media-modal.svelte'
   import MediaCard from './ui/media-card.svelte'
-  import MediaFilterBar from './ui/media-filter-bar.svelte'
   import MediaListRow from './ui/media-list-row.svelte'
   import MediaViewControls from './ui/media-view-controls.svelte'
 
-  import type { WatchStatus } from '$shared/config/domain'
   import type { PageData } from '../../routes/$types'
 
   type ViewMode = 'grid' | 'compact' | 'list'
@@ -24,27 +32,17 @@
   const data = $derived(page.data as PageData)
   const queryClient = useQueryClient()
 
-  // Session-only: which list is shown on home (can switch until reload).
-  let currentListId = $state(untrack(() => data.list?.id ?? ''))
+  const filtersFromUrl = $derived(
+    data.authenticated && data.filters ? data.filters : emptyMediaFiltersState(),
+  )
 
-  $effect(() => {
-    if (data.list?.id && !currentListId) currentListId = data.list.id
-  })
-
-  const lists = $derived((data.lists ?? []) as { id: string; title: string; _count?: { items: number } }[])
-  const currentList = $derived(lists.find((l) => l.id === currentListId) ?? data.list ?? null)
-
-  // Filter state initialized once from URL params.
-  let query = $state(untrack(() => data.filters?.q ?? ''))
-  let genre = $state(untrack(() => data.filters?.genre ?? ''))
-  let status = $state<WatchStatus | ''>(untrack(() => data.filters?.status ?? ''))
   let showAddModal = $state(false)
 
-  // View mode persisted in storage — personal preference, not part of URL.
+  const currentListId = $derived(data.list?.id ?? '')
+
   let viewMode = $state<ViewMode>('grid')
   let viewModeLoaded = $state(false)
 
-  // Read once on mount; SSR gets the default 'grid'.
   $effect(() => {
     getStorageItem<ViewMode>('home-view-mode', 'grid').then((v) => {
       viewMode = v
@@ -52,36 +50,23 @@
     })
   })
 
-  // Write only after the initial read to avoid overwriting with the default.
   $effect(() => {
     if (viewModeLoaded) setStorageItem('home-view-mode', viewMode)
   })
 
-  const hasActiveFilters = $derived(!!(query || genre || status))
+  const hasActiveFilters = $derived(mediaFiltersHasAny(filtersFromUrl))
 
-  const buildItemsUrl = () => {
-    if (!currentListId) return null
+  const navigateWithFilters = async (patch: Partial<MediaFiltersState>) => {
+    const url = mergeNavigateMediaFilters(page.url, patch, 'home')
 
-    const parts: string[] = [`limit=60`]
-
-    if (data.filters?.q) parts.push(`q=${encodeURIComponent(data.filters.q)}`)
-
-    if (data.filters?.genre) parts.push(`genres=${encodeURIComponent(data.filters.genre)}`)
-
-    if (data.filters?.status) parts.push(`status=${data.filters.status}`)
-
-    if (data.filters?.sort) parts.push(`sort=${data.filters.sort}`)
-
-    return `/api/lists/${currentListId}/items?${parts.join('&')}`
+    await goto(url.toString())
   }
 
   const itemsQuery = createQuery(() => ({
-    queryKey: ['list-items', currentListId, data.filters],
-    enabled: !!currentListId,
+    queryKey: ['list-items', currentListId, filtersFromUrl],
+    enabled: !!currentListId && !!data.authenticated,
     queryFn: async () => {
-      const url = buildItemsUrl()
-
-      if (!url) return { items: [] }
+      const url = buildListItemsApiUrl(currentListId, filtersFromUrl, { limit: 60 })
 
       const response = await fetch(url)
 
@@ -91,49 +76,20 @@
     },
     throwOnError: false,
     meta: { onError: () => toast.error(L.common_error_generic()) },
-    initialData: currentListId === data.list?.id ? { items: untrack(() => data.items ?? []) } : undefined,
+    initialData:
+      currentListId === untrack(() => data.list?.id) ? { items: untrack(() => data.items ?? []) } : undefined,
     staleTime: 0,
   }))
 
-  const applyFilters = async (overrides?: { query?: string; genre?: string; status?: WatchStatus | '' }) => {
-    const q = overrides?.query ?? query
-    const g = overrides?.genre ?? genre
-    const s = overrides?.status ?? status
-    const current = new URL(page.url)
+  const handleReset = async () => {
+    const base = parseFiltersForSurface(page.url.searchParams, 'home')
+    const next = buildResetMediaFiltersState(base, 'home')
+    const url = new URL(page.url)
 
-    current.searchParams.delete('q')
-    current.searchParams.delete('genre')
-    current.searchParams.delete('status')
-
-    if (q.trim()) current.searchParams.set('q', q.trim())
-
-    if (g) current.searchParams.set('genre', g)
-
-    if (s) current.searchParams.set('status', s)
-
-    await goto(current.toString())
-  }
-
-  const handleGenreChange = (v: string) => {
-    genre = v
-    applyFilters({ genre: v })
-  }
-
-  const handleStatusChange = (v: WatchStatus | '') => {
-    status = v
-    applyFilters({ status: v })
-  }
-
-  const handleReset = () => {
-    query = ''
-    genre = ''
-    status = ''
-    const current = new URL(page.url)
-    const sort = current.searchParams.get('sort')
-
-    const next = sort ? `/?sort=${sort}` : '/'
-
-    goto(next)
+    writeMediaFiltersToSearchParams(url.searchParams, next, {
+      defaultSort: mediaFilterDefaultSortForSurface('home'),
+    })
+    await goto(url.toString())
   }
 
   const items = $derived(itemsQuery.data?.items ?? [])
@@ -153,28 +109,20 @@
   </section>
 {:else}
   <section class="space-y-4">
-    <MediaFilterBar
-      {query}
-      {genre}
-      {status}
-      {hasActiveFilters}
-      genres={data.genres ?? []}
+    <MediaFiltersBar
+      mode="home"
+      filters={filtersFromUrl}
+      onPatch={(p) => navigateWithFilters(p)}
+      countryCodes={data.listCountryCodes ?? []}
+      canReset={hasActiveFilters}
       onReset={handleReset}
+      catalogGenres={data.genres ?? []}
+      homeListsForPicker={data.lists ?? []}
+      onHomeListSelect={(id) => navigateWithFilters({ listId: id })}
       onAddClick={() => (showAddModal = true)}
-      onQueryChange={(v) => (query = v)}
-      onQueryApply={() => applyFilters()}
-      onGenreChange={handleGenreChange}
-      onStatusChange={handleStatusChange}
     />
 
-    <MediaViewControls
-      {viewMode}
-      onViewChange={(v) => (viewMode = v)}
-      {lists}
-      {currentListId}
-      currentListTitle={currentList?.title ?? '—'}
-      onListChange={(id) => (currentListId = id)}
-    />
+    <MediaViewControls {viewMode} onViewChange={(v) => (viewMode = v)} />
 
     {#if items.length === 0}
       <div class="flex flex-col items-center gap-3 rounded-xl border border-dashed bg-card/50 py-16 text-center">
@@ -183,9 +131,11 @@
         </div>
         <div class="space-y-1">
           <p class="text-sm font-medium">
-            {hasActiveFilters ? L.explore_no_results() : L.home_no_description_yet()}
+            {hasActiveFilters ? L.media_filters_home_no_items() : L.home_no_description_yet()}
           </p>
-          {#if !hasActiveFilters}
+          {#if hasActiveFilters}
+            <p class="text-xs text-muted-foreground">{L.media_filters_empty_suggestion()}</p>
+          {:else}
             <p class="text-xs text-muted-foreground">{L.home_add_product_description()}</p>
           {/if}
         </div>
@@ -231,7 +181,7 @@
 {#if showAddModal}
   <AddMediaModal
     listId={currentListId}
-    listTitle={currentList?.title ?? '—'}
+    listTitle={data.list?.title ?? '—'}
     onclose={() => (showAddModal = false)}
     onAdded={() => queryClient.invalidateQueries({ queryKey: ['list-items'] })}
   />

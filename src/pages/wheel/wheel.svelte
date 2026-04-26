@@ -1,20 +1,29 @@
 <script lang="ts">
   import { browser } from '$app/environment'
+  import { goto } from '$app/navigation'
   import { page } from '$app/state'
   import DicesIcon from '@lucide/svelte/icons/dices'
   import SparklesIcon from '@lucide/svelte/icons/sparkles'
   import { createQuery } from '@tanstack/svelte-query'
   import { toast } from 'svelte-sonner'
 
+  import { MediaFiltersBar } from '$features/media-filters'
   import { L } from '$lib'
+  import { DEFAULT_GENRE_ALIAS_CONFIG, expandGenreSlugsForQuery } from '$shared/lib/genre-alias'
+  import { type MediaFiltersState, mediaFiltersHasAny } from '$shared/lib/media-filters'
+  import {
+    buildResetMediaFiltersState,
+    mediaFilterDefaultSortForSurface,
+    mergeNavigateMediaFilters,
+    parseFiltersForSurface,
+  } from '$shared/lib/media-filters-surface'
+  import { buildListItemsApiUrl, writeMediaFiltersToSearchParams } from '$shared/lib/media-filters-url'
   import { getMediaTitlePair } from '$shared/lib/media-title'
   import { buildWheelSpinSectors, sampleWheelPreview } from '$shared/lib/wheel-sample'
 
   import WheelCanvas from './ui/wheel-canvas.svelte'
-  import WheelFilters from './ui/wheel-filters.svelte'
   import WheelStrip from './ui/wheel-strip.svelte'
 
-  import type { MediaType, WatchStatus } from '$shared/config/domain'
   import type { WheelEntry, WheelGenre, WheelItem } from './wheel.types'
   import type { PageData } from '../../routes/wheel/$types'
 
@@ -22,12 +31,9 @@
   const MIN_SECTORS_FLOOR = 12
   const DEFAULT_SECTOR_COUNT = 14
   const MAX_WHEEL_CANDIDATES = 300
-  const WHEEL_DEFAULT_STATUSES: WatchStatus[] = ['PLAN_TO_WATCH']
 
   type ViewMode = 'wheel' | 'strip'
-  type GenreMatchMode = 'or' | 'and'
 
-  /** `cinetracker:` — как в $shared/lib/storage, значение: `wheel` | `strip`. */
   const WHEEL_VIEW_MODE_STORAGE_KEY = 'cinetracker:wheel:viewMode'
 
   const readStoredViewMode = (): ViewMode => {
@@ -36,7 +42,6 @@
     }
 
     try {
-
       const s = localStorage.getItem(WHEEL_VIEW_MODE_STORAGE_KEY)
 
       if (s === 'wheel' || s === 'strip') {
@@ -49,23 +54,27 @@
     return 'wheel'
   }
 
-  const areSameStatuses = (a: WatchStatus[], b: WatchStatus[]) =>
-    a.length === b.length && a.every((status) => b.includes(status))
-
-  const getAdaptiveDefaultStatuses = (items: WheelItem[]): WatchStatus[] => {
-    let planToWatchCount = 0
-
-    for (const item of items) {
-      if ((item.status ?? 'PLAN_TO_WATCH') === 'PLAN_TO_WATCH') planToWatchCount += 1
-    }
-
-    return planToWatchCount >= 2 ? [...WHEEL_DEFAULT_STATUSES] : []
-  }
-
   const data = $derived(page.data as PageData)
+  const genreAliasConfig = $derived(data.genreAliasConfig ?? DEFAULT_GENRE_ALIAS_CONFIG)
 
   const lists = $derived((data.lists ?? []) as { id: string; title: string; _count?: { items: number } }[])
   const allGenres = $derived((data.genres ?? []) as WheelGenre[])
+
+  const filtersFromUrl = $derived(parseFiltersForSurface(page.url.searchParams, 'wheel'))
+
+  const defaultListId = $derived(lists.find((list) => list.title.toLowerCase() === 'main')?.id ?? data.list?.id ?? '')
+
+  const effectiveListId = $derived(
+    filtersFromUrl.listId && lists.some((l) => l.id === filtersFromUrl.listId)
+      ? filtersFromUrl.listId
+      : defaultListId,
+  )
+
+  const wheelNavigate = async (patch: Partial<MediaFiltersState>) => {
+    const url = mergeNavigateMediaFilters(page.url, patch, 'wheel')
+
+    await goto(url.toString())
+  }
 
   const randomInt = (maxExclusive: number) => {
     if (maxExclusive <= 1) return 0
@@ -77,20 +86,13 @@
     return bytes[0] % maxExclusive
   }
 
-  const defaultListId = $derived(lists.find((list) => list.title.toLowerCase() === 'main')?.id ?? data.list?.id ?? '')
-
-  let currentListId = $state('')
-  let genreMatchMode = $state<GenreMatchMode>('or')
-
-  $effect(() => {
-    if (!currentListId && defaultListId) currentListId = defaultListId
-  })
-
   const listItemsQuery = createQuery(() => ({
-    queryKey: ['wheel-list-items', currentListId],
-    enabled: !!currentListId,
+    queryKey: ['wheel-list-items', page.url.search],
+    enabled: !!effectiveListId,
     queryFn: async () => {
-      const response = await fetch(`/api/lists/${currentListId}/items?limit=${MAX_WHEEL_CANDIDATES}&sort=added_desc`)
+      const f = parseFiltersForSurface(page.url.searchParams, 'wheel')
+
+      const response = await fetch(buildListItemsApiUrl(effectiveListId, f, { limit: MAX_WHEEL_CANDIDATES }))
 
       if (!response.ok) throw new Error('Failed to fetch wheel list items')
 
@@ -98,18 +100,14 @@
     },
     throwOnError: false,
     meta: { onError: () => toast.error(L.common_error_generic()) },
-    initialData: currentListId === data.list?.id ? { items: (data.items ?? []) as WheelItem[] } : undefined,
+    initialData:
+      page.url.search === '' && effectiveListId === data.list?.id
+        ? { items: (data.items ?? []) as WheelItem[] }
+        : undefined,
     staleTime: 0,
   }))
 
   const allItems = $derived((listItemsQuery.data?.items ?? []) as WheelItem[])
-
-  let selectedTypes = $state<MediaType[]>([])
-  let selectedStatuses = $state<WatchStatus[]>([...WHEEL_DEFAULT_STATUSES])
-  let selectedGenreSlugs = $state<string[]>([])
-  let defaultStatuses = $state<WatchStatus[]>([...WHEEL_DEFAULT_STATUSES])
-  let autoStatusDefaultsEnabled = $state(true)
-  let autoStatusDefaultsListId = $state('')
 
   let viewMode = $state<ViewMode>(readStoredViewMode())
 
@@ -121,7 +119,6 @@
     const mode = viewMode
 
     try {
-
       localStorage.setItem(WHEEL_VIEW_MODE_STORAGE_KEY, mode)
     } catch {
       /* ignore */
@@ -137,41 +134,22 @@
   let pickerBusy = $state(false)
 
   const availableGenres = $derived(
-    allGenres.filter((genre) =>
-      allItems.some((item) => (item.media.genres ?? []).some((g) => g.genre.slug === genre.slug)),
-    ),
-  )
+    allGenres.filter((genre) => {
+      const variantSlugs = new Set(expandGenreSlugsForQuery([genre.slug], genreAliasConfig))
 
-  const filteredItems = $derived(
-    allItems.filter((item) => {
-      const itemStatus = (item.status ?? 'PLAN_TO_WATCH') as WatchStatus
-
-      if (selectedTypes.length > 0 && !selectedTypes.includes(item.media.mediaType)) return false
-
-      if (selectedStatuses.length > 0 && !selectedStatuses.includes(itemStatus)) return false
-
-      if (selectedGenreSlugs.length > 0) {
-        const itemGenres = new Set((item.media.genres ?? []).map((genre) => genre.genre.slug))
-
-        if (genreMatchMode === 'and') {
-          if (!selectedGenreSlugs.every((slug) => itemGenres.has(slug))) return false
-        } else if (!selectedGenreSlugs.some((slug) => itemGenres.has(slug))) {
-          return false
-        }
-      }
-
-      return true
+      
+return allItems.some((item) =>
+        (item.media.genres ?? []).some((g) => variantSlugs.has(g.genre.slug)),
+      )
     }),
   )
 
-  const filterSig = $derived(filteredItems.map((item) => item.id).join('|'))
+  const filterSig = $derived(allItems.map((item) => item.id).join('|'))
 
-  const maxSectors = $derived(filteredItems.length < 2 ? 2 : Math.min(MAX_SECTORS_CAP, filteredItems.length))
+  const maxSectors = $derived(allItems.length < 2 ? 2 : Math.min(MAX_SECTORS_CAP, allItems.length))
 
-  /** At least 12 when there are enough candidates; otherwise the sector count is capped by the pool. */
-  const minSectors = $derived(filteredItems.length < 2 ? 2 : Math.min(filteredItems.length, MIN_SECTORS_FLOOR))
+  const minSectors = $derived(allItems.length < 2 ? 2 : Math.min(allItems.length, MIN_SECTORS_FLOOR))
 
-  /** When min === max, the pool allows only one sector count — hide the range control. */
   const showSectorRangeSlider = $derived(maxSectors > minSectors)
 
   $effect(() => {
@@ -186,7 +164,7 @@
     posterUrl: item.media.posterUrl,
   })
 
-  const stripEntries = $derived(filteredItems.map((item) => mapToEntry(item)))
+  const stripEntries = $derived(allItems.map((item) => mapToEntry(item)))
 
   const wheelPoolSig = $derived(`${viewMode}|${sectorCount}|${filterSig}`)
 
@@ -195,14 +173,14 @@
 
     if (!poolSig.startsWith('wheel|')) return
 
-    if (filteredItems.length < 2) return
+    if (allItems.length < 2) return
 
-    const k = Math.min(sectorCount, filteredItems.length)
+    const k = Math.min(sectorCount, allItems.length)
 
-    wheelDisplayEntries = sampleWheelPreview(filteredItems, k, randomInt).map((item) => mapToEntry(item))
+    wheelDisplayEntries = sampleWheelPreview(allItems, k, randomInt).map((item) => mapToEntry(item))
   })
 
-  const winnerResetKey = $derived(`${filterSig}|${viewMode}|${currentListId}|${sectorCount}`)
+  const winnerResetKey = $derived(`${filterSig}|${viewMode}|${effectiveListId}|${sectorCount}`)
 
   $effect(() => {
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions -- reactive dependency
@@ -211,61 +189,25 @@
     winnerEntry = null
   })
 
-  const hasFilters = $derived(
-    selectedTypes.length > 0 || selectedGenreSlugs.length > 0 || !areSameStatuses(selectedStatuses, defaultStatuses),
-  )
-  const currentListTitle = $derived(lists.find((list) => list.id === currentListId)?.title ?? data.list?.title ?? '—')
+  const hasFilters = $derived(mediaFiltersHasAny(filtersFromUrl))
 
-  $effect(() => {
-    if (!currentListId) return
+  const currentListTitle = $derived(lists.find((list) => list.id === effectiveListId)?.title ?? data.list?.title ?? '—')
 
-    if (autoStatusDefaultsListId !== currentListId) {
-      autoStatusDefaultsListId = currentListId
-      autoStatusDefaultsEnabled = true
-    }
-  })
+  const resetFilters = async () => {
+    const base = parseFiltersForSurface(page.url.searchParams, 'wheel')
+    const next = buildResetMediaFiltersState(base, 'wheel', { wheelPreserveListId: effectiveListId })
+    const url = new URL(page.url)
 
-  $effect(() => {
-    if (!autoStatusDefaultsEnabled) return
-
-    const adaptiveDefault = getAdaptiveDefaultStatuses(allItems)
-
-    defaultStatuses = adaptiveDefault
-    selectedStatuses = adaptiveDefault
-  })
-
-  const toggleType = (type: MediaType) => {
-    selectedTypes = selectedTypes.includes(type) ? selectedTypes.filter((v) => v !== type) : [...selectedTypes, type]
-  }
-
-  const toggleStatus = (status: WatchStatus) => {
-    autoStatusDefaultsEnabled = false
-    selectedStatuses = selectedStatuses.includes(status)
-      ? selectedStatuses.filter((v) => v !== status)
-      : [...selectedStatuses, status]
-  }
-
-  const toggleGenre = (slug: string) => {
-    selectedGenreSlugs = selectedGenreSlugs.includes(slug)
-      ? selectedGenreSlugs.filter((v) => v !== slug)
-      : [...selectedGenreSlugs, slug]
-  }
-
-  const resetFilters = () => {
-    selectedTypes = []
-    selectedGenreSlugs = []
-    autoStatusDefaultsEnabled = true
-
-    const adaptiveDefault = getAdaptiveDefaultStatuses(allItems)
-
-    defaultStatuses = adaptiveDefault
-    selectedStatuses = adaptiveDefault
+    writeMediaFiltersToSearchParams(url.searchParams, next, {
+      defaultSort: mediaFilterDefaultSortForSurface('wheel'),
+    })
+    await goto(url.toString())
   }
 
   const spinWheel = () => {
-    if (pickerBusy || filteredItems.length < 2) return
+    if (pickerBusy || allItems.length < 2) return
 
-    const pool = filteredItems
+    const pool = allItems
     const k = Math.min(sectorCount, pool.length)
     const winIndex = randomInt(pool.length)
     const { sectors, winnerSectorIndex } = buildWheelSpinSectors(pool, winIndex, k, randomInt)
@@ -276,10 +218,10 @@
   }
 
   const spinStrip = () => {
-    if (pickerBusy || filteredItems.length < 2) return
+    if (pickerBusy || allItems.length < 2) return
 
-    const winIndex = randomInt(filteredItems.length)
-    const winner = filteredItems[winIndex]
+    const winIndex = randomInt(allItems.length)
+    const winner = allItems[winIndex]
 
     if (!winner) return
 
@@ -311,29 +253,24 @@
     </div>
   </header>
 
-  <WheelFilters
-    {lists}
-    {currentListId}
-    {currentListTitle}
-    onListChange={(listId) => (currentListId = listId)}
-    {genreMatchMode}
-    onGenreMatchModeChange={(value) => (genreMatchMode = value)}
-    genres={availableGenres}
-    {selectedTypes}
-    {selectedStatuses}
-    {selectedGenreSlugs}
-    canResetFilters={hasFilters}
-    onToggleType={toggleType}
-    onToggleStatus={toggleStatus}
-    onToggleGenre={toggleGenre}
+  <MediaFiltersBar
+    mode="wheel"
+    filters={filtersFromUrl}
+    onPatch={(p) => wheelNavigate(p)}
+    countryCodes={data.listCountryCodes ?? []}
+    canReset={hasFilters}
     onReset={resetFilters}
+    catalogGenres={availableGenres}
+    boardLists={lists}
+    wheelSelectedListId={effectiveListId}
+    wheelListTitleText={currentListTitle}
   />
 
-  {#if filteredItems.length === 1}
+  {#if allItems.length === 1}
     <div class="rounded-xl border border-dashed bg-card p-10 text-center">
       <p class="mx-auto max-w-md text-sm leading-relaxed text-muted-foreground">{L.wheel_single_match_empty()}</p>
     </div>
-  {:else if filteredItems.length >= 2}
+  {:else if allItems.length >= 2}
     <div class="space-y-3 rounded-xl border bg-card p-4">
       <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div class="inline-flex rounded-lg border p-0.5" role="group" aria-label={L.wheel_view_mode_group_label()}>
@@ -363,7 +300,7 @@
 
         <div class="flex flex-wrap items-center gap-3">
           {#if viewMode === 'wheel' && showSectorRangeSlider}
-            <label class="flex max-w-md min-w-[12rem] flex-1 flex-col gap-1 text-xs text-muted-foreground">
+            <label class="flex max-w-md min-w-48 flex-1 flex-col gap-1 text-xs text-muted-foreground">
               <span>{L.wheel_sectors_label({ n: sectorCount })}</span>
               <input
                 type="range"
@@ -449,16 +386,16 @@
   {/if}
 
   <div class="rounded-lg border bg-card px-3 py-2 text-xs text-muted-foreground">
-    {#if filteredItems.length === 0}
+    {#if allItems.length === 0}
       {L.wheel_candidates_count({ filtered: 0, rendered: 0 })}
-    {:else if filteredItems.length === 1}
+    {:else if allItems.length === 1}
       {L.wheel_candidates_count({ filtered: 1, rendered: 0 })}
     {:else if viewMode === 'strip'}
-      {L.wheel_candidates_strip({ filtered: filteredItems.length })}
+      {L.wheel_candidates_strip({ filtered: allItems.length })}
     {:else}
       {L.wheel_candidates_wheel({
-        filtered: filteredItems.length,
-        sectors: Math.min(sectorCount, filteredItems.length),
+        filtered: allItems.length,
+        sectors: Math.min(sectorCount, allItems.length),
       })}
     {/if}
     {#if hasFilters}

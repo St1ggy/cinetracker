@@ -9,6 +9,7 @@
   import { FREE_PROVIDERS, KEY_REQUIRED_PROVIDERS, PROVIDER_META } from '$shared/config/domain'
 
   import DeleteAccountModal from './ui/delete-account-modal.svelte'
+  import GenreAliasSettings from './ui/genre-alias-settings.svelte'
   import HandleEditor from './ui/handle-editor.svelte'
   import ProfileInfo from './ui/profile-info.svelte'
   import ProviderApiKeyRow from './ui/provider-api-key-row.svelte'
@@ -152,6 +153,10 @@
 
 <div class="space-y-6">
   <ProfileInfo user={page.data.session?.user} {authProviders} />
+
+  {#if page.data.session?.user && data.genreAliasSettingsJson}
+    <GenreAliasSettings initialJson={data.genreAliasSettingsJson} />
+  {/if}
 
   {#if page.data.session?.user}
     <section class="rounded-lg border bg-card p-6">

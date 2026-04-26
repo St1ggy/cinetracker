@@ -1,34 +1,54 @@
 <script lang="ts">
+  import { goto } from '$app/navigation'
   import { page } from '$app/state'
   import LayoutDashboardIcon from '@lucide/svelte/icons/layout-dashboard'
   import { createQuery, useQueryClient } from '@tanstack/svelte-query'
   import { tick } from 'svelte'
   import { toast } from 'svelte-sonner'
 
+  import { MediaFiltersBar } from '$features/media-filters'
   import { L } from '$lib'
-  import { MEDIA_TYPES, WATCH_STATUSES } from '$shared/config/domain'
-  import { getMediaTypeMeta } from '$shared/lib/labels'
+  import { WATCH_STATUSES } from '$shared/config/domain'
+  import { DEFAULT_GENRE_ALIAS_CONFIG, dedupeGenreNameRows } from '$shared/lib/genre-alias'
+  import { type MediaFiltersState, mediaFiltersHasAny } from '$shared/lib/media-filters'
+  import {
+    buildResetMediaFiltersState,
+    mediaFilterDefaultSortForSurface,
+    mergeNavigateMediaFilters,
+    parseFiltersForSurface,
+  } from '$shared/lib/media-filters-surface'
+  import { buildBoardItemsApiUrl, writeMediaFiltersToSearchParams } from '$shared/lib/media-filters-url'
 
   import EpisodicWatchedDialog from './ui/episodic-watched-dialog.svelte'
   import KanbanColumn from './ui/kanban-column.svelte'
 
-  import type { MediaType, WatchStatus } from '$shared/config/domain'
+  import type { WatchStatus } from '$shared/config/domain'
   import type { KanbanItem } from './board.types'
   import type { PageData } from '../../routes/board/$types'
 
   const data = $derived(page.data as PageData)
+  const genreAliasConfig = $derived(data.genreAliasConfig ?? DEFAULT_GENRE_ALIAS_CONFIG)
   const queryClient = useQueryClient()
 
-  let selectedListIds = $state<string[]>([])
+  const filtersFromUrl = $derived(parseFiltersForSurface(page.url.searchParams, 'board'))
 
-  // No lists selected = show from all owned lists (merged by media). Otherwise from selected only.
-  const effectiveListIds = $derived(selectedListIds.length > 0 ? selectedListIds : (data.lists ?? []).map((l) => l.id))
+  const effectiveListIds = $derived(
+    filtersFromUrl.listIds.length > 0
+      ? filtersFromUrl.listIds
+      : (data.lists ?? []).map((l) => l.id),
+  )
+
+  const boardNavigate = async (patch: Partial<MediaFiltersState>) => {
+    const url = mergeNavigateMediaFilters(page.url, patch, 'board')
+
+    await goto(url.toString())
+  }
 
   const boardQuery = createQuery(() => ({
-    queryKey: ['board-items', [...effectiveListIds].toSorted((a, b) => a.localeCompare(b)).join(',')],
+    queryKey: ['board-items', page.url.search],
     enabled: effectiveListIds.length > 0,
     queryFn: async () => {
-      const response = await fetch(`/api/board/items?listIds=${encodeURIComponent(effectiveListIds.join(','))}`)
+      const response = await fetch(buildBoardItemsApiUrl(effectiveListIds, filtersFromUrl))
 
       if (!response.ok) throw new Error('Failed to fetch board items')
 
@@ -40,10 +60,6 @@
   }))
 
   const allItems = $derived((boardQuery.data?.items ?? []) as KanbanItem[])
-
-  // Filter chips: type (OR within types) AND genre (ALL selected genres must be on item).
-  let selectedTypes = $state<MediaType[]>([])
-  let selectedGenreSlugs = $state<string[]>([])
 
   const availableGenres = $derived(
     (() => {
@@ -57,70 +73,44 @@
         }
       }
 
-      return list.toSorted((a, b) => a.name.localeCompare(b.name))
+      return dedupeGenreNameRows(list, genreAliasConfig)
     })(),
   )
 
-  const filteredItems = $derived(
-    (() => {
-      let list = allItems
+  const hasActiveFilters = $derived(mediaFiltersHasAny(filtersFromUrl))
 
-      if (selectedTypes.length > 0) {
-        const set = new Set(selectedTypes)
+  async function clearFilters() {
+    const base = parseFiltersForSurface(page.url.searchParams, 'board')
+    const next = buildResetMediaFiltersState(base, 'board')
+    const url = new URL(page.url)
 
-        list = list.filter((item) => set.has(item.media.mediaType as MediaType))
-      }
-
-      if (selectedGenreSlugs.length > 0) {
-        list = list.filter((item) => {
-          const itemSlugs = new Set((item.media.genres ?? []).map((g) => g.genre.slug))
-
-          return selectedGenreSlugs.every((slug) => itemSlugs.has(slug))
-        })
-      }
-
-      return list
-    })(),
-  )
-
-  const hasActiveFilters = $derived(selectedTypes.length > 0 || selectedGenreSlugs.length > 0)
-
-  function toggleType(type: MediaType) {
-    const index = selectedTypes.indexOf(type)
-
-    selectedTypes = index === -1 ? [...selectedTypes, type] : selectedTypes.toSpliced(index, 1)
-  }
-
-  function toggleGenre(slug: string) {
-    const index = selectedGenreSlugs.indexOf(slug)
-
-    selectedGenreSlugs = index === -1 ? [...selectedGenreSlugs, slug] : selectedGenreSlugs.toSpliced(index, 1)
-  }
-
-  function clearFilters() {
-    selectedTypes = []
-    selectedGenreSlugs = []
+    writeMediaFiltersToSearchParams(url.searchParams, next, {
+      defaultSort: mediaFilterDefaultSortForSurface('board'),
+    })
+    await goto(url.toString())
   }
 
   function toggleList(listId: string) {
-    const next = selectedListIds.includes(listId)
-      ? selectedListIds.filter((id) => id !== listId)
-      : [...selectedListIds, listId]
+    let nextIds = [...filtersFromUrl.listIds]
+    const all = (data.lists ?? []).map((l) => l.id)
 
-    selectedListIds = next
+    if (nextIds.length === 0) nextIds = [...all]
+
+    nextIds = nextIds.includes(listId) ? nextIds.filter((id) => id !== listId) : [...nextIds, listId]
+
+    if (nextIds.length >= all.length) nextIds = []
+
+    boardNavigate({ listIds: nextIds })
   }
 
-  const isListSelected = (listId: string) => selectedListIds.length > 0 && selectedListIds.includes(listId)
-
-  // Columns are derived from filtered items.
   const columns = $derived<Record<WatchStatus, KanbanItem[]>>({
-    PLAN_TO_WATCH: filteredItems.filter((index) => (index.status ?? 'PLAN_TO_WATCH') === 'PLAN_TO_WATCH'),
-    IN_PROGRESS: filteredItems.filter((index) => index.status === 'IN_PROGRESS'),
-    WATCHED: filteredItems.filter((index) => index.status === 'WATCHED'),
+    PLAN_TO_WATCH: allItems.filter((index) => (index.status ?? 'PLAN_TO_WATCH') === 'PLAN_TO_WATCH'),
+    IN_PROGRESS: allItems.filter((index) => index.status === 'IN_PROGRESS'),
+    WATCHED: allItems.filter((index) => index.status === 'WATCHED'),
   })
 
   const ghostItems = $derived(
-    filteredItems.filter(
+    allItems.filter(
       (index) =>
         index.status === 'IN_PROGRESS' &&
         (index.currentEpisode != null || index.currentSeason != null) &&
@@ -128,8 +118,6 @@
     ),
   )
 
-  // Dialog: for episodic items dropped into WATCHED we ask the user what to do.
-  // A resolve function is stored so the awaiting column can be unblocked when the dialog closes.
   type PendingMove = { itemId: string; item: KanbanItem; resolve: () => void }
   let pendingMove = $state<PendingMove | null>(null)
 
@@ -156,8 +144,6 @@
     if (!response.ok) throw new Error('Failed to update status')
   }
 
-  // Returns a Promise that resolves only after the DB is updated and the query has refetched.
-  // The column awaits this before resetting its isDragging flag, preventing stale-data flickers.
   const handleStatusChange = async (itemId: string, newStatus: WatchStatus): Promise<void> => {
     const item = allItems.find((index) => index.id === itemId)
 
@@ -212,6 +198,7 @@
     await tick()
     resolve()
   }
+
 </script>
 
 {#if !data.list}
@@ -223,64 +210,18 @@
   </div>
 {:else}
   <div class="flex min-h-0 flex-1 flex-col gap-3">
-    <!-- Lists, type and genre filters -->
-    <div class="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-2">
-      {#if (data.lists?.length ?? 0) > 0}
-        <span class="shrink-0 text-xs font-medium text-muted-foreground">{L.board_filter_lists()}</span>
-        {#each data.lists as list (list.id)}
-          <button
-            type="button"
-            class="rounded-full border px-2.5 py-1 text-xs font-medium transition-colors {isListSelected(list.id)
-              ? 'border-transparent bg-primary text-primary-foreground'
-              : 'border-border bg-background hover:bg-accent hover:text-accent-foreground'}"
-            onclick={() => toggleList(list.id)}
-          >
-            {list.title}
-            {#if list._count?.items != null}
-              <span class="opacity-70">({list._count.items})</span>
-            {/if}
-          </button>
-        {/each}
-        <span class="shrink-0 text-border">|</span>
-      {/if}
-      <span class="shrink-0 text-xs font-medium text-muted-foreground">{L.board_filter_types()}</span>
-      {#each MEDIA_TYPES as type (type)}
-        {@const meta = getMediaTypeMeta(type)}
-        <button
-          type="button"
-          class="rounded-full border px-2.5 py-1 text-xs font-medium transition-colors {selectedTypes.includes(type)
-            ? 'border-transparent bg-primary text-primary-foreground'
-            : 'border-border bg-background hover:bg-accent hover:text-accent-foreground'} {meta.color}"
-          onclick={() => toggleType(type)}
-        >
-          {meta.label}
-        </button>
-      {/each}
-      {#if availableGenres.length > 0}
-        <span class="ml-2 shrink-0 text-xs font-medium text-muted-foreground">{L.board_filter_genres()}</span>
-        {#each availableGenres as g (g.slug)}
-          <button
-            type="button"
-            class="rounded-full border px-2.5 py-1 text-xs font-medium transition-colors {selectedGenreSlugs.includes(
-              g.slug,
-            )
-              ? 'border-primary bg-primary text-primary-foreground'
-              : 'border-border bg-background hover:bg-accent hover:text-accent-foreground'}"
-            onclick={() => toggleGenre(g.slug)}
-          >
-            {g.name}
-          </button>
-        {/each}
-      {/if}
-      {#if hasActiveFilters}
-        <button
-          type="button"
-          class="rounded-full border border-dashed border-muted-foreground/50 px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-          onclick={clearFilters}
-        >
-          {L.board_filter_clear()}
-        </button>
-      {/if}
+    <div class="space-y-2">
+      <MediaFiltersBar
+        mode="board"
+        filters={filtersFromUrl}
+        onPatch={(p) => boardNavigate(p)}
+        countryCodes={data.boardCountryCodes ?? []}
+        canReset={hasActiveFilters}
+        onReset={clearFilters}
+        boardLists={data.lists ?? []}
+        boardGenres={availableGenres}
+        onBoardListToggle={toggleList}
+      />
     </div>
 
     <div class="flex min-h-0 flex-1 items-stretch gap-4 overflow-x-auto pb-4">

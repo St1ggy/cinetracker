@@ -1,15 +1,15 @@
-import { type WatchStatus, WatchStatus as WatchStatusEnum } from '@prisma/client'
-
 import { getHomeList } from '$lib/server/lists'
 import { prisma } from '$lib/server/prisma'
 import { listsRepository } from '$lib/server/repositories'
+import { dedupeGenresByCanonical } from '$shared/lib/genre-alias'
+import { emptyMediaFiltersState, mediaFiltersToRepoParams } from '$shared/lib/media-filters'
+import { parseFiltersForSurface } from '$shared/lib/media-filters-surface'
 
 import type { PageServerLoad } from './$types'
 
-const VALID_STATUSES = Object.values(WatchStatusEnum) as WatchStatus[]
-
-export const load: PageServerLoad = async ({ locals, url }) => {
+export const load: PageServerLoad = async ({ locals, parent, url }) => {
   const session = await locals.auth()
+  const { genreAliasConfig } = await parent()
 
   if (!session?.user?.id) {
     return {
@@ -17,6 +17,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
       list: null,
       lists: [],
       items: [],
+      listCountryCodes: [],
+      filters: emptyMediaFiltersState(),
     }
   }
 
@@ -24,24 +26,22 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     getHomeList(session.user.id),
     listsRepository.findOwnedWithCounts(session.user.id),
   ])
-  const q = url.searchParams.get('q') ?? ''
-  const yearFrom = Number.parseInt(url.searchParams.get('yearFrom') ?? '', 10)
-  const yearTo = Number.parseInt(url.searchParams.get('yearTo') ?? '', 10)
-  const genre = url.searchParams.get('genre') ?? ''
-  const statusParameter = url.searchParams.get('status') ?? ''
-  const status = VALID_STATUSES.includes(statusParameter as WatchStatus) ? (statusParameter as WatchStatus) : null
-  const sort = url.searchParams.get('sort') ?? ''
+  const filters = parseFiltersForSurface(url.searchParams, 'home')
+  const repo = mediaFiltersToRepoParams(filters)
 
-  const items = await listsRepository.findItemsByListWithFilters({
-    listId: list.id,
-    q: q || undefined,
-    yearFrom: Number.isNaN(yearFrom) ? undefined : yearFrom,
-    yearTo: Number.isNaN(yearTo) ? undefined : yearTo,
-    genresFilter: genre ? [genre] : [],
-    status: status ?? undefined,
-    sort: sort || undefined,
-    limit: 60,
-  })
+  const targetListId = filters.listId && lists.some((l) => l.id === filters.listId) ? filters.listId : list.id
+
+  const displayList = lists.find((l) => l.id === targetListId) ?? list
+
+  const [items, listCountryCodes] = await Promise.all([
+    listsRepository.findItemsByListWithFilters({
+      listId: targetListId,
+      ...repo,
+      sort: filters.sort || undefined,
+      limit: 60,
+    }),
+    listsRepository.findDistinctCountryCodesForListIds([targetListId]),
+  ])
 
   const allGenres = await prisma.genre.findMany({
     orderBy: { name: 'asc' },
@@ -49,17 +49,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
   return {
     authenticated: true,
-    list,
+    list: displayList,
     lists,
     items,
-    genres: allGenres,
-    filters: {
-      q,
-      yearFrom: Number.isNaN(yearFrom) ? null : yearFrom,
-      yearTo: Number.isNaN(yearTo) ? null : yearTo,
-      genre: genre || null,
-      status,
-      sort: sort || null,
-    },
+    listCountryCodes,
+    genres: dedupeGenresByCanonical(allGenres, genreAliasConfig),
+    filters,
   }
 }

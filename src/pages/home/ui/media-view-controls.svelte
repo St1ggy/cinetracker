@@ -12,27 +12,12 @@
 
   type ViewMode = 'grid' | 'compact' | 'list'
 
-  type ListOption = { id: string; title: string }
-
   type Props = {
     viewMode: ViewMode
     onViewChange: (v: ViewMode) => void
-    lists?: ListOption[]
-    currentListId?: string
-    currentListTitle?: string
-    onListChange?: (id: string) => void
   }
 
-  const {
-    viewMode,
-    onViewChange,
-    lists = [],
-    currentListId = '',
-    currentListTitle = '—',
-    onListChange,
-  }: Props = $props()
-
-  const showListSelect = $derived(lists.length > 1 && !!onListChange)
+  const { viewMode, onViewChange }: Props = $props()
 
   const SORT_OPTIONS = [
     { value: 'added_desc', label: () => L.home_sort_added_desc() },
@@ -70,19 +55,6 @@
 
 <div class="flex items-center justify-between gap-2">
   <div class="flex flex-wrap items-center gap-2">
-    {#if showListSelect}
-      <span class="text-xs text-muted-foreground">{L.home_list_label()}:</span>
-      <Select.Root type="single" value={currentListId} onValueChange={(v) => v && onListChange?.(v)}>
-        <Select.Trigger class="h-8 min-w-[140px] text-xs">
-          {currentListTitle}
-        </Select.Trigger>
-        <Select.Content>
-          {#each lists as list (list.id)}
-            <Select.Item value={list.id} label={list.title} />
-          {/each}
-        </Select.Content>
-      </Select.Root>
-    {/if}
     <span class="text-xs text-muted-foreground">{L.home_sort_label()}:</span>
     <Select.Root type="single" value={currentSort} onValueChange={handleSortChange}>
       <Select.Trigger class="h-8 min-w-[150px] text-xs">
