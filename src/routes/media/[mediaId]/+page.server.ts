@@ -1,5 +1,6 @@
 import { error } from '@sveltejs/kit'
 
+import { getLocale } from '$lib/paraglide/runtime'
 import { decrypt } from '$lib/server/crypto'
 import { enrichMediaSources } from '$lib/server/enrich'
 import { prisma } from '$lib/server/prisma'
@@ -56,13 +57,25 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         await mediaRepository.setMediaEnriched(params.mediaId, new Date(0))
       }
 
-      await enrichMediaSources(params.mediaId, userKeys)
+      await enrichMediaSources(params.mediaId, userKeys, { locale: getLocale() })
 
       return mediaRepository.findByIdWithDetails(params.mediaId)
     })()
 
-    return { media, userItems, enriched, willEnrich: true }
+    return {
+      media,
+      userItems,
+      enriched,
+      willEnrich: true,
+      canForceEnrich: Boolean(session?.user?.id),
+    }
   }
 
-  return { media, userItems, enriched: Promise.resolve(null), willEnrich: false }
+  return {
+    media,
+    userItems,
+    enriched: Promise.resolve(null),
+    willEnrich: false,
+    canForceEnrich: Boolean(session?.user?.id),
+  }
 }

@@ -1,5 +1,23 @@
 import { getLocale } from '$lib/paraglide/runtime'
 
+/** Set during `withEnrichLocale` so provider calls use the request UI language. */
+let localeOverride: string | null = null
+
+const effectiveLocale = (): string => localeOverride ?? getLocale()
+
+/** Runs the callback with a fixed Paraglide locale for all `locale.ts` pickers and TMDB/TVDB language. */
+export const withEnrichLocale = async <T>(locale: string, run: () => Promise<T>): Promise<T> => {
+  const previous = localeOverride
+
+  localeOverride = locale
+
+  try {
+    return await run()
+  } finally {
+    localeOverride = previous
+  }
+}
+
 // Maps Paraglide locale codes to TMDB language codes (BCP-47 region-specific).
 // Falls back to 'en-US' for unknown locales.
 const TMDB_LANGUAGE_MAP: Record<string, string> = {
@@ -10,18 +28,18 @@ const TMDB_LANGUAGE_MAP: Record<string, string> = {
   zh: 'zh-CN',
 }
 
-export const getTmdbLanguage = (): string => TMDB_LANGUAGE_MAP[getLocale()] ?? 'en-US'
+export const getTmdbLanguage = (): string => TMDB_LANGUAGE_MAP[effectiveLocale()] ?? 'en-US'
 
 /** BCP-47 (region) for TheTVDB / other APIs that use Accept-Language. */
 export const getAcceptLanguageHeader = (): string => `${getTmdbLanguage()},en;q=0.8`
 
 // Returns true when the current locale is Japanese (for preferring native/romaji titles).
-export const isJapaneseLocale = (): boolean => getLocale() === 'ja'
+export const isJapaneseLocale = (): boolean => effectiveLocale() === 'ja'
 
 // Returns true when the current locale is English.
-export const isEnglishLocale = (): boolean => getLocale() === 'en'
+export const isEnglishLocale = (): boolean => effectiveLocale() === 'en'
 
-export const isRuLocale = (): boolean => getLocale() === 'ru'
+export const isRuLocale = (): boolean => effectiveLocale() === 'ru'
 
 const firstNonEmpty = (candidates: (string | null | undefined)[]): string | undefined => {
   for (const c of candidates) {
@@ -103,7 +121,7 @@ export const pickKitsuTitle = (titles: KitsuTitleBlock, canonical: string | unde
 
 /** Comma list for wikibase:label (order = preference / fallback). */
 export const getWikidataLabelLanguages = (): string => {
-  const loc = getLocale()
+  const loc = effectiveLocale()
 
   if (loc === 'ru') {
     return 'ru,en,fr,de,ja'

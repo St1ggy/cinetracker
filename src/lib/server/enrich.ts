@@ -1,4 +1,8 @@
+import { getLocale } from '$lib/paraglide/runtime'
+
 import { appEnv } from './env'
+import { withEnrichLocale } from './locale'
+import { prisma } from './prisma'
 import { getAdapter } from './providers/registry'
 import { mediaRepository } from './repositories'
 
@@ -83,7 +87,28 @@ const buildUpsertPayload = (media: MediaWithSources, ids: KnownIds, updates: Rec
   seasonBreakdown: media.seasonBreakdown ?? null,
 })
 
-const collectTextUpdates = (media: MediaWithSources, normalized: CanonicalMedia): Record<string, unknown> => {
+const collectTextUpdatesForce = (normalized: CanonicalMedia): Record<string, unknown> => {
+  const updates: Record<string, unknown> = {}
+
+  if (normalized.tagline) updates.tagline = normalized.tagline
+
+  if (normalized.status) updates.status = normalized.status
+
+  if (normalized.director) updates.director = normalized.director
+
+  if (normalized.backdropUrl) updates.backdropUrl = normalized.backdropUrl
+
+  if (normalized.posterUrl) updates.posterUrl = normalized.posterUrl
+
+  if (normalized.overview) updates.overview = normalized.overview
+
+  return updates
+}
+
+const collectTextUpdatesIncremental = (
+  media: MediaWithSources,
+  normalized: CanonicalMedia,
+): Record<string, unknown> => {
   const updates: Record<string, unknown> = {}
 
   if (!media.tagline && normalized.tagline) updates.tagline = normalized.tagline
@@ -101,6 +126,13 @@ const collectTextUpdates = (media: MediaWithSources, normalized: CanonicalMedia)
 
   return updates
 }
+
+const collectTextUpdates = (
+  media: MediaWithSources,
+  normalized: CanonicalMedia,
+  force: boolean,
+): Record<string, unknown> =>
+  force ? collectTextUpdatesForce(normalized) : collectTextUpdatesIncremental(media, normalized)
 
 const syncCrossRefIds = (normalized: CanonicalMedia, ids: KnownIds, updates: Record<string, unknown>): void => {
   if (!ids.imdbId && normalized.imdbId) {
@@ -133,6 +165,7 @@ type FetchContext = {
   credsByProvider: Map<MediaProvider, ProviderCredentials>
   now: Date
   expiresAt: Date
+  force: boolean
 }
 
 const processProviderFetch = async (context: FetchContext): Promise<void> => {
@@ -166,12 +199,12 @@ const processProviderFetch = async (context: FetchContext): Promise<void> => {
       const existingHasPhotos = context.media.cast.some((c) => c.profileUrl)
       const incomingHasPhotos = normalized.cast.some((c) => c.profileUrl)
 
-      if (context.media.cast.length === 0 || (!existingHasPhotos && incomingHasPhotos)) {
+      if (context.force || context.media.cast.length === 0 || (!existingHasPhotos && incomingHasPhotos)) {
         await mediaRepository.replaceMediaCast(context.mediaId, normalized.cast)
       }
     }
 
-    const updates = collectTextUpdates(context.media, normalized)
+    const updates = collectTextUpdates(context.media, normalized, context.force)
 
     syncCrossRefIds(normalized, context.ids, updates)
 
@@ -259,60 +292,90 @@ const discoverMissingIds = async (
 // 2. Don't yet have a MediaSource saved
 // 3. Are enabled (user has a key or provider is free)
 //
+// Remove cached per-provider fetches, ratings, and cast so a full re-pull can run.
+export const clearMediaEnrichmentCache = async (mediaId: string): Promise<void> => {
+  await prisma.$transaction([
+    prisma.mediaSource.deleteMany({ where: { mediaId } }),
+    prisma.mediaRating.deleteMany({ where: { mediaId } }),
+    prisma.mediaCast.deleteMany({ where: { mediaId } }),
+  ])
+}
+
+// Re-fetch from every compatible, enabled provider (after clearing source rows and ratings / cast).
+// Merges text and ids more aggressively than the default incremental pass.
+export const forceEnrichMediaSources = async (
+  mediaId: string,
+  userKeys: DecryptedUserKey[],
+  options: { locale?: string } = {},
+): Promise<void> => {
+  await clearMediaEnrichmentCache(mediaId)
+  await enrichMediaSources(mediaId, userKeys, { force: true, ...options })
+}
+
 // Merges ratings, cast, externalUrls, and fills in missing text fields.
 // Sets enrichedAt when done.
-export const enrichMediaSources = async (mediaId: string, userKeys: DecryptedUserKey[]): Promise<void> => {
-  const media = await mediaRepository.findByIdWithDetails(mediaId)
+export const enrichMediaSources = async (
+  mediaId: string,
+  userKeys: DecryptedUserKey[],
+  options: { force?: boolean; locale?: string } = {},
+): Promise<void> => {
+  const { force = false, locale: localeFromOptions } = options
+  const runLocale = localeFromOptions ?? getLocale()
 
-  if (!media) return
+  await withEnrichLocale(runLocale, async () => {
+    const media = await mediaRepository.findByIdWithDetails(mediaId)
 
-  const now = new Date()
-  const expiresAt = new Date(now.getTime() + appEnv.externalCacheTtlSeconds * 1000)
-  const existingProviders = new Set(media.sources.map((s) => s.provider))
-  const credsByProvider = new Map(userKeys.map((k) => [k.provider, k.credentials]))
-  const compatibleProviders = getCompatibleProviders(media)
+    if (!media) return
 
-  const ids: KnownIds = {
-    imdbId: media.imdbId,
-    tvdbId: media.tvdbId,
-    tmdbId: media.tmdbId,
-    malId: media.malId,
-    anilistId: media.anilistId,
-    kitsuId: media.kitsuId,
-    traktId: media.traktId,
-  }
+    const now = new Date()
+    const expiresAt = new Date(now.getTime() + appEnv.externalCacheTtlSeconds * 1000)
+    const existingProviders = new Set(media.sources.map((s) => s.provider))
+    const credsByProvider = new Map(userKeys.map((k) => [k.provider, k.credentials]))
+    const compatibleProviders = getCompatibleProviders(media)
 
-  await discoverMissingIds(mediaId, media, existingProviders, credsByProvider, ids)
+    const ids: KnownIds = {
+      imdbId: media.imdbId,
+      tvdbId: media.tvdbId,
+      tmdbId: media.tmdbId,
+      malId: media.malId,
+      anilistId: media.anilistId,
+      kitsuId: media.kitsuId,
+      traktId: media.traktId,
+    }
 
-  const fetchTasks: Promise<void>[] = []
+    await discoverMissingIds(mediaId, media, existingProviders, credsByProvider, ids)
 
-  for (const provider of compatibleProviders) {
-    if (existingProviders.has(provider)) continue
+    const fetchTasks: Promise<void>[] = []
 
-    const externalIdValue = getExternalId(provider, ids)
+    for (const provider of compatibleProviders) {
+      if (!force && existingProviders.has(provider)) continue
 
-    if (externalIdValue == null) continue
+      const externalIdValue = getExternalId(provider, ids)
 
-    const adapter = getAdapter(provider)
+      if (externalIdValue == null) continue
 
-    if (!adapter) continue
+      const adapter = getAdapter(provider)
 
-    if (adapter.requiresKey && !credsByProvider.has(provider)) continue
+      if (!adapter) continue
 
-    fetchTasks.push(
-      processProviderFetch({
-        mediaId,
-        provider,
-        externalId: String(externalIdValue),
-        media,
-        ids,
-        credsByProvider,
-        now,
-        expiresAt,
-      }),
-    )
-  }
+      if (adapter.requiresKey && !credsByProvider.has(provider)) continue
 
-  await Promise.allSettled(fetchTasks)
-  await mediaRepository.setMediaEnriched(mediaId, now)
+      fetchTasks.push(
+        processProviderFetch({
+          mediaId,
+          provider,
+          externalId: String(externalIdValue),
+          media,
+          ids,
+          credsByProvider,
+          now,
+          expiresAt,
+          force,
+        }),
+      )
+    }
+
+    await Promise.allSettled(fetchTasks)
+    await mediaRepository.setMediaEnriched(mediaId, now)
+  })
 }
