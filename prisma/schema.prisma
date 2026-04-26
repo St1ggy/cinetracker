@@ -418,3 +418,13 @@ model ListRating {
   @@index([listId], map: "list_ratings_list_idx")
   @@map("list_ratings")
 }
+
+// Singleton app row (`id = "app"`) for global config (e.g. genre deduplication rules).
+model AppSettings {
+  id                   String   @id
+  genreAliasGroupsJson Json?    @map("genre_alias_groups")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("app_settings")
+}
