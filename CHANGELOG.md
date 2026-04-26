@@ -1,3 +1,11 @@
+## [1.24.0](https://github.com/St1ggy/cinetracker/compare/v1.23.0...v1.24.0) (2026-04-26)
+
+### Features
+
+* **board:** S/E label, full-height columns, scrollable ghost ([37809ac](https://github.com/St1ggy/cinetracker/commit/37809ac486d522aa8ce45ab063cea2301b569eca))
+* **episodic:** default season 1 in grid and API when only episode is set ([07eb7ea](https://github.com/St1ggy/cinetracker/commit/07eb7ea69e188475cd695e68e4e753c29dc062e6))
+* **providers:** locale-based anime titles, Wiki labels, TVDB Accept-Language ([03fbac8](https://github.com/St1ggy/cinetracker/commit/03fbac8a6601bcc82520e8b81cd68aa69e3fadbb))
+
 ## [1.23.0](https://github.com/St1ggy/cinetracker/compare/v1.22.0...v1.23.0) (2026-04-26)
 
 ### Features
