@@ -1,7 +1,9 @@
-import { browser } from '$app/environment'
 import { createStorage } from 'unstorage'
 import localStorageDriver from 'unstorage/drivers/localstorage'
 import memoryDriver from 'unstorage/drivers/memory'
+
+// eslint-disable-next-line import-x/no-unresolved -- SvelteKit $app; resolver does not know $ alias from shared/
+import { browser } from '$app/environment'
 
 // App-wide key–value storage.
 // Browser: backed by localStorage (prefix "cinetracker:").

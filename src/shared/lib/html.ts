@@ -1,3 +1,4 @@
+// eslint-disable-next-line import-x/no-named-as-default -- DOMPurify is the default export
 import DOMPurify from 'dompurify'
 
 // Strip all HTML tags and decode entities — for short text previews (card descriptions).

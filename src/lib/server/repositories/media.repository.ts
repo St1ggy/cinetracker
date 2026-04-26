@@ -198,7 +198,7 @@ export const mediaRepository = {
     await prisma.mediaCast.deleteMany({ where: { mediaId } })
 
     for (const member of castMembers) {
-      let person: { id: string } | null = null
+      let person: { id: string }
 
       if (member.tmdbPersonId != null) {
         person = await prisma.person.upsert({
@@ -214,11 +214,9 @@ export const mediaRepository = {
           create: { name: member.name, anilistStaffId: member.anilistStaffId },
         })
       } else {
-        person = await prisma.person.findFirst({ where: { name: member.name } })
+        const found = await prisma.person.findFirst({ where: { name: member.name } })
 
-        if (!person) {
-          person = await prisma.person.create({ data: { name: member.name } })
-        }
+        person = found ?? (await prisma.person.create({ data: { name: member.name } }))
       }
 
       await prisma.mediaCast.upsert({

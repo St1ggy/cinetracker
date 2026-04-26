@@ -27,7 +27,15 @@ const cleanedSt1ggyConfig = st1ggyConfig.map((c) => {
 
 export default defineConfig(
   includeIgnoreFile(gitignorePath),
-  globalIgnores(['src/lib/components/ui/**/*', 'scripts/**']),
+  // Root config files are plain JS; typed @typescript-eslint rules (e.g. switch-exhaustiveness) break on them.
+  globalIgnores([
+    'src/lib/components/ui/**/*',
+    'scripts/**',
+    'prettier.config.js',
+    'stylelint.config.js',
+    'eslint.config.js',
+    'svelte.config.js',
+  ]),
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
   {
     files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],

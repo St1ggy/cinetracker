@@ -109,10 +109,16 @@
   )
   const orderedStatuses = WATCH_STATUSES.toReversed()
 
-  let status = $state<WatchStatus>(initialStatus)
-  let season = $state<number | ''>(initialSeason ?? '')
-  let episode = $state<number | ''>(initialEpisode ?? '')
+  let status = $state<WatchStatus>('PLAN_TO_WATCH')
+  let season = $state<number | ''>('')
+  let episode = $state<number | ''>('')
   let quick = $state('')
+
+  $effect.pre(() => {
+    status = initialStatus
+    season = initialSeason ?? ''
+    episode = initialEpisode ?? ''
+  })
   let fieldError = $state<'season' | 'episode' | null>(null)
   let messageKey = $state<string | null>(null)
   let messageMax = $state<number | undefined>()
