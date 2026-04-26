@@ -115,7 +115,7 @@
   }
 </script>
 
-<div class="flex min-w-[272px] flex-1 flex-col rounded-xl border bg-muted/30">
+<div class="flex h-full min-h-0 min-w-[272px] flex-1 flex-col rounded-xl border bg-muted/30">
   <div class="flex items-center gap-2 border-b px-4 py-3">
     <div class="rounded-full p-1 text-white shadow-sm" style="background-color: {statusMeta.bgColor}">
       {#if statusMeta.icon === 'circle-check'}
@@ -142,8 +142,8 @@
   </div>
 
   {#if ghostItems.length > 0}
-    <div class="border-b px-2 py-2">
-      <div class="flex flex-col gap-2">
+    <div class="shrink-0 border-b px-2 py-2">
+      <div class="scroll-fade max-h-44 flex min-h-0 flex-col gap-2 overflow-y-auto" use:scrollFade>
         {#each ghostItems as item (item.id)}
           <KanbanCard {item} columnKind={cardColumnKind} ghost />
         {/each}
@@ -155,7 +155,7 @@
        scrollable element. dndzone must only have KanbanCards as direct children —
        any wrapper div inside makes the library treat the wrapper as the single
        draggable unit (causing all cards to move together). -->
-  <div class="scroll-fade relative flex-1 overflow-y-auto" use:scrollFade>
+  <div class="scroll-fade relative min-h-0 flex-1 overflow-y-auto" use:scrollFade>
     <div
       class="kanban-drop-zone flex min-h-full flex-col gap-2 p-2"
       use:dndzone={{

@@ -6,7 +6,7 @@
   import { L } from '$lib'
   import { WATCH_STATUS_META } from '$shared/config/domain'
   import { boardItemDurationMinutes } from '$shared/lib/board-kanban-duration'
-  import { getMediaTypeMeta } from '$shared/lib/labels'
+  import { formatProgressSeLabel, getMediaTypeMeta } from '$shared/lib/labels'
   import { getMediaTitlePair } from '$shared/lib/media-title'
 
   import type { KanbanItem } from '../board.types'
@@ -113,12 +113,8 @@
     </div>
 
     {#if isEpisodic && hasProgress && item.status === 'IN_PROGRESS'}
-      <p class="mt-1 text-xs text-muted-foreground">
-        {#if item.currentSeason}{L.media_season_number({
-            n: item.currentSeason,
-          })}{/if}{#if item.currentSeason && item.currentEpisode},{/if}{#if item.currentEpisode}
-          {L.media_episode_short({ n: item.currentEpisode })}{/if}
-      </p>
+      <!-- i18n: neutral S/E label (intentional, like player S01E01) -->
+      <p class="mt-1 text-xs text-muted-foreground">{formatProgressSeLabel(item.currentSeason, item.currentEpisode)}</p>
     {/if}
 
     <p class="mt-1 flex items-center gap-1 text-xs text-muted-foreground/80">

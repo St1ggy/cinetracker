@@ -66,3 +66,20 @@ export const formatCountry = (code: string): string => {
     return flag ? `${flag} ${code}` : code
   }
 }
+
+/** Compact `S1 E2` (neutral Latin) for board progress; not translated. */
+export const formatProgressSeLabel = (
+  season: number | null | undefined,
+  episode: number | null | undefined,
+): string => {
+  const hasSeason = season != null && season >= 1
+  const hasEpisode = episode != null && episode >= 1
+
+  if (hasSeason && hasEpisode) return `S${season} E${episode}`
+
+  if (hasEpisode) return `E${episode}`
+
+  if (hasSeason) return `S${season}`
+
+  return ''
+}
