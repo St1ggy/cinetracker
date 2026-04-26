@@ -76,7 +76,7 @@
   )
 
   const cast = $derived(
-    media.cast.map((mc: { person: { name: string }; role: string | null; profileUrl?: string | null }) => ({
+    media.cast.map((mc) => ({
       name: mc.person.name,
       role: mc.role,
       profileUrl: mc.profileUrl,

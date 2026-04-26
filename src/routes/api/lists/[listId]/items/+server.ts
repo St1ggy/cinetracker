@@ -1,9 +1,11 @@
 import { error, json } from '@sveltejs/kit'
 import { z } from 'zod'
 
+import { getLocale } from '$lib/paraglide/runtime'
 import { decrypt } from '$lib/server/crypto'
 import { importExternalMedia } from '$lib/server/external'
 import { requireAddableList, requireReadableList } from '$lib/server/lists'
+import { localizeBoardMedia } from '$lib/server/localized-media'
 import { prisma } from '$lib/server/prisma'
 import { listItemsRepository, listsRepository } from '$lib/server/repositories'
 import { MEDIA_PROVIDERS, WATCH_STATUSES } from '$shared/config/domain'
@@ -101,9 +103,10 @@ export const GET = async ({ locals, params, url }) => {
     limit: parsed.limit,
     cursor: parsed.cursor,
   })
+  const loc = getLocale()
 
   return json({
-    items,
+    items: items.map((item) => ({ ...item, media: localizeBoardMedia(item.media, loc) })),
     nextCursor: items.length === parsed.limit ? items.at(-1)?.id : null,
   })
 }
@@ -129,7 +132,7 @@ export const POST = async ({ locals, params, request, url }) => {
     }
 
     const userKeys = await loadUserKeys(session.user.id)
-    const media = await importExternalMedia(payload.provider, payload.externalId, userKeys)
+    const media = await importExternalMedia(payload.provider, payload.externalId, userKeys, { locale: getLocale() })
 
     mediaId = media.id
   }

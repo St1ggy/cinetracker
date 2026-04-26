@@ -3,6 +3,7 @@ import { error } from '@sveltejs/kit'
 import { getLocale } from '$lib/paraglide/runtime'
 import { decrypt } from '$lib/server/crypto'
 import { enrichMediaSources } from '$lib/server/enrich'
+import { localizeMediaDetails } from '$lib/server/localized-media'
 import { prisma } from '$lib/server/prisma'
 import { listItemsRepository, mediaRepository } from '$lib/server/repositories'
 
@@ -41,6 +42,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     throw error(404, 'Media not found')
   }
 
+  const loc = getLocale()
+  const localized = localizeMediaDetails(media, loc)
+
   // Re-enrich if: not yet enriched, OR cast has entries but none have profile photos
   // (covers media imported before cast images were fetched from providers).
   const castLacksPhotos = media.cast.length > 0 && media.cast.every((c) => !c.profileUrl)
@@ -59,11 +63,13 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
       await enrichMediaSources(params.mediaId, userKeys, { locale: getLocale() })
 
-      return mediaRepository.findByIdWithDetails(params.mediaId)
+      const m = await mediaRepository.findByIdWithDetails(params.mediaId)
+
+      return m ? localizeMediaDetails(m, getLocale()) : null
     })()
 
     return {
-      media,
+      media: localized,
       userItems,
       enriched,
       willEnrich: true,
@@ -72,7 +78,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
   }
 
   return {
-    media,
+    media: localized,
     userItems,
     enriched: Promise.resolve(null),
     willEnrich: false,

@@ -1,8 +1,10 @@
 import { error, json } from '@sveltejs/kit'
 import { z } from 'zod'
 
+import { getLocale } from '$lib/paraglide/runtime'
 import { coalesceSeason1WhenEpisodeSet } from '$lib/server/coalesce-episodic-season'
 import { requireSessionUser } from '$lib/server/lists'
+import { localizeBoardMedia } from '$lib/server/localized-media'
 import { prisma } from '$lib/server/prisma'
 import { listItemsRepository, listsRepository } from '$lib/server/repositories'
 import { assertEpisodicProgressPayload } from '$lib/server/validate-episodic-payload'
@@ -100,6 +102,7 @@ export const GET = async ({ locals, url }) => {
 
   const merged = mergeItemsByMedia(rawItems)
 
+  const loc = getLocale()
   const items = merged.map((item) => ({
     id: item.id,
     mediaId: item.mediaId,
@@ -108,7 +111,7 @@ export const GET = async ({ locals, url }) => {
     currentEpisode: item.currentEpisode,
     userSeasonBreakdown: item.userSeasonBreakdown,
     seasonStructureSource: item.seasonStructureSource,
-    media: item.media,
+    media: localizeBoardMedia(item.media, loc),
   }))
 
   return json({ items })
