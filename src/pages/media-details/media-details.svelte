@@ -1,10 +1,12 @@
 <script lang="ts">
+  import { invalidateAll } from '$app/navigation'
   import { page } from '$app/state'
   import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left'
+  import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw'
+  import { toast } from 'svelte-sonner'
 
   import { L } from '$lib'
-  import { displaySeasonGrid, effectiveEpisodicCounts, parseSeasonBreakdown } from '$shared/lib/episodic-progress'
-  import { getMediaTitlePair } from '$shared/lib/media-title'
+  import { effectiveEpisodicCounts } from '$shared/lib/episodic-progress'
 
   import MediaHero from './ui/media-hero.svelte'
   import MediaProgressPanel from './ui/media-progress-panel.svelte'
@@ -16,6 +18,7 @@
 
   let enrichedMedia = $state<typeof data.media | null>(null)
   let isEnriching = $state((page.data as PageData).willEnrich ?? false)
+  let isForceEnriching = $state(false)
 
   $effect(() => {
     const enrichedPromise = data.enriched
@@ -37,7 +40,6 @@
   })
 
   const media = $derived(enrichedMedia ?? data.media)
-  const displayTitle = $derived(getMediaTitlePair({ title: media.title, originalTitle: media.originalTitle }).primary)
   const userItems = $derived(data.userItems)
   const isEpisodic = $derived(media.mediaType === 'TV' || media.mediaType === 'ANIME')
 
@@ -63,13 +65,6 @@
   const catalogSeasons = $derived(seasonBreakdown())
   type ListItemForSeasons = { userSeasonBreakdown: unknown; seasonStructureSource: 'CATALOG' | 'USER' | null }
   const it0 = $derived((userItems?.[0] as ListItemForSeasons | undefined) ?? null)
-  const displaySeasons = $derived(
-    displaySeasonGrid(
-      catalogSeasons.length > 0 ? catalogSeasons : null,
-      it0 === null ? null : (parseSeasonBreakdown(it0.userSeasonBreakdown) ?? null),
-      it0 !== null && it0.seasonStructureSource != null ? it0.seasonStructureSource : 'AUTO',
-    ),
-  )
   const heroEpisodicCounts = $derived(
     effectiveEpisodicCounts(
       media.seasonBreakdown,
@@ -88,6 +83,27 @@
     })),
   )
 
+  const canForceEnrich = $derived((page.data as PageData).canForceEnrich ?? false)
+
+  const handleForceEnrich = async () => {
+    if (!canForceEnrich) return
+
+    isForceEnriching = true
+    try {
+      const response = await fetch(`/api/media/${media.id}/enrich`, { method: 'POST' })
+
+      if (!response.ok) throw new Error('failed')
+
+      await invalidateAll()
+      enrichedMedia = null
+      toast.success(L.media_refresh_sources_success())
+    } catch {
+      toast.error(L.common_error_generic())
+    } finally {
+      isForceEnriching = false
+    }
+  }
+
   const watchProviders = $derived.by<WatchProviders | null>(() => {
     const tmdbSource = media.sources.find((s: { provider: string; normalizedJson?: unknown }) => s.provider === 'TMDB')
 
@@ -101,21 +117,32 @@
   })
 </script>
 
-<svelte:head>
-  <title>{displayTitle} — CineTracker</title>
-</svelte:head>
-
 <article class="space-y-6">
-  <button
-    type="button"
-    class="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
-    onclick={() => globalThis.history.back()}
-  >
-    <ArrowLeftIcon class="size-4" />
-    {L.common_back()}
-  </button>
+  <div class="flex flex-wrap items-center gap-2">
+    <button
+      type="button"
+      class="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+      onclick={() => globalThis.history.back()}
+    >
+      <ArrowLeftIcon class="size-4" />
+      {L.common_back()}
+    </button>
+    {#if canForceEnrich}
+      <button
+        type="button"
+        class="inline-flex items-center gap-1.5 rounded-md border border-dashed px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+        title={L.media_refresh_sources_aria()}
+        disabled={isEnriching || isForceEnriching}
+        aria-label={L.media_refresh_sources_aria()}
+        onclick={handleForceEnrich}
+      >
+        <RefreshCwIcon class="size-4 {isForceEnriching ? 'animate-spin' : ''}" />
+        {L.media_refresh_sources()}
+      </button>
+    {/if}
+  </div>
 
-  <MediaHero {media} {isEnriching} episodicCounts={heroEpisodicCounts} />
+  <MediaHero media={media} isEnriching={isEnriching || isForceEnriching} episodicCounts={heroEpisodicCounts} />
 
   {#if watchProviders && (watchProviders.stream.length > 0 || watchProviders.rent.length > 0 || watchProviders.buy.length > 0)}
     <section class="rounded-xl border bg-card p-4">
@@ -224,20 +251,6 @@
                 <div class="h-3.5 w-32 animate-pulse rounded bg-muted"></div>
                 <div class="h-3 w-24 animate-pulse rounded bg-muted"></div>
               </div>
-            </li>
-          {/each}
-        </ul>
-      </section>
-    {/if}
-
-    {#if isEpisodic && displaySeasons.length > 0}
-      <section class="rounded-lg border bg-card p-5">
-        <h2 class="mb-4 text-base font-semibold">{L.media_seasons()}</h2>
-        <ul class="space-y-2">
-          {#each displaySeasons as season (season.seasonNumber)}
-            <li class="flex items-center justify-between rounded-md px-2 py-1.5 text-sm odd:bg-muted/30">
-              <span class="text-muted-foreground">{L.media_season_number({ n: season.seasonNumber })}</span>
-              <span class="font-medium">{L.list_episodes_count({ count: season.episodes })}</span>
             </li>
           {/each}
         </ul>

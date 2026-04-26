@@ -8,7 +8,14 @@
   import EpisodicResponsivePanel from '$lib/components/media/episodic-responsive-panel.svelte'
   import * as Sheet from '$lib/components/ui/sheet'
   import { WATCH_STATUSES } from '$shared/config/domain'
-  import { type SeasonBreakdownEntry, type SeasonGridSource, parseSeasonBreakdown } from '$shared/lib/episodic-progress'
+  import {
+    type SeasonBreakdownEntry,
+    type SeasonGridSource,
+    type SeasonProgressRow,
+    displaySeasonGrid,
+    parseSeasonBreakdown,
+    seasonProgressRowsForGrid,
+  } from '$shared/lib/episodic-progress'
   import { getWatchStatusLabels } from '$shared/lib/labels'
 
   import type { WatchStatus } from '$shared/config/domain'
@@ -86,6 +93,25 @@
 
   const openStructureSheet = (itemId: string) => {
     activeSheet = { itemId, mode: 'structure' }
+  }
+
+  const seasonRowLiClass = (row: SeasonProgressRow, rowIndex: number) => {
+    const base =
+      'relative overflow-hidden rounded-md border border-transparent px-2 py-1.5'
+
+    if (row.highlight === 'none' && rowIndex % 2 === 1) {
+      return `${base} bg-muted/30`
+    }
+
+    if (row.highlight === 'done') {
+      return `${base} border-s-2 border-primary bg-primary/5`
+    }
+
+    if (row.highlight === 'in_progress') {
+      return `${base} border-s-2 border-primary/60`
+    }
+
+    return base
   }
 
   const patchItem = async (
@@ -203,6 +229,17 @@
             {/if}
 
             {#if isEpisodic}
+              {@const seasonGrid = displaySeasonGrid(
+                catalogSeasons,
+                parseSeasonBreakdown(item.userSeasonBreakdown),
+                item.seasonStructureSource == null ? 'AUTO' : item.seasonStructureSource,
+              )}
+              {@const seasonRows = seasonProgressRowsForGrid(
+                seasonGrid,
+                state.status,
+                state.currentSeason,
+                state.currentEpisode,
+              )}
               <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <p class="min-w-0 text-sm text-muted-foreground">
                   {watchStatusLabels[
@@ -232,6 +269,44 @@
                   </button>
                 </div>
               </div>
+              {#if seasonRows.length > 0}
+                <div class="pt-2">
+                  <p class="mb-2 text-xs font-medium text-muted-foreground">{L.media_seasons()}</p>
+                  <ul class="space-y-2">
+                    {#each seasonRows as row, rowIndex (row.seasonNumber)}
+                      <li
+                        class={seasonRowLiClass(row, rowIndex)}
+                        role={row.highlight === 'in_progress' ? 'progressbar' : undefined}
+                        aria-label={row.highlight === 'in_progress'
+                          ? L.media_season_in_progress_aria({
+                              n: String(row.seasonNumber),
+                              w: String(row.watchedInSeason),
+                              t: String(row.episodes),
+                            })
+                          : undefined}
+                        aria-valuemin={row.highlight === 'in_progress' ? 0 : undefined}
+                        aria-valuenow={row.highlight === 'in_progress' ? row.watchedInSeason : undefined}
+                        aria-valuemax={row.highlight === 'in_progress' ? row.episodes : undefined}
+                      >
+                        {#if row.highlight === 'in_progress'}
+                          <div
+                            class="pointer-events-none absolute inset-y-0 start-0 min-w-0 max-w-full rounded-sm bg-primary/20"
+                            style:width="{Math.round(row.fillRatio * 1000) / 10}%"
+                            aria-hidden="true"
+                          ></div>
+                        {/if}
+                        <div class="relative flex min-w-0 items-center justify-between gap-2">
+                          <span class="text-muted-foreground">{L.media_season_number({ n: String(row.seasonNumber) })}</span
+                          >
+                          <span class="shrink-0 font-medium text-foreground/90"
+                            >{L.list_episodes_count({ count: row.episodes })}</span
+                          >
+                        </div>
+                      </li>
+                    {/each}
+                  </ul>
+                </div>
+              {/if}
             {:else}
               <div class="grid gap-1 rounded-lg border bg-muted/30 p-1" style="grid-template-columns: repeat(3, 1fr)">
                 {#each WATCH_STATUSES.toReversed() as st (st)}
