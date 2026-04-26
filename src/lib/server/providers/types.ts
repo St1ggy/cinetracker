@@ -60,7 +60,10 @@ export type CanonicalMedia = {
   malId?: number | null
   kitsuId?: number | null
   traktId?: number | null
+  /** Localized display names; keep `genres` in sync (same order/length) for legacy callers. */
   genres: string[]
+  /** Stable slug (e.g. tmdb-28) + API name in current request language. */
+  genreLocalizations?: { slug: string; name: string }[]
   countries: string[]
   runtimeMinutes?: number | null
   episodeRuntimeMin?: number | null

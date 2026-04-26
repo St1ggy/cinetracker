@@ -207,10 +207,30 @@ model Media {
   genres            MediaGenre[]
   cast              MediaCast[]
   ratings           MediaRating[]
+  i18n              MediaI18n[]
 
   @@index([title], map: "media_title_idx")
   @@index([year], map: "media_year_idx")
   @@map("media")
+}
+
+model MediaI18n {
+  mediaId         String   @map("media_id") @db.Uuid
+  locale          String   @db.VarChar(10)
+  title           String   @db.VarChar(500)
+  originalTitle   String?  @map("original_title") @db.VarChar(500)
+  tagline         String?  @db.VarChar(1000)
+  status          String?  @db.VarChar(100)
+  director        String?  @db.VarChar(255)
+  overview        String?
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  media           Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, locale], map: "media_i18n_pk")
+  @@index([locale], map: "media_i18n_locale_idx")
+  @@index([title], map: "media_i18n_title_idx")
+  @@map("media_i18n")
 }
 
 model ListItem {
@@ -258,12 +278,27 @@ model MediaSource {
 model Genre {
   id        String      @id @default(uuid()) @db.Uuid
   slug      String      @unique @db.VarChar(255)
+  /// Display name in site base locale; prefer `i18n` for UI.
   name      String      @db.VarChar(255)
   createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
   media     MediaGenre[]
+  i18n      GenreI18n[]
 
   @@map("genres")
+}
+
+model GenreI18n {
+  genreId   String   @map("genre_id") @db.Uuid
+  locale    String   @db.VarChar(10)
+  name      String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  genre     Genre    @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([genreId, locale], map: "genre_i18n_pk")
+  @@index([locale], map: "genre_i18n_locale_idx")
+  @@map("genre_i18n")
 }
 
 model MediaGenre {
@@ -278,30 +313,58 @@ model MediaGenre {
 }
 
 model Person {
-  id            String      @id @default(uuid()) @db.Uuid
-  name          String      @db.VarChar(255)
-  tmdbPersonId  Int?        @unique(map: "people_tmdb_unique") @map("tmdb_person_id")
-  anilistStaffId Int?       @unique(map: "people_anilist_unique") @map("anilist_staff_id")
-  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
-  castEntries   MediaCast[]
+  id             String        @id @default(uuid()) @db.Uuid
+  name           String        @db.VarChar(255)
+  tmdbPersonId   Int?          @unique(map: "people_tmdb_unique") @map("tmdb_person_id")
+  anilistStaffId Int?          @unique(map: "people_anilist_unique") @map("anilist_staff_id")
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  castEntries    MediaCast[]
+  i18n           PersonI18n[]
 
   @@index([name], map: "people_name_idx")
   @@map("people")
 }
 
-model MediaCast {
-  mediaId    String  @map("media_id") @db.Uuid
-  personId   String  @map("person_id") @db.Uuid
-  role       String? @db.VarChar(255)
-  castOrder  Int?    @map("cast_order")
-  profileUrl String? @map("profile_url")
-  media      Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  person     Person  @relation(fields: [personId], references: [id], onDelete: Cascade)
+model PersonI18n {
+  personId  String   @map("person_id") @db.Uuid
+  locale    String   @db.VarChar(10)
+  name      String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  person    Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
 
-  @@id([mediaId, personId])
+  @@id([personId, locale], map: "person_i18n_pk")
+  @@index([locale], map: "person_i18n_locale_idx")
+  @@map("person_i18n")
+}
+
+model MediaCast {
+  mediaId     String         @map("media_id") @db.Uuid
+  personId    String         @map("person_id") @db.Uuid
+  castOrder   Int?           @map("cast_order")
+  profileUrl  String?        @map("profile_url")
+  media       Media          @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  person      Person         @relation(fields: [personId], references: [id], onDelete: Cascade)
+  i18n        MediaCastI18n[]
+
+  @@id([mediaId, personId], map: "media_cast_pk")
   @@index([personId], map: "media_cast_person_idx")
   @@map("media_cast")
+}
+
+model MediaCastI18n {
+  mediaId   String    @map("media_id") @db.Uuid
+  personId  String    @map("person_id") @db.Uuid
+  locale    String    @db.VarChar(10)
+  role      String?   @db.VarChar(500)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  castEntry MediaCast @relation(fields: [mediaId, personId], references: [mediaId, personId], onDelete: Cascade, map: "media_cast_i18n_cast_fk")
+
+  @@id([mediaId, personId, locale], map: "media_cast_i18n_pk")
+  @@index([locale], map: "media_cast_i18n_locale_idx")
+  @@map("media_cast_i18n")
 }
 
 model MediaRating {

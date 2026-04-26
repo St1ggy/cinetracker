@@ -123,6 +123,19 @@ const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
   const externalUrl =
     mediaType === 'TV' ? `https://www.themoviedb.org/tv/${id}` : `https://www.themoviedb.org/movie/${id}`
 
+  const rawGenres = Array.isArray(raw.genres) ? (raw.genres as { id?: unknown; name?: unknown }[]) : []
+  const genreLocalizations = rawGenres
+    .map((g) => {
+      const tid = g.id != null && Number.isFinite(Number(g.id)) ? Number(g.id) : null
+      const name = String(g.name ?? '').trim()
+
+      if (tid == null || name.length === 0) return null
+
+      return { slug: `tmdb-${tid}`, name }
+    })
+    .filter((x): x is { slug: string; name: string } => x != null)
+  const genres = genreLocalizations.map((g) => g.name)
+
   return {
     provider: 'TMDB',
     externalId: String(id),
@@ -140,7 +153,8 @@ const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
     imdbId,
     tmdbId: id,
     tvdbId,
-    genres: [],
+    genres,
+    genreLocalizations: genreLocalizations.length > 0 ? genreLocalizations : undefined,
     countries: Array.isArray(raw.origin_country) ? (raw.origin_country as string[]) : [],
     runtimeMinutes: (raw.runtime as number | undefined) ?? null,
     episodeRuntimeMin: episodeRuntimeValues.length > 0 ? Math.min(...episodeRuntimeValues) : null,

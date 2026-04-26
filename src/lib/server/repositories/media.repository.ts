@@ -1,7 +1,28 @@
 /* eslint-disable camelcase */
 import { type MediaProvider, type MediaType, Prisma } from '@prisma/client'
 
+import { toGenreLocalizations } from '$lib/server/media-i18n'
 import { prisma } from '$lib/server/prisma'
+import { UI_BASE_LOCALE } from '$lib/ui-locales'
+
+import type { CanonicalMedia } from '../providers/types'
+
+const detailsInclude = {
+  i18n: true,
+  genres: { include: { genre: { include: { i18n: true } } } },
+  cast: {
+    include: {
+      person: { include: { i18n: true } },
+      i18n: true,
+    },
+    orderBy: { castOrder: 'asc' as const },
+    take: 20,
+  },
+  sources: {
+    select: { provider: true, externalId: true, externalUrl: true, normalizedJson: true },
+  },
+  ratings: { orderBy: { value: 'desc' as const } },
+} satisfies Prisma.MediaInclude
 
 type UpsertMediaPayload = {
   mediaType: MediaType
@@ -31,6 +52,15 @@ type UpsertMediaPayload = {
   isAdult: boolean
 }
 
+export type MediaI18nTextPayload = {
+  title: string
+  originalTitle?: string | null
+  tagline?: string | null
+  status?: string | null
+  director?: string | null
+  overview?: string | null
+}
+
 type RatingPayload = {
   provider: MediaProvider
   source: string
@@ -57,7 +87,7 @@ export const mediaRepository = {
           externalId,
         },
       },
-      include: { media: true },
+      include: { media: { include: { i18n: true } } },
     }),
 
   findExistingByExternalKeys: async (payload: {
@@ -108,6 +138,28 @@ export const mediaRepository = {
     return prisma.media.update({ where: { id: mediaId }, data: mappedPayload })
   },
 
+  upsertMediaI18n: async (mediaId: string, locale: string, data: MediaI18nTextPayload) => {
+    await prisma.mediaI18n.upsert({
+      where: { mediaId_locale: { mediaId, locale } },
+      create: { mediaId, locale, ...data },
+      update: data,
+    })
+  },
+
+  replaceMediaI18nFromMap: async (mediaId: string, byLocale: Record<string, MediaI18nTextPayload>) => {
+    for (const [loc, data] of Object.entries(byLocale)) {
+      await prisma.mediaI18n.upsert({
+        where: { mediaId_locale: { mediaId, locale: loc } },
+        create: { mediaId, locale: loc, ...data },
+        update: data,
+      })
+    }
+  },
+
+  deleteMediaI18nByMediaId: async (mediaId: string) => {
+    await prisma.mediaI18n.deleteMany({ where: { mediaId } })
+  },
+
   upsertMediaSource: async (input: {
     mediaId: string
     provider: MediaProvider
@@ -146,19 +198,41 @@ export const mediaRepository = {
     })
   },
 
-  replaceMediaGenres: async (mediaId: string, genreNames: string[]) => {
+  // Stable `slug` + per-locale label in `genre_i18n`. `Genre.name` is updated for `en` only.
+  replaceMediaGenres: async (
+    mediaId: string,
+    items: { slug: string; name: string }[] | CanonicalMedia,
+    locale: string,
+  ) => {
+    const list: { slug: string; name: string }[] = Array.isArray(items) ? items : toGenreLocalizations(items)
+
     await prisma.mediaGenre.deleteMany({ where: { mediaId } })
 
-    if (genreNames.length === 0) return
+    if (list.length === 0) {
+      return
+    }
 
     const createdGenreIds: string[] = []
 
-    for (const genreName of genreNames) {
-      const slug = genreName.toLowerCase().replaceAll(/\s+/g, '-')
+    for (const { slug, name } of list) {
+      if (!slug || String(slug).length === 0) {
+        continue
+      }
+
+      const displayName = name && String(name).length > 0 ? name : slug
       const genre = await prisma.genre.upsert({
-        where: { slug },
-        update: { name: genreName },
-        create: { slug, name: genreName },
+        where: { slug: String(slug) },
+        update: locale === UI_BASE_LOCALE ? { name: displayName } : {},
+        create: {
+          slug: String(slug),
+          name: locale === UI_BASE_LOCALE ? displayName : String(slug),
+        },
+      })
+
+      await prisma.genreI18n.upsert({
+        where: { genreId_locale: { genreId: genre.id, locale } },
+        create: { genreId: genre.id, locale, name: displayName },
+        update: { name: displayName },
       })
 
       createdGenreIds.push(genre.id)
@@ -192,8 +266,10 @@ export const mediaRepository = {
     }
   },
 
-  replaceMediaCast: async (mediaId: string, castMembers: CastMemberPayload[]) => {
-    if (castMembers.length === 0) return
+  replaceMediaCast: async (mediaId: string, castMembers: CastMemberPayload[], locale: string) => {
+    if (castMembers.length === 0) {
+      return
+    }
 
     await prisma.mediaCast.deleteMany({ where: { mediaId } })
 
@@ -219,21 +295,38 @@ export const mediaRepository = {
         person = found ?? (await prisma.person.create({ data: { name: member.name } }))
       }
 
-      await prisma.mediaCast.upsert({
-        where: { mediaId_personId: { mediaId, personId: person.id } },
-        update: {
-          role: member.role ?? null,
-          castOrder: member.order ?? null,
-          profileUrl: member.profileUrl ?? null,
-        },
-        create: {
+      await prisma.personI18n.upsert({
+        where: { personId_locale: { personId: person.id, locale } },
+        create: { personId: person.id, locale, name: member.name },
+        update: { name: member.name },
+      })
+
+      if (locale === UI_BASE_LOCALE) {
+        await prisma.person.update({ where: { id: person.id }, data: { name: member.name } })
+      }
+
+      await prisma.mediaCast.create({
+        data: {
           mediaId,
           personId: person.id,
-          role: member.role ?? null,
           castOrder: member.order ?? null,
           profileUrl: member.profileUrl ?? null,
         },
       })
+
+      if (member.role) {
+        await prisma.mediaCastI18n.upsert({
+          where: {
+            mediaId_personId_locale: {
+              mediaId,
+              personId: person.id,
+              locale,
+            },
+          },
+          create: { mediaId, personId: person.id, locale, role: member.role },
+          update: { role: member.role },
+        })
+      }
     }
   },
 
@@ -247,31 +340,21 @@ export const mediaRepository = {
   findByIdWithDetails: async (id: string) =>
     prisma.media.findUnique({
       where: { id },
-      include: {
-        genres: { include: { genre: true } },
-        cast: {
-          include: { person: true },
-          orderBy: { castOrder: 'asc' },
-          take: 20,
-        },
-        sources: {
-          select: { provider: true, externalId: true, externalUrl: true, normalizedJson: true },
-        },
-        ratings: {
-          orderBy: { value: 'desc' },
-        },
-      },
+      include: detailsInclude,
     }),
 
   findByIdsWithGenres: async (ids: string[]) => {
-    if (ids.length === 0) return []
+    if (ids.length === 0) {
+      return []
+    }
 
     return prisma.media.findMany({
       where: { id: { in: ids } },
       include: {
+        i18n: true,
         genres: {
           include: {
-            genre: true,
+            genre: { include: { i18n: true } },
           },
         },
       },

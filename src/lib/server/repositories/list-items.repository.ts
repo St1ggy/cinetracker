@@ -49,9 +49,10 @@ export const listItemsRepository = {
       include: {
         media: {
           include: {
+            i18n: true,
             genres: {
               include: {
-                genre: true,
+                genre: { include: { i18n: true } },
               },
             },
           },
@@ -117,9 +118,10 @@ export const listItemsRepository = {
       include: {
         media: {
           include: {
+            i18n: true,
             genres: {
               include: {
-                genre: true,
+                genre: { include: { i18n: true } },
               },
             },
           },

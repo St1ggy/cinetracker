@@ -2,12 +2,14 @@ import { getLocale } from '$lib/paraglide/runtime'
 
 import { appEnv } from './env'
 import { withEnrichLocale } from './locale'
+import { toGenreLocalizations } from './media-i18n'
 import { prisma } from './prisma'
 import { getAdapter } from './providers/registry'
+import { applyTmdbTranslationBatch } from './providers/tmdb-translations'
 import { mediaRepository } from './repositories'
 
 import type { DecryptedUserKey } from './providers/registry'
-import type { CanonicalMedia, ProviderCredentials } from './providers/types'
+import type { CanonicalMedia, ProviderCredentials, TmdbCredentials } from './providers/types'
 import type { MediaProvider } from '@prisma/client'
 
 type MediaWithSources = NonNullable<Awaited<ReturnType<typeof mediaRepository.findByIdWithDetails>>>
@@ -61,8 +63,11 @@ const getCompatibleProviders = (media: MediaWithSources): MediaProvider[] => {
 
 const buildUpsertPayload = (media: MediaWithSources, ids: KnownIds, updates: Record<string, unknown>) => ({
   mediaType: media.mediaType,
-  title: media.title,
-  originalTitle: media.originalTitle,
+  title: (updates.title as string | undefined) ?? media.title,
+  originalTitle:
+    (updates as { originalTitle?: string | null }).originalTitle === undefined
+      ? media.originalTitle
+      : (updates as { originalTitle: string | null }).originalTitle,
   countries: media.countries,
   isAdult: media.isAdult,
   tagline: (updates.tagline as string | undefined) ?? media.tagline ?? null,
@@ -90,6 +95,14 @@ const buildUpsertPayload = (media: MediaWithSources, ids: KnownIds, updates: Rec
 const collectTextUpdatesForce = (normalized: CanonicalMedia): Record<string, unknown> => {
   const updates: Record<string, unknown> = {}
 
+  if (normalized.title) {
+    updates.title = normalized.title
+  }
+
+  if (normalized.originalTitle !== undefined) {
+    updates.originalTitle = normalized.originalTitle
+  }
+
   if (normalized.tagline) updates.tagline = normalized.tagline
 
   if (normalized.status) updates.status = normalized.status
@@ -105,26 +118,34 @@ const collectTextUpdatesForce = (normalized: CanonicalMedia): Record<string, unk
   return updates
 }
 
+const setIfLacking = (
+  u: Record<string, unknown>,
+  isEmpty: boolean,
+  v: string | null | undefined,
+  key: string,
+): void => {
+  if (v && isEmpty) {
+    u[key] = v
+  }
+}
+
 const collectTextUpdatesIncremental = (
   media: MediaWithSources,
   normalized: CanonicalMedia,
 ): Record<string, unknown> => {
-  const updates: Record<string, unknown> = {}
+  const u: Record<string, unknown> = {}
 
-  if (!media.tagline && normalized.tagline) updates.tagline = normalized.tagline
-
-  if (!media.status && normalized.status) updates.status = normalized.status
-
-  if (!media.director && normalized.director) updates.director = normalized.director
-
-  if (!media.backdropUrl && normalized.backdropUrl) updates.backdropUrl = normalized.backdropUrl
-
-  if (!media.posterUrl && normalized.posterUrl) updates.posterUrl = normalized.posterUrl
-
+  setIfLacking(u, !media.title, normalized.title, 'title')
+  setIfLacking(u, media.originalTitle == null, normalized.originalTitle, 'originalTitle')
+  setIfLacking(u, !media.tagline, normalized.tagline, 'tagline')
+  setIfLacking(u, !media.status, normalized.status, 'status')
+  setIfLacking(u, !media.director, normalized.director, 'director')
+  setIfLacking(u, !media.backdropUrl, normalized.backdropUrl, 'backdropUrl')
+  setIfLacking(u, !media.posterUrl, normalized.posterUrl, 'posterUrl')
   // Prefer TMDB localised overview; OMDb/Trakt are English — do not overwrite a good TMDB field lightly.
-  if (!media.overview && normalized.overview) updates.overview = normalized.overview
+  setIfLacking(u, !media.overview, normalized.overview, 'overview')
 
-  return updates
+  return u
 }
 
 const collectTextUpdates = (
@@ -166,6 +187,7 @@ type FetchContext = {
   now: Date
   expiresAt: Date
   force: boolean
+  locale: string
 }
 
 const processProviderFetch = async (context: FetchContext): Promise<void> => {
@@ -200,8 +222,14 @@ const processProviderFetch = async (context: FetchContext): Promise<void> => {
       const incomingHasPhotos = normalized.cast.some((c) => c.profileUrl)
 
       if (context.force || context.media.cast.length === 0 || (!existingHasPhotos && incomingHasPhotos)) {
-        await mediaRepository.replaceMediaCast(context.mediaId, normalized.cast)
+        await mediaRepository.replaceMediaCast(context.mediaId, normalized.cast, context.locale)
       }
+    }
+
+    const gItems = toGenreLocalizations(normalized)
+
+    if (gItems.length > 0) {
+      await mediaRepository.replaceMediaGenres(context.mediaId, gItems, context.locale)
     }
 
     const updates = collectTextUpdates(context.media, normalized, context.force)
@@ -211,9 +239,49 @@ const processProviderFetch = async (context: FetchContext): Promise<void> => {
     if (Object.keys(updates).length > 0) {
       await mediaRepository.upsertMedia(context.mediaId, buildUpsertPayload(context.media, context.ids, updates))
     }
+
+    await mediaRepository.upsertMediaI18n(context.mediaId, context.locale, {
+      title: normalized.title,
+      originalTitle: normalized.originalTitle ?? null,
+      tagline: normalized.tagline ?? null,
+      status: normalized.status ?? null,
+      director: normalized.director ?? null,
+      overview: normalized.overview ?? null,
+    })
   } catch {
     // Silently skip providers that fail — enrichment is best-effort
   }
+}
+
+const maybeApplyTmdbTranslationBatch = async (params: {
+  credsByProvider: Map<MediaProvider, ProviderCredentials>
+  ids: KnownIds
+  mediaId: string
+}): Promise<void> => {
+  const tmdbCreds = params.credsByProvider.get('TMDB') as TmdbCredentials | undefined
+
+  if (!tmdbCreds || (!tmdbCreds.apiKey && !tmdbCreds.bearerToken) || !params.ids.tmdbId) {
+    return
+  }
+
+  const m = await mediaRepository.findByIdWithDetails(params.mediaId)
+
+  if (!m) {
+    return
+  }
+
+  await applyTmdbTranslationBatch({
+    base: {
+      title: m.title,
+      originalTitle: m.originalTitle,
+      tagline: m.tagline,
+      overview: m.overview,
+    },
+    mediaId: params.mediaId,
+    tmdbCreds,
+    tmdbId: params.ids.tmdbId,
+    useTvEndpoint: m.mediaType !== 'MOVIE',
+  })
 }
 
 const fetchTmdbCrossRefs = async (tmdbId: number, creds: unknown, ids: KnownIds): Promise<void> => {
@@ -299,6 +367,7 @@ export const clearMediaEnrichmentCache = async (mediaId: string): Promise<void> 
     prisma.mediaRating.deleteMany({ where: { mediaId } }),
     prisma.mediaCast.deleteMany({ where: { mediaId } }),
   ])
+  await prisma.mediaI18n.deleteMany({ where: { mediaId } })
 }
 
 // Re-fetch from every compatible, enabled provider (after clearing source rows and ratings / cast).
@@ -371,11 +440,14 @@ export const enrichMediaSources = async (
           now,
           expiresAt,
           force,
+          locale: runLocale,
         }),
       )
     }
 
     await Promise.allSettled(fetchTasks)
+    await maybeApplyTmdbTranslationBatch({ credsByProvider, ids, mediaId })
+
     await mediaRepository.setMediaEnriched(mediaId, now)
   })
 }

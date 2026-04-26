@@ -1,11 +1,15 @@
 import { error } from '@sveltejs/kit'
 
+import { getLocale } from '$lib/paraglide/runtime'
+
 import { appEnv } from './env'
+import { withEnrichLocale } from './locale'
 import { getAdapter, getEnabledAdapters } from './providers/registry'
+import { applyTmdbTranslationBatch } from './providers/tmdb-translations'
 import { mediaRepository } from './repositories'
 
 import type { DecryptedUserKey } from './providers/registry'
-import type { SearchResult } from './providers/types'
+import type { SearchResult, TmdbCredentials } from './providers/types'
 import type { MediaProvider } from '@prisma/client'
 
 const normalizeTitle = (title: string) =>
@@ -41,7 +45,9 @@ const deduplicateResults = (results: SearchResult[]) => {
 export const searchExternal = async (query: string, userKeys: DecryptedUserKey[], providerFilter?: string[]) => {
   const trimmed = query.trim()
 
-  if (!trimmed) return []
+  if (!trimmed) {
+    return []
+  }
 
   const enabledAdapters = getEnabledAdapters(userKeys)
   const filterSet = providerFilter ? new Set(providerFilter.map((p) => p.toUpperCase())) : null
@@ -64,84 +70,117 @@ export const importExternalMedia = async (
   provider: MediaProvider,
   externalId: string,
   userKeys: DecryptedUserKey[] = [],
+  options: { locale?: string } = {},
 ) => {
-  const cache = await mediaRepository.findSourceWithMedia(provider, externalId)
+  const locale = options.locale ?? getLocale()
 
-  const now = new Date()
+  return withEnrichLocale(locale, async () => {
+    const cache = await mediaRepository.findSourceWithMedia(provider, externalId)
 
-  if (cache?.expiresAt && cache.expiresAt > now) {
-    return cache.media
-  }
+    const now = new Date()
 
-  const adapter = getAdapter(provider)
+    if (cache?.expiresAt && cache.expiresAt > now) {
+      return cache.media
+    }
 
-  if (!adapter) throw error(400, `Unsupported provider: ${provider}`)
+    const adapter = getAdapter(provider)
 
-  const credsByProvider = new Map(userKeys.map((k) => [k.provider, k.credentials]))
-  const normalized = await adapter.fetchDetails(externalId, credsByProvider.get(provider))
+    if (!adapter) {
+      throw error(400, `Unsupported provider: ${provider}`)
+    }
 
-  const existing = await mediaRepository.findExistingByExternalKeys({
-    imdbId: normalized.imdbId,
-    tmdbId: normalized.tmdbId,
-    anilistId: normalized.anilistId,
-    tvdbId: normalized.tvdbId,
-    malId: normalized.malId,
-    kitsuId: normalized.kitsuId,
-    traktId: normalized.traktId,
+    const credsByProvider = new Map(userKeys.map((k) => [k.provider, k.credentials]))
+    const normalized = await adapter.fetchDetails(externalId, credsByProvider.get(provider))
+
+    const existing = await mediaRepository.findExistingByExternalKeys({
+      imdbId: normalized.imdbId,
+      tmdbId: normalized.tmdbId,
+      anilistId: normalized.anilistId,
+      tvdbId: normalized.tvdbId,
+      malId: normalized.malId,
+      kitsuId: normalized.kitsuId,
+      traktId: normalized.traktId,
+    })
+
+    const upsertedMedia = await mediaRepository.upsertMedia(cache?.mediaId ?? existing?.id ?? null, {
+      mediaType: normalized.mediaType,
+      title: normalized.title,
+      originalTitle: normalized.originalTitle,
+      tagline: normalized.tagline,
+      status: normalized.status,
+      director: normalized.director,
+      year: normalized.year,
+      overview: normalized.overview,
+      posterUrl: normalized.posterUrl,
+      backdropUrl: normalized.backdropUrl,
+      imdbId: normalized.imdbId,
+      tmdbId: normalized.tmdbId,
+      anilistId: normalized.anilistId,
+      tvdbId: normalized.tvdbId,
+      malId: normalized.malId,
+      kitsuId: normalized.kitsuId,
+      traktId: normalized.traktId,
+      countries: normalized.countries,
+      runtimeMinutes: normalized.runtimeMinutes,
+      episodeRuntimeMin: normalized.episodeRuntimeMin,
+      episodeRuntimeMax: normalized.episodeRuntimeMax,
+      seasonsCount: normalized.seasonsCount,
+      episodesCount: normalized.episodesCount,
+      seasonBreakdown: normalized.seasonBreakdown ?? null,
+      isAdult: normalized.isAdult,
+    })
+
+    await mediaRepository.upsertMediaI18n(upsertedMedia.id, locale, {
+      title: normalized.title,
+      originalTitle: normalized.originalTitle ?? null,
+      tagline: normalized.tagline ?? null,
+      status: normalized.status ?? null,
+      director: normalized.director ?? null,
+      overview: normalized.overview ?? null,
+    })
+
+    await mediaRepository.upsertMediaSource({
+      mediaId: upsertedMedia.id,
+      provider,
+      externalId,
+      externalUrl: normalized.externalUrl ?? null,
+      rawJson: normalized.raw,
+      normalizedJson: normalized,
+      lastFetchedAt: now,
+      expiresAt: new Date(now.getTime() + appEnv.externalCacheTtlSeconds * 1000),
+    })
+    await mediaRepository.replaceMediaGenres(upsertedMedia.id, normalized, locale)
+
+    if (normalized.ratings && normalized.ratings.length > 0) {
+      await mediaRepository.upsertMediaRatings(
+        upsertedMedia.id,
+        normalized.ratings.map((r) => ({ ...r, provider })),
+      )
+    }
+
+    if (normalized.cast && normalized.cast.length > 0) {
+      await mediaRepository.replaceMediaCast(upsertedMedia.id, normalized.cast, locale)
+    }
+
+    const tmdbCreds = credsByProvider.get('TMDB') as TmdbCredentials | undefined
+
+    if (tmdbCreds && (tmdbCreds.apiKey || tmdbCreds.bearerToken) && normalized.tmdbId) {
+      await applyTmdbTranslationBatch({
+        mediaId: upsertedMedia.id,
+        tmdbId: normalized.tmdbId,
+        tmdbCreds,
+        useTvEndpoint: normalized.mediaType !== 'MOVIE',
+        base: {
+          title: upsertedMedia.title,
+          originalTitle: upsertedMedia.originalTitle,
+          tagline: upsertedMedia.tagline,
+          overview: upsertedMedia.overview,
+        },
+      })
+    }
+
+    return upsertedMedia
   })
-
-  const upsertedMedia = await mediaRepository.upsertMedia(cache?.mediaId ?? existing?.id ?? null, {
-    mediaType: normalized.mediaType,
-    title: normalized.title,
-    originalTitle: normalized.originalTitle,
-    tagline: normalized.tagline,
-    status: normalized.status,
-    director: normalized.director,
-    year: normalized.year,
-    overview: normalized.overview,
-    posterUrl: normalized.posterUrl,
-    backdropUrl: normalized.backdropUrl,
-    imdbId: normalized.imdbId,
-    tmdbId: normalized.tmdbId,
-    anilistId: normalized.anilistId,
-    tvdbId: normalized.tvdbId,
-    malId: normalized.malId,
-    kitsuId: normalized.kitsuId,
-    traktId: normalized.traktId,
-    countries: normalized.countries,
-    runtimeMinutes: normalized.runtimeMinutes,
-    episodeRuntimeMin: normalized.episodeRuntimeMin,
-    episodeRuntimeMax: normalized.episodeRuntimeMax,
-    seasonsCount: normalized.seasonsCount,
-    episodesCount: normalized.episodesCount,
-    seasonBreakdown: normalized.seasonBreakdown ?? null,
-    isAdult: normalized.isAdult,
-  })
-
-  await mediaRepository.upsertMediaSource({
-    mediaId: upsertedMedia.id,
-    provider,
-    externalId,
-    externalUrl: normalized.externalUrl ?? null,
-    rawJson: normalized.raw,
-    normalizedJson: normalized,
-    lastFetchedAt: now,
-    expiresAt: new Date(now.getTime() + appEnv.externalCacheTtlSeconds * 1000),
-  })
-  await mediaRepository.replaceMediaGenres(upsertedMedia.id, normalized.genres)
-
-  if (normalized.ratings && normalized.ratings.length > 0) {
-    await mediaRepository.upsertMediaRatings(
-      upsertedMedia.id,
-      normalized.ratings.map((r) => ({ ...r, provider })),
-    )
-  }
-
-  if (normalized.cast && normalized.cast.length > 0) {
-    await mediaRepository.replaceMediaCast(upsertedMedia.id, normalized.cast)
-  }
-
-  return upsertedMedia
 }
 
 export { type DecryptedUserKey } from './providers/registry'

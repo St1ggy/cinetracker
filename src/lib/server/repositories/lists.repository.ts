@@ -229,10 +229,12 @@ export const listsRepository = {
     const castFilters = params.cast ?? []
 
     if (params.q) {
-      mediaWhere.title = {
-        contains: params.q,
-        mode: 'insensitive',
-      }
+      const qv = params.q
+
+      mediaWhere.OR = [
+        { title: { contains: qv, mode: 'insensitive' } },
+        { i18n: { some: { title: { contains: qv, mode: 'insensitive' } } } },
+      ]
     }
 
     const hasYearFrom = params.yearFrom !== undefined
@@ -286,9 +288,10 @@ export const listsRepository = {
       include: {
         media: {
           include: {
+            i18n: true,
             genres: {
               include: {
-                genre: true,
+                genre: { include: { i18n: true } },
               },
             },
           },
@@ -308,9 +311,10 @@ export const listsRepository = {
       include: {
         media: {
           include: {
+            i18n: true,
             genres: {
               include: {
-                genre: true,
+                genre: { include: { i18n: true } },
               },
             },
           },
