@@ -1,6 +1,165 @@
 import { type ListVisibility, type MediaType, Prisma, type SharePermission, type WatchStatus } from '@prisma/client'
 
+import { getGenreAliasConfig } from '$lib/server/app-genre-aliases'
 import { prisma } from '$lib/server/prisma'
+import { type GenreAliasConfig, expandGenreSlugsForQuery } from '$shared/lib/genre-alias'
+
+type ListMediaFilterParams = {
+  q?: string
+  yearFrom?: number
+  yearTo?: number
+  genresFilter?: string[]
+  genreMatchMode?: 'and' | 'or'
+  types?: MediaType[]
+  cast?: string[]
+  durationFrom?: number
+  durationTo?: number
+  countries?: string[]
+}
+
+const appendGenreClauses = (
+  clauses: Prisma.MediaWhereInput[],
+  rawGenreSlugs: string[],
+  genreMode: 'and' | 'or',
+  genreConfig: GenreAliasConfig,
+) => {
+  if (rawGenreSlugs.length === 0) return
+
+  if (genreMode === 'and') {
+    for (const raw of rawGenreSlugs) {
+      const expanded = expandGenreSlugsForQuery([raw], genreConfig)
+
+      clauses.push({
+        genres: {
+          some: {
+            genre: { slug: { in: expanded } },
+          },
+        },
+      })
+    }
+
+    return
+  }
+
+  const expanded = expandGenreSlugsForQuery(rawGenreSlugs, genreConfig)
+
+  clauses.push({
+    genres: {
+      some: {
+        genre: {
+          slug: { in: expanded },
+        },
+      },
+    },
+  })
+}
+
+const appendYearAndDurationClauses = (clauses: Prisma.MediaWhereInput[], params: ListMediaFilterParams) => {
+  const hasYearFrom = params.yearFrom !== undefined
+  const hasYearTo = params.yearTo !== undefined
+
+  if (hasYearFrom || hasYearTo) {
+    clauses.push({
+      year: {
+        ...(hasYearFrom ? { gte: params.yearFrom } : {}),
+        ...(hasYearTo ? { lte: params.yearTo } : {}),
+      },
+    })
+  }
+
+  const hasDurationFrom = params.durationFrom !== undefined
+  const hasDurationTo = params.durationTo !== undefined
+
+  if (hasDurationFrom || hasDurationTo) {
+    const range: { gte?: number; lte?: number } = {
+      ...(hasDurationFrom ? { gte: params.durationFrom } : {}),
+      ...(hasDurationTo ? { lte: params.durationTo } : {}),
+    }
+
+    clauses.push({
+      OR: [{ runtimeMinutes: range }, { episodeRuntimeMin: range }],
+    })
+  }
+}
+
+const buildMediaWhereForListFilters = (
+  params: ListMediaFilterParams,
+  genreConfig: GenreAliasConfig,
+): Prisma.MediaWhereInput => {
+  const clauses: Prisma.MediaWhereInput[] = []
+  const genreSlugs = (params.genresFilter ?? []).map((genre) => genre.toLowerCase().replaceAll(' ', '-'))
+  const castFilters = params.cast ?? []
+  const genreMode = params.genreMatchMode ?? 'or'
+
+  if (params.q) {
+    const qv = params.q
+
+    clauses.push({
+      OR: [
+        { title: { contains: qv, mode: 'insensitive' } },
+        { i18n: { some: { title: { contains: qv, mode: 'insensitive' } } } },
+      ],
+    })
+  }
+
+  appendYearAndDurationClauses(clauses, params)
+
+  if ((params.types?.length ?? 0) > 0) {
+    clauses.push({ mediaType: { in: params.types } })
+  }
+
+  appendGenreClauses(clauses, genreSlugs, genreMode, genreConfig)
+
+  if (castFilters.length > 0) {
+    clauses.push({
+      OR: castFilters.map((castName) => ({
+        cast: {
+          some: {
+            person: {
+              name: {
+                contains: castName,
+                mode: 'insensitive',
+              },
+            },
+          },
+        },
+      })),
+    })
+  }
+
+  if ((params.countries?.length ?? 0) > 0) {
+    clauses.push({
+      countries: { hasSome: params.countries },
+    })
+  }
+
+  if (clauses.length === 0) return {}
+
+  if (clauses.length === 1) return clauses[0]!
+
+  return { AND: clauses }
+}
+
+const listItemStatusWhere = (statuses?: WatchStatus[]): Prisma.ListItemWhereInput => {
+  if (statuses && statuses.length > 0) {
+    return { status: { in: statuses } }
+  }
+
+  return {}
+}
+
+const listItemsInclude = {
+  media: {
+    include: {
+      i18n: true,
+      genres: {
+        include: {
+          genre: { include: { i18n: true } },
+        },
+      },
+    },
+  },
+} as const
 
 const buildOrderBy = (sort?: string): Prisma.ListItemOrderByWithRelationInput[] => {
   // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
@@ -217,110 +376,122 @@ export const listsRepository = {
     yearFrom?: number
     yearTo?: number
     genresFilter?: string[]
+    genreMatchMode?: 'and' | 'or'
     types?: MediaType[]
     cast?: string[]
-    status?: WatchStatus | null
+    statuses?: WatchStatus[]
+    durationFrom?: number
+    durationTo?: number
+    countries?: string[]
     sort?: string
     limit: number
     cursor?: string
   }) => {
-    const mediaWhere: Prisma.MediaWhereInput = {}
-    const genreSlugs = (params.genresFilter ?? []).map((genre) => genre.toLowerCase().replaceAll(' ', '-'))
-    const castFilters = params.cast ?? []
-
-    if (params.q) {
-      const qv = params.q
-
-      mediaWhere.OR = [
-        { title: { contains: qv, mode: 'insensitive' } },
-        { i18n: { some: { title: { contains: qv, mode: 'insensitive' } } } },
-      ]
-    }
-
-    const hasYearFrom = params.yearFrom !== undefined
-    const hasYearTo = params.yearTo !== undefined
-
-    if (hasYearFrom || hasYearTo) {
-      mediaWhere.year = {
-        ...(hasYearFrom ? { gte: params.yearFrom } : {}),
-        ...(hasYearTo ? { lte: params.yearTo } : {}),
-      }
-    }
-
-    if ((params.types?.length ?? 0) > 0) {
-      mediaWhere.mediaType = { in: params.types }
-    }
-
-    if (genreSlugs.length > 0) {
-      mediaWhere.genres = {
-        some: {
-          genre: {
-            slug: { in: genreSlugs },
-          },
-        },
-      }
-    }
-
-    if (castFilters.length > 0) {
-      mediaWhere.OR = castFilters.map((castName) => ({
-        cast: {
-          some: {
-            person: {
-              name: {
-                contains: castName,
-                mode: 'insensitive',
-              },
-            },
-          },
-        },
-      }))
-    }
+    const gConfig = await getGenreAliasConfig()
+    const mediaWhere = buildMediaWhereForListFilters(
+      {
+        q: params.q,
+        yearFrom: params.yearFrom,
+        yearTo: params.yearTo,
+        genresFilter: params.genresFilter,
+        genreMatchMode: params.genreMatchMode,
+        types: params.types,
+        cast: params.cast,
+        durationFrom: params.durationFrom,
+        durationTo: params.durationTo,
+        countries: params.countries,
+      },
+      gConfig,
+    )
 
     return prisma.listItem.findMany({
       where: {
         listId: params.listId,
-        ...(params.status !== undefined && params.status !== null ? { status: params.status } : {}),
+        ...listItemStatusWhere(params.statuses),
         ...(Object.keys(mediaWhere).length > 0 ? { media: mediaWhere } : {}),
       },
       orderBy: buildOrderBy(params.sort),
       ...(params.cursor ? { cursor: { id: params.cursor }, skip: 1 } : {}),
       take: params.limit,
-      include: {
-        media: {
-          include: {
-            i18n: true,
-            genres: {
-              include: {
-                genre: { include: { i18n: true } },
-              },
-            },
-          },
-        },
-      },
+      include: listItemsInclude,
     })
   },
 
-  /** Items from multiple lists (for board). No filters, no deduplication. */
-  findItemsByListIds: async (listIds: string[], limit = 1000) => {
+  //
+  // Items from multiple lists (for board). Optional media filters; no merge/dedup;
+  // caller runs mergeItemsByMedia.
+  //
+  findItemsByListIds: async (
+    listIds: string[],
+    options: {
+      limit?: number
+      q?: string
+      yearFrom?: number
+      yearTo?: number
+      genresFilter?: string[]
+      genreMatchMode?: 'and' | 'or'
+      types?: MediaType[]
+      cast?: string[]
+      statuses?: WatchStatus[]
+      durationFrom?: number
+      durationTo?: number
+      countries?: string[]
+    } = {},
+  ) => {
     if (listIds.length === 0) return []
 
+    const limit = options.limit ?? 1000
+    const gConfig = await getGenreAliasConfig()
+    const mediaWhere = buildMediaWhereForListFilters(
+      {
+        q: options.q,
+        yearFrom: options.yearFrom,
+        yearTo: options.yearTo,
+        genresFilter: options.genresFilter,
+        genreMatchMode: options.genreMatchMode,
+        types: options.types,
+        cast: options.cast,
+        durationFrom: options.durationFrom,
+        durationTo: options.durationTo,
+        countries: options.countries,
+      },
+      gConfig,
+    )
+
     return prisma.listItem.findMany({
-      where: { listId: { in: listIds } },
+      where: {
+        listId: { in: listIds },
+        ...listItemStatusWhere(options.statuses),
+        ...(Object.keys(mediaWhere).length > 0 ? { media: mediaWhere } : {}),
+      },
       orderBy: [{ createdAt: 'desc' }],
       take: limit,
-      include: {
-        media: {
-          include: {
-            i18n: true,
-            genres: {
-              include: {
-                genre: { include: { i18n: true } },
-              },
-            },
-          },
-        },
-      },
+      include: listItemsInclude,
     })
+  },
+
+  /** Distinct ISO origin country codes from all media in the given lists (ignores list filters). */
+  findDistinctCountryCodesForListIds: async (listIds: string[]): Promise<string[]> => {
+    if (listIds.length === 0) return []
+
+    const rows = await prisma.$queryRaw<{ code: string }[]>(
+      Prisma.sql`
+        SELECT DISTINCT UPPER(TRIM(u.c)) AS code
+        FROM list_items li
+        INNER JOIN media m ON m.id = li.media_id
+        CROSS JOIN LATERAL UNNEST(m.countries) AS u(c)
+        WHERE li.list_id IN (${Prisma.join(listIds.map((id) => Prisma.sql`${id}`))})
+          AND TRIM(u.c) <> ''
+      `,
+    )
+
+    const out = new Set<string>()
+
+    for (const row of rows) {
+      if (row.code) out.add(row.code)
+    }
+
+    return [...out].toSorted((a, b) => a.localeCompare(b))
   },
 
   setListTags: async (listId: string, tagIds: string[]) => {

@@ -1,9 +1,11 @@
 /* eslint-disable camelcase */
 import { type MediaProvider, type MediaType, Prisma } from '@prisma/client'
 
+import { getGenreAliasConfig } from '$lib/server/app-genre-aliases'
 import { toGenreLocalizations } from '$lib/server/media-i18n'
 import { prisma } from '$lib/server/prisma'
 import { UI_BASE_LOCALE } from '$lib/ui-locales'
+import { mergeLocalizedGenreList } from '$shared/lib/genre-alias'
 
 import type { CanonicalMedia } from '../providers/types'
 
@@ -204,7 +206,9 @@ export const mediaRepository = {
     items: { slug: string; name: string }[] | CanonicalMedia,
     locale: string,
   ) => {
-    const list: { slug: string; name: string }[] = Array.isArray(items) ? items : toGenreLocalizations(items)
+    const raw: { slug: string; name: string }[] = Array.isArray(items) ? items : toGenreLocalizations(items)
+    const gConfig = await getGenreAliasConfig()
+    const list: { slug: string; name: string }[] = mergeLocalizedGenreList(raw, gConfig)
 
     await prisma.mediaGenre.deleteMany({ where: { mediaId } })
 

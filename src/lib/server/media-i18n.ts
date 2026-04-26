@@ -15,20 +15,21 @@ type MediaTextFields = {
 export const toGenreLocalizations = (
   normalized: Pick<CanonicalMedia, 'genres' | 'genreLocalizations'>,
 ): { slug: string; name: string }[] => {
-  if (normalized.genreLocalizations && normalized.genreLocalizations.length > 0) {
-    return normalized.genreLocalizations
-  }
+  const raw: { slug: string; name: string }[] =
+    normalized.genreLocalizations && normalized.genreLocalizations.length > 0
+      ? normalized.genreLocalizations
+      : normalized.genres.map((name) => ({
+          slug: name
+            .toLowerCase()
+            .trim()
+            .replaceAll(/\s+/g, '-')
+            .replaceAll(/[^a-z0-9-]/g, '')
+            .replaceAll(/-+/g, '-')
+            .replaceAll(/^-|-$/g, ''),
+          name,
+        }))
 
-  return normalized.genres.map((name) => ({
-    slug: name
-      .toLowerCase()
-      .trim()
-      .replaceAll(/\s+/g, '-')
-      .replaceAll(/[^a-z0-9-]/g, '')
-      .replaceAll(/-+/g, '-')
-      .replaceAll(/^-|-$/g, ''),
-    name,
-  }))
+  return raw
 }
 
 const pickI18nRow = <T extends { locale: string }>(rows: T[], locale: string, fallback: string): T | null =>

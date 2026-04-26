@@ -9,6 +9,8 @@ import { prisma } from '$lib/server/prisma'
 import { listItemsRepository, listsRepository } from '$lib/server/repositories'
 import { assertEpisodicProgressPayload } from '$lib/server/validate-episodic-payload'
 import { WATCH_STATUSES } from '$shared/config/domain'
+import { mediaFiltersToRepoParams } from '$shared/lib/media-filters'
+import { parseFiltersForSurface } from '$shared/lib/media-filters-surface'
 
 import type { WatchStatus } from '@prisma/client'
 
@@ -98,7 +100,10 @@ export const GET = async ({ locals, url }) => {
     throw error(403, 'Only own lists can be used')
   }
 
-  const rawItems = await listsRepository.findItemsByListIds(listIds)
+  const filterState = parseFiltersForSurface(url.searchParams, 'board')
+  const repo = mediaFiltersToRepoParams(filterState)
+
+  const rawItems = await listsRepository.findItemsByListIds(listIds, { ...repo, limit: 1000 })
 
   const merged = mergeItemsByMedia(rawItems)
 

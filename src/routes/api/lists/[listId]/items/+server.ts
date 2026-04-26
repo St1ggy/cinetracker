@@ -46,9 +46,15 @@ const listFiltersSchema = z.object({
   yearFrom: z.coerce.number().int().optional(),
   yearTo: z.coerce.number().int().optional(),
   genres: z.string().optional(),
+  genre: z.string().optional(),
+  genreMode: z.enum(['and', 'or']).optional(),
   types: z.string().optional(),
   cast: z.string().optional(),
   status: z.enum(WATCH_STATUSES).optional(),
+  statuses: z.string().optional(),
+  durationFrom: z.coerce.number().int().min(0).optional(),
+  durationTo: z.coerce.number().int().min(0).optional(),
+  countries: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(60),
   sort: z.string().optional(),
   cursor: z.string().optional(),
@@ -68,19 +74,30 @@ export const GET = async ({ locals, params, url }) => {
     yearFrom: url.searchParams.get('yearFrom') ?? undefined,
     yearTo: url.searchParams.get('yearTo') ?? undefined,
     genres: url.searchParams.get('genres') ?? undefined,
+    genre: url.searchParams.get('genre') ?? undefined,
+    genreMode: url.searchParams.get('genreMode') ?? undefined,
     types: url.searchParams.get('types') ?? undefined,
     cast: url.searchParams.get('cast') ?? undefined,
     status: url.searchParams.get('status') ?? undefined,
+    statuses: url.searchParams.get('statuses') ?? undefined,
+    durationFrom: url.searchParams.get('durationFrom') ?? undefined,
+    durationTo: url.searchParams.get('durationTo') ?? undefined,
+    countries: url.searchParams.get('countries') ?? undefined,
     sort: url.searchParams.get('sort') ?? undefined,
     cursor: url.searchParams.get('cursor') ?? undefined,
     limit: url.searchParams.get('limit') ?? undefined,
   })
 
-  const genres =
+  const genresFromParameter =
     parsed.genres
       ?.split(',')
       .map((x) => x.trim())
       .filter(Boolean) ?? []
+  const genreLegacy = parsed.genre?.trim()
+  const genres =
+    genreLegacy && !genresFromParameter.includes(genreLegacy)
+      ? [genreLegacy, ...genresFromParameter]
+      : genresFromParameter
   const types = (parsed.types
     ?.split(',')
     .map((x) => x.trim().toUpperCase())
@@ -90,15 +107,40 @@ export const GET = async ({ locals, params, url }) => {
       ?.split(',')
       .map((x) => x.trim())
       .filter(Boolean) ?? []
+  const statusesFromParameter =
+    parsed.statuses
+      ?.split(',')
+      .map((x) => x.trim().toUpperCase())
+      .filter((x): x is WatchStatus => (WATCH_STATUSES as readonly string[]).includes(x)) ?? []
+
+  let statuses: WatchStatus[] | undefined
+
+  if (statusesFromParameter.length > 0) {
+    statuses = statusesFromParameter
+  } else if (parsed.status) {
+    statuses = [parsed.status]
+  } else {
+    statuses = undefined
+  }
+
+  const countries =
+    parsed.countries
+      ?.split(',')
+      .map((x) => x.trim().toUpperCase())
+      .filter((c) => c.length === 2) ?? []
   const items = await listsRepository.findItemsByListWithFilters({
     listId: params.listId,
     q: parsed.q,
     yearFrom: parsed.yearFrom,
     yearTo: parsed.yearTo,
     genresFilter: genres,
+    genreMatchMode: parsed.genreMode,
     types,
     cast,
-    status: parsed.status ?? undefined,
+    statuses,
+    durationFrom: parsed.durationFrom,
+    durationTo: parsed.durationTo,
+    countries: countries.length > 0 ? countries : undefined,
     sort: parsed.sort,
     limit: parsed.limit,
     cursor: parsed.cursor,
