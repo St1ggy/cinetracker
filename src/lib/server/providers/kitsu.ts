@@ -1,5 +1,7 @@
 import { error } from '@sveltejs/kit'
 
+import { pickKitsuTitle } from '$lib/server/locale'
+
 import type { CanonicalMedia, CanonicalRating, ProviderAdapter, SearchResult } from './types'
 
 const BASE_URL = 'https://kitsu.io/api/edge'
@@ -31,7 +33,8 @@ const extractKitsuRatings = (attributes: Record<string, unknown>): CanonicalRati
 const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
   const attributes = (raw.attributes ?? {}) as Record<string, unknown>
   const titles = (attributes.titles ?? {}) as Record<string, string | undefined>
-  const title = titles.en ?? titles.en_jp ?? titles.ja_jp ?? attributes.canonicalTitle ?? 'Untitled'
+  const canonical = attributes.canonicalTitle as string | undefined
+  const title = pickKitsuTitle(titles, canonical)
   const episodeDuration = (attributes.episodeLength as number | undefined) ?? null
   const genres: string[] = []
   const year = attributes.startDate ? Number.parseInt(String(attributes.startDate).slice(0, 4), 10) : null

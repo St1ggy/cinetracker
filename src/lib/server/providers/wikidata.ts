@@ -1,5 +1,7 @@
 import { error } from '@sveltejs/kit'
 
+import { getWikidataLabelLanguages } from '$lib/server/locale'
+
 import type { CanonicalMedia, ProviderAdapter, SearchResult } from './types'
 
 const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql'
@@ -9,7 +11,7 @@ const WIKIDATA_HEADERS = {
   'User-Agent': 'CineTracker/1.0 (https://github.com/St1ggy/cinetracker)',
 }
 
-const buildQuery = (imdbId: string): string => `
+const buildQuery = (imdbId: string, labelLangs: string): string => `
 SELECT ?item ?itemLabel ?countryLabel ?boxOffice ?budget ?duration
        ?productionCompanyLabel ?awardLabel
 WHERE {
@@ -20,7 +22,7 @@ WHERE {
   OPTIONAL { ?item wdt:P2047 ?duration . }
   OPTIONAL { ?item wdt:P272 ?productionCompany . }
   OPTIONAL { ?item wdt:P166 ?award . }
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "${labelLangs}" . }
 }
 LIMIT 10
 `
@@ -87,7 +89,7 @@ export const wikidataAdapter: ProviderAdapter = {
 
     const url = new URL(SPARQL_ENDPOINT)
 
-    url.searchParams.set('query', buildQuery(imdbId))
+    url.searchParams.set('query', buildQuery(imdbId, getWikidataLabelLanguages()))
     url.searchParams.set('format', 'json')
 
     const response = await fetch(url, { headers: WIKIDATA_HEADERS })

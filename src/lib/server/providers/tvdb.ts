@@ -1,5 +1,7 @@
 import { error } from '@sveltejs/kit'
 
+import { getAcceptLanguageHeader } from '$lib/server/locale'
+
 import type { CanonicalMedia, ProviderAdapter, ProviderCredentials, TvdbCredentials } from './types'
 import type { MediaType } from '@prisma/client'
 
@@ -41,6 +43,8 @@ const getToken = async (creds: TvdbCredentials): Promise<string> => {
 const authHeaders = (token: string): Record<string, string> => ({
   Authorization: `Bearer ${token}`,
   'Content-Type': 'application/json',
+  // v4: preferred translation; server falls back to default when a locale is missing
+  'Accept-Language': getAcceptLanguageHeader(),
 })
 
 const toMediaType = (type: string | undefined): MediaType => {

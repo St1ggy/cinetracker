@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit'
 
-import { isJapaneseLocale } from '$lib/server/locale'
+import { pickShikimoriTitle } from '$lib/server/locale'
 
 import type { CanonicalMedia, CanonicalRating, ProviderAdapter, SearchResult } from './types'
 
@@ -25,14 +25,7 @@ const extractTitle = (raw: Record<string, unknown>): { title: string; originalTi
   const russian = raw.russian as string | undefined
   const name = (raw.name as string | undefined) ?? ''
 
-  if (isJapaneseLocale()) {
-    return { title: name, originalTitle: russian ?? null }
-  }
-
-  return {
-    title: russian && russian.length > 0 ? russian : name,
-    originalTitle: name || null,
-  }
+  return pickShikimoriTitle(russian, name)
 }
 
 const extractRatings = (raw: Record<string, unknown>): CanonicalRating[] => {

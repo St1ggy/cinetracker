@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit'
 
 import { appEnv } from '$lib/server/env'
-import { isJapaneseLocale } from '$lib/server/locale'
+import { pickAnilistStyleTitle } from '$lib/server/locale'
 
 import type { CanonicalCastMember, CanonicalMedia, CanonicalRating, ProviderAdapter, SearchResult } from './types'
 
@@ -49,14 +49,6 @@ query ($id: Int!) {
 }
 `
 
-const pickTitle = (titleObject: Record<string, string | undefined>): string => {
-  if (isJapaneseLocale()) {
-    return titleObject.native ?? titleObject.romaji ?? titleObject.english ?? 'Untitled'
-  }
-
-  return titleObject.english ?? titleObject.romaji ?? titleObject.native ?? 'Untitled'
-}
-
 const extractAnilistRatings = (raw: Record<string, unknown>): CanonicalRating[] => {
   const averageScore = raw.averageScore as number | undefined
 
@@ -89,7 +81,7 @@ const extractAnilistCast = (raw: Record<string, unknown>): CanonicalCastMember[]
 }
 
 const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
-  const titleObject = (raw.title ?? {}) as Record<string, string | undefined>
+  const titleObject = (raw.title ?? {}) as { romaji?: string; english?: string; native?: string }
   const id = Number(raw.id)
   const malId = raw.idMal == null ? null : Number(raw.idMal)
   const coverImage = raw.coverImage as Record<string, string | undefined> | undefined
@@ -99,7 +91,7 @@ const normalize = (raw: Record<string, unknown>): CanonicalMedia => {
     provider: 'ANILIST',
     externalId: String(raw.id),
     externalUrl: `https://anilist.co/anime/${id}`,
-    title: pickTitle(titleObject),
+    title: pickAnilistStyleTitle(titleObject),
     originalTitle: titleObject.native ?? titleObject.romaji ?? null,
     year: ((raw.startDate as Record<string, number | undefined> | undefined)?.year ?? null) as number | null,
     mediaType: 'ANIME',

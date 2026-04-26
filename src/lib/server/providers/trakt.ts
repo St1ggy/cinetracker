@@ -1,3 +1,4 @@
+// Trakt API: titles and overviews are English-only; do not conflate with TMDB localised text in enrich.
 import { error } from '@sveltejs/kit'
 
 import type {

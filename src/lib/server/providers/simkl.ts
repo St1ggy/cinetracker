@@ -1,3 +1,4 @@
+// Simkl: primary language follows API defaults; use TMDB in MOVIE/TV path for user locale when available.
 import { error } from '@sveltejs/kit'
 
 import type {

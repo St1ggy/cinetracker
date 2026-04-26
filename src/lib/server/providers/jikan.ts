@@ -1,26 +1,12 @@
 import { error } from '@sveltejs/kit'
 
-import { isJapaneseLocale } from '$lib/server/locale'
+import { pickJikanDisplayTitle } from '$lib/server/locale'
 
 import type { CanonicalCastMember, CanonicalMedia, CanonicalRating, ProviderAdapter, SearchResult } from './types'
 
 const BASE_URL = 'https://api.jikan.moe/v4'
 
-const extractTitle = (raw: Record<string, unknown>): { title: string; originalTitle: string | null } => {
-  const titles = raw.titles as Record<string, unknown>[] | undefined
-  const englishTitle = titles?.find((t) => t.type === 'English')?.title as string | undefined
-  const defaultTitle = titles?.find((t) => t.type === 'Default')?.title as string | undefined
-  const nativeTitle = raw.title_japanese as string | undefined
-
-  const title = isJapaneseLocale()
-    ? (nativeTitle ?? defaultTitle ?? englishTitle ?? 'Untitled')
-    : (englishTitle ?? defaultTitle ?? nativeTitle ?? 'Untitled')
-
-  return {
-    title,
-    originalTitle: nativeTitle ?? null,
-  }
-}
+const extractTitle = (raw: Record<string, unknown>) => pickJikanDisplayTitle(raw)
 
 const extractYear = (raw: Record<string, unknown>): number | null => {
   const aired = raw.aired as Record<string, unknown> | undefined

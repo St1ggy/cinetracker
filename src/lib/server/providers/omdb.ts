@@ -1,3 +1,4 @@
+// omdbapi.com: no i18n query param; Title/Plot are English-centric. RU/FR/ja UI: prefer TMDB when merging.
 import { error } from '@sveltejs/kit'
 
 import type {

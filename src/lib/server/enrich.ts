@@ -96,6 +96,7 @@ const collectTextUpdates = (media: MediaWithSources, normalized: CanonicalMedia)
 
   if (!media.posterUrl && normalized.posterUrl) updates.posterUrl = normalized.posterUrl
 
+  // Prefer TMDB localised overview; OMDb/Trakt are English — do not overwrite a good TMDB field lightly.
   if (!media.overview && normalized.overview) updates.overview = normalized.overview
 
   return updates
