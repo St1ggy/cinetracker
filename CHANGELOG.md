@@ -1,3 +1,13 @@
+## [1.28.0](https://github.com/St1ggy/cinetracker/compare/v1.27.0...v1.28.0) (2026-04-27)
+
+### Features
+
+* **ui:** add reusable tabs primitives ([93093e7](https://github.com/St1ggy/cinetracker/commit/93093e7f6a563bca56e6da387c010253ba05f8d7))
+
+### Bug Fixes
+
+* **profile:** stabilize tabs and handle loading flow ([4ac6a05](https://github.com/St1ggy/cinetracker/commit/4ac6a053781072641a4d90edb6eca0b09c07c4b7))
+
 ## [1.27.0](https://github.com/St1ggy/cinetracker/compare/v1.26.0...v1.27.0) (2026-04-26)
 
 ### Features
