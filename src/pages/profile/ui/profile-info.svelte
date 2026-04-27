@@ -10,15 +10,21 @@
   type Props = {
     user: User | null | undefined
     authProviders?: string[]
+    /** Use `2` when this block sits under page-level tabs to keep a single logical h1 on the page. */
+    titleLevel?: 1 | 2
   }
 
-  const { user, authProviders = [] }: Props = $props()
+  const { user, authProviders = [], titleLevel = 1 }: Props = $props()
 
   const formatProvider = (provider: string) => provider.charAt(0).toUpperCase() + provider.slice(1)
 </script>
 
 <section class="rounded-lg border bg-card p-6">
-  <h1 class="text-2xl font-semibold">{L.profile_title()}</h1>
+  {#if titleLevel === 1}
+    <h1 class="text-2xl font-semibold">{L.profile_title()}</h1>
+  {:else}
+    <h2 class="text-2xl font-semibold">{L.profile_title()}</h2>
+  {/if}
   {#if user}
     <div class="mt-3 space-y-1 text-sm">
       <p><span class="text-muted-foreground">{L.profile_name()}</span> {user.name ?? '—'}</p>

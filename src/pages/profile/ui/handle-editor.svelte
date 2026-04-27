@@ -11,10 +11,13 @@
     onSaved?: (handle: string) => void
   }
 
-  const { currentHandle = null, nextChangeAt = null, onSaved }: Props = $props()
+  // `let` keeps props reactive in Svelte 5 (`const` would freeze initial values).
+  // eslint-disable-next-line prefer-const -- reactive props from `$props()` must stay `let`
+  let { currentHandle = null, nextChangeAt = null, onSaved }: Props = $props()
 
   let editing = $state(false)
-  let input = $derived.by(() => currentHandle ?? '')
+  /** Editable field while the inline editor is open (cannot be `$derived` with `bind:value`) */
+  let draft = $state('')
   let error = $state<string | null>(null)
   let saving = $state(false)
 
@@ -28,7 +31,7 @@
   }
 
   const save = async () => {
-    const validationError = validate(input)
+    const validationError = validate(draft)
 
     if (validationError) {
       error = validationError
@@ -43,7 +46,7 @@
       const response = await fetch('/api/user/handle', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ handle: input }),
+        body: JSON.stringify({ handle: draft }),
       })
 
       const data = await response.json()
@@ -82,7 +85,7 @@
           type="button"
           class="rounded-md border px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
           onclick={() => {
-            input = currentHandle ?? ''
+            draft = currentHandle ?? ''
             editing = true
           }}
         >
@@ -103,7 +106,7 @@
         type="text"
         class="w-40 rounded border bg-background px-2 py-1 font-mono text-sm focus:ring-2 focus:ring-ring focus:outline-none"
         placeholder={L.profile_handle_placeholder()}
-        bind:value={input}
+        bind:value={draft}
         maxlength={30}
         oninput={() => (error = null)}
       />

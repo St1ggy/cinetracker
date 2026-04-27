@@ -28,19 +28,22 @@ export const GET: RequestHandler = async ({ locals }) => {
 
 export const PUT: RequestHandler = async ({ locals, request }) => {
   await requireSessionUser(locals)
-  const body = (await request.json()) as { jsonText?: string }
-
-  if (typeof body.jsonText !== 'string') {
-    throw error(400, 'jsonText required')
-  }
+  const body = (await request.json()) as { config?: unknown; jsonText?: string }
 
   let parsed: unknown
 
-  try {
-    parsed = JSON.parse(body.jsonText) as unknown
-  } catch {
-    throw error(400, 'Invalid JSON')
+  if (body.config !== undefined) {
+    parsed = body.config
+  } else if (typeof body.jsonText === 'string') {
+    try {
+      parsed = JSON.parse(body.jsonText) as unknown
+    } catch {
+      throw error(400, 'Invalid JSON')
+    }
+  } else {
+    throw error(400, 'config or jsonText required')
   }
+
   const valid = genreAliasConfigZod.safeParse(parsed)
 
   if (!valid.success) {
